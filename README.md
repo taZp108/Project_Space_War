@@ -1,7 +1,7 @@
 <<<<<<< HEAD
 # space-war
 
-Game 2 người chơi theo lượt (Đại Chiến Không Gian), client-server bằng Haskell + WebSocket.
+Game 2 người chơi theo lượt, client-server bằng Haskell + WebSocket.
 
 ```
 stack build
