@@ -1,0 +1,33 @@
+name:                space-war
+version:             0.1.0.0
+synopsis:            Game 2 người chơi theo lượt, client-server (Haskell + WebSocket)
+
+dependencies:
+- base >= 4.7 && < 5
+
+ghc-options:
+- -Wall
+
+library:
+  source-dirs: src
+  dependencies:
+  - containers
+  - random
+  - aeson
+  - websockets
+
+executables:
+  space-war-exe:
+    main:                Main.hs
+    source-dirs:         app
+    dependencies:
+    - space-war
+
+tests:
+  space-war-test:
+    main:                Spec.hs
+    source-dirs:         test
+    dependencies:
+    - space-war
+    - hspec
+    - QuickCheck
