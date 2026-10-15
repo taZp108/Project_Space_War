@@ -1,0 +1,26 @@
+? C:\Users\ASUS\AppData\Local\Programs\stack\x86_64-windows\ghc-9.10.3\lib\x86_64-windows-ghc-9.10.3\rts-1.0.2\include\ghcversion.h
+: hash: 7038bb968ecc358729edd5d1e72a638409aaf5ea6ab13ce6ec7f253daa3b6529
+D:\Dev\space-war\.stack-work\dist\1a191874\build\autogen\Paths_space_war.hs:
+  hash: 6b8e2526b41e569be06d22e55f889941b0aac1cc79ac818a4e83f0301d217f5e
+D:\Dev\space-war\.stack-work\dist\1a191874\build\autogen\cabal_macros.h:
+  hash: 493222cf1adf230d2d4703c930e2a68239477a93558d16126a3fde44870dfdc6
+D:\Dev\space-war\package.yaml:
+  hash: 341af2dc5db348f8b2aa3464b9ddb0a4813462a2e91cf9de578bd8e09d8da76b
+D:\Dev\space-war\space-war.cabal:
+  hash: 46855b31b6bc84114a32c03d6472fe08f153050e95ad7689b092181087001d6c
+D:\Dev\space-war\src\Game\Action.hs:
+  hash: f4bfcaf2937254b43d6ee3235ffede12636bb5e43337558dff671e1c26562d22
+D:\Dev\space-war\src\Game\Config.hs:
+  hash: 99b2ef9c2f205835ca40062b13094e1d32a314046930d3f12efcbc0d6b62eb1c
+D:\Dev\space-war\src\Game\Generate.hs:
+  hash: 154d377ca605027050c7478c5fde4bcda9c2aa8ec1ae0b9d7ac2bb08db6f0491
+D:\Dev\space-war\src\Game\State.hs:
+  hash: 8d1689490b4ea2f3a5a154a25ef5ddf2efa1f93de77012d52332e51bd7166a79
+D:\Dev\space-war\src\Game\Turn.hs:
+  hash: 85b6186fa41933b01004c5683f57cf45b8b78018469966a9790e27a9fa53631f
+D:\Dev\space-war\src\Game\Types.hs:
+  hash: e10c3c7b13dae9368817f02a298734503caa41a946c49ffbbf0ef9cedeef22e1
+D:\Dev\space-war\src\Game\World.hs:
+  hash: af1a6bc920e67cf4709e0ea567c0a05e81622570c550fa3f316fc5002ab32dbb
+D:\Dev\space-war\src\Lib.hs:
+  hash: df261841e54388ef6881c93e12647694d719aac3c5aa5bcc154dd66188fe04b5

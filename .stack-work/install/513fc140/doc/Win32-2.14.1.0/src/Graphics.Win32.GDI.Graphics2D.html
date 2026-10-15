@@ -1,0 +1,907 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-cpp">#if __GLASGOW_HASKELL__ &gt;= 709
+</span><span class="hs-pragma">{-# LANGUAGE Safe #-}</span><span class="hs-cpp">
+#else
+</span><span class="hs-pragma">{-# LANGUAGE Trustworthy #-}</span><span class="hs-cpp">
+#endif
+</span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Module      :  Graphics.Win32.GDI.Graphics2D</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Copyright   :  (c) Alastair Reid, 1997-2003</span><span>
+</span><span id="line-10"></span><span class="hs-comment">-- License     :  BSD-style (see the file libraries/base/LICENSE)</span><span>
+</span><span id="line-11"></span><span class="hs-comment">--</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- Maintainer  :  Esa Ilari Vuokko &lt;ei@vuokko.info&gt;</span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- Stability   :  provisional</span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-15"></span><span class="hs-comment">--</span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- 2D graphics operations</span><span>
+</span><span id="line-17"></span><span class="hs-comment">--</span><span>
+</span><span id="line-18"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html"><span class="hs-identifier">Graphics.Win32.GDI.Graphics2D</span></a></span><span>
+</span><span id="line-21"></span><span>        </span><span class="hs-keyword">where</span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="System.Win32.Types.html"><span class="hs-identifier">System.Win32.Types</span></a></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html"><span class="hs-identifier">Graphics.Win32.GDI.Types</span></a></span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../../base-4.20.2.0-39f9/src/Foreign.html"><span class="hs-identifier">Foreign</span></a></span><span class="hs-cpp">
+
+#include &quot;windows_cconv.h&quot;
+</span><span>
+</span><span id="line-30"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
+</span><span id="line-31"></span><span class="hs-comment">-- Lines and Curves</span><span>
+</span><span id="line-32"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#moveToEx"><span class="hs-identifier hs-type">moveToEx</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span>
+</span><span id="line-35"></span><span id="moveToEx"><span class="annot"><span class="annottext">moveToEx :: HDC -&gt; Int32 -&gt; Int32 -&gt; IO POINT
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#moveToEx"><span class="hs-identifier hs-var hs-var">moveToEx</span></a></span></span><span> </span><span id="local-6989586621679156038"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156038"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156039"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156039"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679156040"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156040"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-36"></span><span>  </span><span class="annot"><span class="annottext">(Ptr POINT -&gt; IO POINT) -&gt; IO POINT
+forall a. (Ptr POINT -&gt; IO a) -&gt; IO a
+</span><a href="Graphics.Win32.GDI.Types.html#allocaPOINT"><span class="hs-identifier hs-var">allocaPOINT</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr POINT -&gt; IO POINT) -&gt; IO POINT)
+-&gt; (Ptr POINT -&gt; IO POINT) -&gt; IO POINT
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679156042"><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156042"><span class="hs-identifier hs-var">p_point</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-37"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;MoveToEx&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC -&gt; Int32 -&gt; Int32 -&gt; Ptr POINT -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_MoveToEx"><span class="hs-identifier hs-var">c_MoveToEx</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156038"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156039"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156040"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156042"><span class="hs-identifier hs-var">p_point</span></a></span><span>
+</span><span id="line-38"></span><span>  </span><span class="annot"><span class="annottext">Ptr POINT -&gt; IO POINT
+</span><a href="Graphics.Win32.GDI.Types.html#peekPOINT"><span class="hs-identifier hs-var">peekPOINT</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156042"><span class="hs-identifier hs-var">p_point</span></a></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h MoveToEx&quot;</span><span>
+</span><span id="line-40"></span><span>  </span><span id="c_MoveToEx"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_MoveToEx"><span class="hs-identifier hs-var">c_MoveToEx</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#lineTo"><span class="hs-identifier hs-type">lineTo</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span id="lineTo"><span class="annot"><span class="annottext">lineTo :: HDC -&gt; Int32 -&gt; Int32 -&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#lineTo"><span class="hs-identifier hs-var hs-var">lineTo</span></a></span></span><span> </span><span id="local-6989586621679156047"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156047"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156048"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156048"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679156049"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156049"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-44"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;LineTo&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC -&gt; Int32 -&gt; Int32 -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_LineTo"><span class="hs-identifier hs-var">c_LineTo</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156047"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156048"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156049"><span class="hs-identifier hs-var">y</span></a></span><span>
+</span><span id="line-45"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h LineTo&quot;</span><span>
+</span><span id="line-46"></span><span>  </span><span id="c_LineTo"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_LineTo"><span class="hs-identifier hs-var">c_LineTo</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#polyline"><span class="hs-identifier hs-type">polyline</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span id="polyline"><span class="annot"><span class="annottext">polyline :: HDC -&gt; [POINT] -&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#polyline"><span class="hs-identifier hs-var hs-var">polyline</span></a></span></span><span> </span><span id="local-6989586621679156052"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156052"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156053"><span class="annot"><span class="annottext">[POINT]
+</span><a href="#local-6989586621679156053"><span class="hs-identifier hs-var">points</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-50"></span><span>  </span><span class="annot"><span class="annottext">[POINT] -&gt; (Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ()
+forall a. [POINT] -&gt; (Ptr POINT -&gt; Int -&gt; IO a) -&gt; IO a
+</span><a href="Graphics.Win32.GDI.Types.html#withPOINTArray"><span class="hs-identifier hs-var">withPOINTArray</span></a></span><span> </span><span class="annot"><span class="annottext">[POINT]
+</span><a href="#local-6989586621679156053"><span class="hs-identifier hs-var">points</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ())
+-&gt; (Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679156055"><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156055"><span class="hs-identifier hs-var">pount_array</span></a></span></span><span> </span><span id="local-6989586621679156056"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679156056"><span class="hs-identifier hs-var">npoints</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-51"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Polyline&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC -&gt; Ptr POINT -&gt; Int -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_Polyline"><span class="hs-identifier hs-var">c_Polyline</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156052"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156055"><span class="hs-identifier hs-var">pount_array</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679156056"><span class="hs-identifier hs-var">npoints</span></a></span><span>
+</span><span id="line-52"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h Polyline&quot;</span><span>
+</span><span id="line-53"></span><span>  </span><span id="c_Polyline"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_Polyline"><span class="hs-identifier hs-var">c_Polyline</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-54"></span><span>
+</span><span id="line-55"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#polylineTo"><span class="hs-identifier hs-type">polylineTo</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-56"></span><span id="polylineTo"><span class="annot"><span class="annottext">polylineTo :: HDC -&gt; [POINT] -&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#polylineTo"><span class="hs-identifier hs-var hs-var">polylineTo</span></a></span></span><span> </span><span id="local-6989586621679156059"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156059"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156060"><span class="annot"><span class="annottext">[POINT]
+</span><a href="#local-6989586621679156060"><span class="hs-identifier hs-var">points</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-57"></span><span>  </span><span class="annot"><span class="annottext">[POINT] -&gt; (Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ()
+forall a. [POINT] -&gt; (Ptr POINT -&gt; Int -&gt; IO a) -&gt; IO a
+</span><a href="Graphics.Win32.GDI.Types.html#withPOINTArray"><span class="hs-identifier hs-var">withPOINTArray</span></a></span><span> </span><span class="annot"><span class="annottext">[POINT]
+</span><a href="#local-6989586621679156060"><span class="hs-identifier hs-var">points</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ())
+-&gt; (Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679156061"><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156061"><span class="hs-identifier hs-var">pount_array</span></a></span></span><span> </span><span id="local-6989586621679156062"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679156062"><span class="hs-identifier hs-var">npoints</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-58"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;PolylineTo&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC -&gt; Ptr POINT -&gt; Int -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_PolylineTo"><span class="hs-identifier hs-var">c_PolylineTo</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156059"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156061"><span class="hs-identifier hs-var">pount_array</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679156062"><span class="hs-identifier hs-var">npoints</span></a></span><span>
+</span><span id="line-59"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h PolylineTo&quot;</span><span>
+</span><span id="line-60"></span><span>  </span><span id="c_PolylineTo"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_PolylineTo"><span class="hs-identifier hs-var">c_PolylineTo</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-61"></span><span>
+</span><span id="line-62"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#polygon"><span class="hs-identifier hs-type">polygon</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-63"></span><span id="polygon"><span class="annot"><span class="annottext">polygon :: HDC -&gt; [POINT] -&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#polygon"><span class="hs-identifier hs-var hs-var">polygon</span></a></span></span><span> </span><span id="local-6989586621679156065"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156065"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156066"><span class="annot"><span class="annottext">[POINT]
+</span><a href="#local-6989586621679156066"><span class="hs-identifier hs-var">points</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-64"></span><span>  </span><span class="annot"><span class="annottext">[POINT] -&gt; (Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ()
+forall a. [POINT] -&gt; (Ptr POINT -&gt; Int -&gt; IO a) -&gt; IO a
+</span><a href="Graphics.Win32.GDI.Types.html#withPOINTArray"><span class="hs-identifier hs-var">withPOINTArray</span></a></span><span> </span><span class="annot"><span class="annottext">[POINT]
+</span><a href="#local-6989586621679156066"><span class="hs-identifier hs-var">points</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ())
+-&gt; (Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679156067"><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156067"><span class="hs-identifier hs-var">pount_array</span></a></span></span><span> </span><span id="local-6989586621679156068"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679156068"><span class="hs-identifier hs-var">npoints</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-65"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Polygon&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC -&gt; Ptr POINT -&gt; Int -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_Polygon"><span class="hs-identifier hs-var">c_Polygon</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156065"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156067"><span class="hs-identifier hs-var">pount_array</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679156068"><span class="hs-identifier hs-var">npoints</span></a></span><span>
+</span><span id="line-66"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h Polygon&quot;</span><span>
+</span><span id="line-67"></span><span>  </span><span id="c_Polygon"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_Polygon"><span class="hs-identifier hs-var">c_Polygon</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-68"></span><span>
+</span><span id="line-69"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#polyBezier"><span class="hs-identifier hs-type">polyBezier</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-70"></span><span id="polyBezier"><span class="annot"><span class="annottext">polyBezier :: HDC -&gt; [POINT] -&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#polyBezier"><span class="hs-identifier hs-var hs-var">polyBezier</span></a></span></span><span> </span><span id="local-6989586621679156071"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156071"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156072"><span class="annot"><span class="annottext">[POINT]
+</span><a href="#local-6989586621679156072"><span class="hs-identifier hs-var">points</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-71"></span><span>  </span><span class="annot"><span class="annottext">[POINT] -&gt; (Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ()
+forall a. [POINT] -&gt; (Ptr POINT -&gt; Int -&gt; IO a) -&gt; IO a
+</span><a href="Graphics.Win32.GDI.Types.html#withPOINTArray"><span class="hs-identifier hs-var">withPOINTArray</span></a></span><span> </span><span class="annot"><span class="annottext">[POINT]
+</span><a href="#local-6989586621679156072"><span class="hs-identifier hs-var">points</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ())
+-&gt; (Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679156073"><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156073"><span class="hs-identifier hs-var">pount_array</span></a></span></span><span> </span><span id="local-6989586621679156074"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679156074"><span class="hs-identifier hs-var">npoints</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-72"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;PolyBezier&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC -&gt; Ptr POINT -&gt; Int -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_PolyBezier"><span class="hs-identifier hs-var">c_PolyBezier</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156071"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156073"><span class="hs-identifier hs-var">pount_array</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679156074"><span class="hs-identifier hs-var">npoints</span></a></span><span>
+</span><span id="line-73"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h PolyBezier&quot;</span><span>
+</span><span id="line-74"></span><span>  </span><span id="c_PolyBezier"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_PolyBezier"><span class="hs-identifier hs-var">c_PolyBezier</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#polyBezierTo"><span class="hs-identifier hs-type">polyBezierTo</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-77"></span><span id="polyBezierTo"><span class="annot"><span class="annottext">polyBezierTo :: HDC -&gt; [POINT] -&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#polyBezierTo"><span class="hs-identifier hs-var hs-var">polyBezierTo</span></a></span></span><span> </span><span id="local-6989586621679156077"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156077"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156078"><span class="annot"><span class="annottext">[POINT]
+</span><a href="#local-6989586621679156078"><span class="hs-identifier hs-var">points</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-78"></span><span>  </span><span class="annot"><span class="annottext">[POINT] -&gt; (Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ()
+forall a. [POINT] -&gt; (Ptr POINT -&gt; Int -&gt; IO a) -&gt; IO a
+</span><a href="Graphics.Win32.GDI.Types.html#withPOINTArray"><span class="hs-identifier hs-var">withPOINTArray</span></a></span><span> </span><span class="annot"><span class="annottext">[POINT]
+</span><a href="#local-6989586621679156078"><span class="hs-identifier hs-var">points</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ())
+-&gt; (Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679156079"><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156079"><span class="hs-identifier hs-var">pount_array</span></a></span></span><span> </span><span id="local-6989586621679156080"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679156080"><span class="hs-identifier hs-var">npoints</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-79"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;PolyBezierTo&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC -&gt; Ptr POINT -&gt; Int -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_PolyBezierTo"><span class="hs-identifier hs-var">c_PolyBezierTo</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156077"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156079"><span class="hs-identifier hs-var">pount_array</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679156080"><span class="hs-identifier hs-var">npoints</span></a></span><span>
+</span><span id="line-80"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h PolyBezierTo&quot;</span><span>
+</span><span id="line-81"></span><span>  </span><span id="c_PolyBezierTo"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_PolyBezierTo"><span class="hs-identifier hs-var">c_PolyBezierTo</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-82"></span><span>
+</span><span id="line-83"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#arc"><span class="hs-identifier hs-type">arc</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-84"></span><span id="arc"><span class="annot"><span class="annottext">arc :: HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#arc"><span class="hs-identifier hs-var hs-var">arc</span></a></span></span><span> </span><span id="local-6989586621679156083"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156083"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156084"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156084"><span class="hs-identifier hs-var">left</span></a></span></span><span> </span><span id="local-6989586621679156085"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156085"><span class="hs-identifier hs-var">top</span></a></span></span><span> </span><span id="local-6989586621679156086"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156086"><span class="hs-identifier hs-var">right</span></a></span></span><span> </span><span id="local-6989586621679156087"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156087"><span class="hs-identifier hs-var">bottom</span></a></span></span><span> </span><span id="local-6989586621679156088"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156088"><span class="hs-identifier hs-var">x1</span></a></span></span><span> </span><span id="local-6989586621679156089"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156089"><span class="hs-identifier hs-var">y1</span></a></span></span><span> </span><span id="local-6989586621679156090"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156090"><span class="hs-identifier hs-var">x2</span></a></span></span><span> </span><span id="local-6989586621679156091"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156091"><span class="hs-identifier hs-var">y2</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-85"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Arc&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_Arc"><span class="hs-identifier hs-var">c_Arc</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156083"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156084"><span class="hs-identifier hs-var">left</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156085"><span class="hs-identifier hs-var">top</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156086"><span class="hs-identifier hs-var">right</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156087"><span class="hs-identifier hs-var">bottom</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156088"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156089"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156090"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156091"><span class="hs-identifier hs-var">y2</span></a></span><span>
+</span><span id="line-86"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h Arc&quot;</span><span>
+</span><span id="line-87"></span><span>  </span><span id="c_Arc"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_Arc"><span class="hs-identifier hs-var">c_Arc</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-88"></span><span>
+</span><span id="line-89"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#arcTo"><span class="hs-identifier hs-type">arcTo</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-90"></span><span id="arcTo"><span class="annot"><span class="annottext">arcTo :: HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#arcTo"><span class="hs-identifier hs-var hs-var">arcTo</span></a></span></span><span> </span><span id="local-6989586621679156094"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156094"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156095"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156095"><span class="hs-identifier hs-var">left</span></a></span></span><span> </span><span id="local-6989586621679156096"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156096"><span class="hs-identifier hs-var">top</span></a></span></span><span> </span><span id="local-6989586621679156097"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156097"><span class="hs-identifier hs-var">right</span></a></span></span><span> </span><span id="local-6989586621679156098"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156098"><span class="hs-identifier hs-var">bottom</span></a></span></span><span> </span><span id="local-6989586621679156099"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156099"><span class="hs-identifier hs-var">x1</span></a></span></span><span> </span><span id="local-6989586621679156100"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156100"><span class="hs-identifier hs-var">y1</span></a></span></span><span> </span><span id="local-6989586621679156101"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156101"><span class="hs-identifier hs-var">x2</span></a></span></span><span> </span><span id="local-6989586621679156102"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156102"><span class="hs-identifier hs-var">y2</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-91"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;ArcTo&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_ArcTo"><span class="hs-identifier hs-var">c_ArcTo</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156094"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156095"><span class="hs-identifier hs-var">left</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156096"><span class="hs-identifier hs-var">top</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156097"><span class="hs-identifier hs-var">right</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156098"><span class="hs-identifier hs-var">bottom</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156099"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156100"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156101"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156102"><span class="hs-identifier hs-var">y2</span></a></span><span>
+</span><span id="line-92"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h ArcTo&quot;</span><span>
+</span><span id="line-93"></span><span>  </span><span id="c_ArcTo"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_ArcTo"><span class="hs-identifier hs-var">c_ArcTo</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-94"></span><span>
+</span><span id="line-95"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#angleArc"><span class="hs-identifier hs-type">angleArc</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#WORD"><span class="hs-identifier hs-type">WORD</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-96"></span><span id="angleArc"><span class="annot"><span class="annottext">angleArc :: HDC -&gt; Int32 -&gt; Int32 -&gt; WORD -&gt; Float -&gt; Float -&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#angleArc"><span class="hs-identifier hs-var hs-var">angleArc</span></a></span></span><span> </span><span id="local-6989586621679156105"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156105"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156106"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156106"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679156107"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156107"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span id="local-6989586621679156108"><span class="annot"><span class="annottext">WORD
+</span><a href="#local-6989586621679156108"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679156109"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679156109"><span class="hs-identifier hs-var">start</span></a></span></span><span> </span><span id="local-6989586621679156110"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679156110"><span class="hs-identifier hs-var">sweep</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-97"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;AngleArc&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC -&gt; Int32 -&gt; Int32 -&gt; WORD -&gt; Float -&gt; Float -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_AngleArc"><span class="hs-identifier hs-var">c_AngleArc</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156105"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156106"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156107"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">WORD
+</span><a href="#local-6989586621679156108"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679156109"><span class="hs-identifier hs-var">start</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679156110"><span class="hs-identifier hs-var">sweep</span></a></span><span>
+</span><span id="line-98"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h AngleArc&quot;</span><span>
+</span><span id="line-99"></span><span>  </span><span id="c_AngleArc"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_AngleArc"><span class="hs-identifier hs-var">c_AngleArc</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#WORD"><span class="hs-identifier hs-type">WORD</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-100"></span><span>
+</span><span id="line-101"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
+</span><span id="line-102"></span><span class="hs-comment">-- Filled Shapes</span><span>
+</span><span id="line-103"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
+</span><span id="line-104"></span><span>
+</span><span id="line-105"></span><span class="hs-comment">-- TODO: We ought to be able to specify a colour instead of the</span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- Brush by adding 1 to colour number.</span><span>
+</span><span id="line-107"></span><span>
+</span><span id="line-108"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#fillRect"><span class="hs-identifier hs-type">fillRect</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#RECT"><span class="hs-identifier hs-type">RECT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HBRUSH"><span class="hs-identifier hs-type">HBRUSH</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-109"></span><span id="fillRect"><span class="annot"><span class="annottext">fillRect :: HDC -&gt; RECT -&gt; HDC -&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#fillRect"><span class="hs-identifier hs-var hs-var">fillRect</span></a></span></span><span> </span><span id="local-6989586621679156114"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156114"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156115"><span class="annot"><span class="annottext">RECT
+</span><a href="#local-6989586621679156115"><span class="hs-identifier hs-var">rect</span></a></span></span><span> </span><span id="local-6989586621679156116"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156116"><span class="hs-identifier hs-var">brush</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-110"></span><span>  </span><span class="annot"><span class="annottext">RECT -&gt; (Ptr RECT -&gt; IO ()) -&gt; IO ()
+forall a. RECT -&gt; (Ptr RECT -&gt; IO a) -&gt; IO a
+</span><a href="Graphics.Win32.GDI.Types.html#withRECT"><span class="hs-identifier hs-var">withRECT</span></a></span><span> </span><span class="annot"><span class="annottext">RECT
+</span><a href="#local-6989586621679156115"><span class="hs-identifier hs-var">rect</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr RECT -&gt; IO ()) -&gt; IO ()) -&gt; (Ptr RECT -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679156118"><span class="annot"><span class="annottext">Ptr RECT
+</span><a href="#local-6989586621679156118"><span class="hs-identifier hs-var">c_rect</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-111"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;FillRect&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC -&gt; Ptr RECT -&gt; HDC -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_FillRect"><span class="hs-identifier hs-var">c_FillRect</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156114"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr RECT
+</span><a href="#local-6989586621679156118"><span class="hs-identifier hs-var">c_rect</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156116"><span class="hs-identifier hs-var">brush</span></a></span><span>
+</span><span id="line-112"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h FillRect&quot;</span><span>
+</span><span id="line-113"></span><span>  </span><span id="c_FillRect"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_FillRect"><span class="hs-identifier hs-var">c_FillRect</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#RECT"><span class="hs-identifier hs-type">RECT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HBRUSH"><span class="hs-identifier hs-type">HBRUSH</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-114"></span><span>
+</span><span id="line-115"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#frameRect"><span class="hs-identifier hs-type">frameRect</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#RECT"><span class="hs-identifier hs-type">RECT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HBRUSH"><span class="hs-identifier hs-type">HBRUSH</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-116"></span><span id="frameRect"><span class="annot"><span class="annottext">frameRect :: HDC -&gt; RECT -&gt; HDC -&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#frameRect"><span class="hs-identifier hs-var hs-var">frameRect</span></a></span></span><span> </span><span id="local-6989586621679156121"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156121"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156122"><span class="annot"><span class="annottext">RECT
+</span><a href="#local-6989586621679156122"><span class="hs-identifier hs-var">rect</span></a></span></span><span> </span><span id="local-6989586621679156123"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156123"><span class="hs-identifier hs-var">brush</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-117"></span><span>  </span><span class="annot"><span class="annottext">RECT -&gt; (Ptr RECT -&gt; IO ()) -&gt; IO ()
+forall a. RECT -&gt; (Ptr RECT -&gt; IO a) -&gt; IO a
+</span><a href="Graphics.Win32.GDI.Types.html#withRECT"><span class="hs-identifier hs-var">withRECT</span></a></span><span> </span><span class="annot"><span class="annottext">RECT
+</span><a href="#local-6989586621679156122"><span class="hs-identifier hs-var">rect</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr RECT -&gt; IO ()) -&gt; IO ()) -&gt; (Ptr RECT -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679156124"><span class="annot"><span class="annottext">Ptr RECT
+</span><a href="#local-6989586621679156124"><span class="hs-identifier hs-var">c_rect</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-118"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;FrameRect&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC -&gt; Ptr RECT -&gt; HDC -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_FrameRect"><span class="hs-identifier hs-var">c_FrameRect</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156121"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr RECT
+</span><a href="#local-6989586621679156124"><span class="hs-identifier hs-var">c_rect</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156123"><span class="hs-identifier hs-var">brush</span></a></span><span>
+</span><span id="line-119"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h FrameRect&quot;</span><span>
+</span><span id="line-120"></span><span>  </span><span id="c_FrameRect"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_FrameRect"><span class="hs-identifier hs-var">c_FrameRect</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#RECT"><span class="hs-identifier hs-type">RECT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HBRUSH"><span class="hs-identifier hs-type">HBRUSH</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-121"></span><span>
+</span><span id="line-122"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#invertRect"><span class="hs-identifier hs-type">invertRect</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#RECT"><span class="hs-identifier hs-type">RECT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-123"></span><span id="invertRect"><span class="annot"><span class="annottext">invertRect :: HDC -&gt; RECT -&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#invertRect"><span class="hs-identifier hs-var hs-var">invertRect</span></a></span></span><span> </span><span id="local-6989586621679156127"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156127"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156128"><span class="annot"><span class="annottext">RECT
+</span><a href="#local-6989586621679156128"><span class="hs-identifier hs-var">rect</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-124"></span><span>  </span><span class="annot"><span class="annottext">RECT -&gt; (Ptr RECT -&gt; IO ()) -&gt; IO ()
+forall a. RECT -&gt; (Ptr RECT -&gt; IO a) -&gt; IO a
+</span><a href="Graphics.Win32.GDI.Types.html#withRECT"><span class="hs-identifier hs-var">withRECT</span></a></span><span> </span><span class="annot"><span class="annottext">RECT
+</span><a href="#local-6989586621679156128"><span class="hs-identifier hs-var">rect</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr RECT -&gt; IO ()) -&gt; IO ()) -&gt; (Ptr RECT -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679156129"><span class="annot"><span class="annottext">Ptr RECT
+</span><a href="#local-6989586621679156129"><span class="hs-identifier hs-var">c_rect</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-125"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;InvertRect&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC -&gt; Ptr RECT -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_InvertRect"><span class="hs-identifier hs-var">c_InvertRect</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156127"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr RECT
+</span><a href="#local-6989586621679156129"><span class="hs-identifier hs-var">c_rect</span></a></span><span>
+</span><span id="line-126"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h InvertRect&quot;</span><span>
+</span><span id="line-127"></span><span>  </span><span id="c_InvertRect"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_InvertRect"><span class="hs-identifier hs-var">c_InvertRect</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#RECT"><span class="hs-identifier hs-type">RECT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-128"></span><span>
+</span><span id="line-129"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#rectangle"><span class="hs-identifier hs-type">rectangle</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-130"></span><span id="rectangle"><span class="annot"><span class="annottext">rectangle :: HDC -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#rectangle"><span class="hs-identifier hs-var hs-var">rectangle</span></a></span></span><span> </span><span id="local-6989586621679156132"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156132"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156133"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156133"><span class="hs-identifier hs-var">left</span></a></span></span><span> </span><span id="local-6989586621679156134"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156134"><span class="hs-identifier hs-var">top</span></a></span></span><span> </span><span id="local-6989586621679156135"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156135"><span class="hs-identifier hs-var">right</span></a></span></span><span> </span><span id="local-6989586621679156136"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156136"><span class="hs-identifier hs-var">bottom</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-131"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Rectangle&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_Rectangle"><span class="hs-identifier hs-var">c_Rectangle</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156132"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156133"><span class="hs-identifier hs-var">left</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156134"><span class="hs-identifier hs-var">top</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156135"><span class="hs-identifier hs-var">right</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156136"><span class="hs-identifier hs-var">bottom</span></a></span><span>
+</span><span id="line-132"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h Rectangle&quot;</span><span>
+</span><span id="line-133"></span><span>  </span><span id="c_Rectangle"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_Rectangle"><span class="hs-identifier hs-var">c_Rectangle</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-134"></span><span>
+</span><span id="line-135"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#roundRect"><span class="hs-identifier hs-type">roundRect</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-136"></span><span id="roundRect"><span class="annot"><span class="annottext">roundRect :: HDC -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#roundRect"><span class="hs-identifier hs-var hs-var">roundRect</span></a></span></span><span> </span><span id="local-6989586621679156139"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156139"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156140"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156140"><span class="hs-identifier hs-var">left</span></a></span></span><span> </span><span id="local-6989586621679156141"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156141"><span class="hs-identifier hs-var">top</span></a></span></span><span> </span><span id="local-6989586621679156142"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156142"><span class="hs-identifier hs-var">right</span></a></span></span><span> </span><span id="local-6989586621679156143"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156143"><span class="hs-identifier hs-var">bottom</span></a></span></span><span> </span><span id="local-6989586621679156144"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156144"><span class="hs-identifier hs-var">w</span></a></span></span><span> </span><span id="local-6989586621679156145"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156145"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-137"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;RoundRect&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC
+-&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_RoundRect"><span class="hs-identifier hs-var">c_RoundRect</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156139"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156140"><span class="hs-identifier hs-var">left</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156141"><span class="hs-identifier hs-var">top</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156142"><span class="hs-identifier hs-var">right</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156143"><span class="hs-identifier hs-var">bottom</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156144"><span class="hs-identifier hs-var">w</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156145"><span class="hs-identifier hs-var">h</span></a></span><span>
+</span><span id="line-138"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h RoundRect&quot;</span><span>
+</span><span id="line-139"></span><span>  </span><span id="c_RoundRect"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_RoundRect"><span class="hs-identifier hs-var">c_RoundRect</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-140"></span><span>
+</span><span id="line-141"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#ellipse"><span class="hs-identifier hs-type">ellipse</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-142"></span><span id="ellipse"><span class="annot"><span class="annottext">ellipse :: HDC -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#ellipse"><span class="hs-identifier hs-var hs-var">ellipse</span></a></span></span><span> </span><span id="local-6989586621679156148"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156148"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156149"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156149"><span class="hs-identifier hs-var">left</span></a></span></span><span> </span><span id="local-6989586621679156150"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156150"><span class="hs-identifier hs-var">top</span></a></span></span><span> </span><span id="local-6989586621679156151"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156151"><span class="hs-identifier hs-var">right</span></a></span></span><span> </span><span id="local-6989586621679156152"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156152"><span class="hs-identifier hs-var">bottom</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-143"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Ellipse&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; Int32 -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_Ellipse"><span class="hs-identifier hs-var">c_Ellipse</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156148"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156149"><span class="hs-identifier hs-var">left</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156150"><span class="hs-identifier hs-var">top</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156151"><span class="hs-identifier hs-var">right</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156152"><span class="hs-identifier hs-var">bottom</span></a></span><span>
+</span><span id="line-144"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h Ellipse&quot;</span><span>
+</span><span id="line-145"></span><span>  </span><span id="c_Ellipse"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_Ellipse"><span class="hs-identifier hs-var">c_Ellipse</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-146"></span><span>
+</span><span id="line-147"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#chord"><span class="hs-identifier hs-type">chord</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-148"></span><span id="chord"><span class="annot"><span class="annottext">chord :: HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#chord"><span class="hs-identifier hs-var hs-var">chord</span></a></span></span><span> </span><span id="local-6989586621679156155"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156155"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156156"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156156"><span class="hs-identifier hs-var">left</span></a></span></span><span> </span><span id="local-6989586621679156157"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156157"><span class="hs-identifier hs-var">top</span></a></span></span><span> </span><span id="local-6989586621679156158"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156158"><span class="hs-identifier hs-var">right</span></a></span></span><span> </span><span id="local-6989586621679156159"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156159"><span class="hs-identifier hs-var">bottom</span></a></span></span><span> </span><span id="local-6989586621679156160"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156160"><span class="hs-identifier hs-var">x1</span></a></span></span><span> </span><span id="local-6989586621679156161"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156161"><span class="hs-identifier hs-var">y1</span></a></span></span><span> </span><span id="local-6989586621679156162"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156162"><span class="hs-identifier hs-var">x2</span></a></span></span><span> </span><span id="local-6989586621679156163"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156163"><span class="hs-identifier hs-var">y2</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-149"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Chord&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_Chord"><span class="hs-identifier hs-var">c_Chord</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156155"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156156"><span class="hs-identifier hs-var">left</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156157"><span class="hs-identifier hs-var">top</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156158"><span class="hs-identifier hs-var">right</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156159"><span class="hs-identifier hs-var">bottom</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156160"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156161"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156162"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156163"><span class="hs-identifier hs-var">y2</span></a></span><span>
+</span><span id="line-150"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h Chord&quot;</span><span>
+</span><span id="line-151"></span><span>  </span><span id="c_Chord"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_Chord"><span class="hs-identifier hs-var">c_Chord</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-152"></span><span>
+</span><span id="line-153"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#pie"><span class="hs-identifier hs-type">pie</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-154"></span><span id="pie"><span class="annot"><span class="annottext">pie :: HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#pie"><span class="hs-identifier hs-var hs-var">pie</span></a></span></span><span> </span><span id="local-6989586621679156166"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156166"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156167"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156167"><span class="hs-identifier hs-var">left</span></a></span></span><span> </span><span id="local-6989586621679156168"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156168"><span class="hs-identifier hs-var">top</span></a></span></span><span> </span><span id="local-6989586621679156169"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156169"><span class="hs-identifier hs-var">right</span></a></span></span><span> </span><span id="local-6989586621679156170"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156170"><span class="hs-identifier hs-var">bottom</span></a></span></span><span> </span><span id="local-6989586621679156171"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156171"><span class="hs-identifier hs-var">x1</span></a></span></span><span> </span><span id="local-6989586621679156172"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156172"><span class="hs-identifier hs-var">y1</span></a></span></span><span> </span><span id="local-6989586621679156173"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156173"><span class="hs-identifier hs-var">x2</span></a></span></span><span> </span><span id="local-6989586621679156174"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156174"><span class="hs-identifier hs-var">y2</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-155"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Pie&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_Pie"><span class="hs-identifier hs-var">c_Pie</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156166"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156167"><span class="hs-identifier hs-var">left</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156168"><span class="hs-identifier hs-var">top</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156169"><span class="hs-identifier hs-var">right</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156170"><span class="hs-identifier hs-var">bottom</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156171"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156172"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156173"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156174"><span class="hs-identifier hs-var">y2</span></a></span><span>
+</span><span id="line-156"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h Pie&quot;</span><span>
+</span><span id="line-157"></span><span>  </span><span id="c_Pie"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_Pie"><span class="hs-identifier hs-var">c_Pie</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-158"></span><span>
+</span><span id="line-159"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
+</span><span id="line-160"></span><span class="hs-comment">-- Bitmaps</span><span>
+</span><span id="line-161"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
+</span><span id="line-162"></span><span>
+</span><span id="line-163"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#bitBlt"><span class="hs-identifier hs-type">bitBlt</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#RasterOp3"><span class="hs-identifier hs-type">RasterOp3</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-164"></span><span id="bitBlt"><span class="annot"><span class="annottext">bitBlt :: HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; RasterOp3
+-&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#bitBlt"><span class="hs-identifier hs-var hs-var">bitBlt</span></a></span></span><span> </span><span id="local-6989586621679156178"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156178"><span class="hs-identifier hs-var">dcDest</span></a></span></span><span> </span><span id="local-6989586621679156179"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156179"><span class="hs-identifier hs-var">xDest</span></a></span></span><span> </span><span id="local-6989586621679156180"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156180"><span class="hs-identifier hs-var">yDest</span></a></span></span><span> </span><span id="local-6989586621679156181"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156181"><span class="hs-identifier hs-var">w</span></a></span></span><span> </span><span id="local-6989586621679156182"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156182"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span id="local-6989586621679156183"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156183"><span class="hs-identifier hs-var">dcSrc</span></a></span></span><span> </span><span id="local-6989586621679156184"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156184"><span class="hs-identifier hs-var">xSrc</span></a></span></span><span> </span><span id="local-6989586621679156185"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156185"><span class="hs-identifier hs-var">ySrc</span></a></span></span><span> </span><span id="local-6989586621679156186"><span class="annot"><span class="annottext">RasterOp3
+</span><a href="#local-6989586621679156186"><span class="hs-identifier hs-var">rop</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-165"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;BitBlt&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; RasterOp3
+-&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_BitBlt"><span class="hs-identifier hs-var">c_BitBlt</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156178"><span class="hs-identifier hs-var">dcDest</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156179"><span class="hs-identifier hs-var">xDest</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156180"><span class="hs-identifier hs-var">yDest</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156181"><span class="hs-identifier hs-var">w</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156182"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156183"><span class="hs-identifier hs-var">dcSrc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156184"><span class="hs-identifier hs-var">xSrc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156185"><span class="hs-identifier hs-var">ySrc</span></a></span><span> </span><span class="annot"><span class="annottext">RasterOp3
+</span><a href="#local-6989586621679156186"><span class="hs-identifier hs-var">rop</span></a></span><span>
+</span><span id="line-166"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h BitBlt&quot;</span><span>
+</span><span id="line-167"></span><span>  </span><span id="c_BitBlt"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_BitBlt"><span class="hs-identifier hs-var">c_BitBlt</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#RasterOp3"><span class="hs-identifier hs-type">RasterOp3</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-168"></span><span>
+</span><span id="line-169"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#maskBlt"><span class="hs-identifier hs-type">maskBlt</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HBITMAP"><span class="hs-identifier hs-type">HBITMAP</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#RasterOp4"><span class="hs-identifier hs-type">RasterOp4</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-170"></span><span id="maskBlt"><span class="annot"><span class="annottext">maskBlt :: HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; RasterOp3
+-&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#maskBlt"><span class="hs-identifier hs-var hs-var">maskBlt</span></a></span></span><span> </span><span id="local-6989586621679156191"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156191"><span class="hs-identifier hs-var">dcDest</span></a></span></span><span> </span><span id="local-6989586621679156192"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156192"><span class="hs-identifier hs-var">xDest</span></a></span></span><span> </span><span id="local-6989586621679156193"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156193"><span class="hs-identifier hs-var">yDest</span></a></span></span><span> </span><span id="local-6989586621679156194"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156194"><span class="hs-identifier hs-var">w</span></a></span></span><span> </span><span id="local-6989586621679156195"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156195"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span id="local-6989586621679156196"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156196"><span class="hs-identifier hs-var">dcSrc</span></a></span></span><span> </span><span id="local-6989586621679156197"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156197"><span class="hs-identifier hs-var">xSrc</span></a></span></span><span> </span><span id="local-6989586621679156198"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156198"><span class="hs-identifier hs-var">ySrc</span></a></span></span><span> </span><span id="local-6989586621679156199"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156199"><span class="hs-identifier hs-var">bm</span></a></span></span><span> </span><span id="local-6989586621679156200"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156200"><span class="hs-identifier hs-var">xMask</span></a></span></span><span> </span><span id="local-6989586621679156201"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156201"><span class="hs-identifier hs-var">yMask</span></a></span></span><span> </span><span id="local-6989586621679156202"><span class="annot"><span class="annottext">RasterOp3
+</span><a href="#local-6989586621679156202"><span class="hs-identifier hs-var">rop</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-171"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;MaskBlt&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-172"></span><span>    </span><span class="annot"><span class="annottext">HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; RasterOp3
+-&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_MaskBlt"><span class="hs-identifier hs-var">c_MaskBlt</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156191"><span class="hs-identifier hs-var">dcDest</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156192"><span class="hs-identifier hs-var">xDest</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156193"><span class="hs-identifier hs-var">yDest</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156194"><span class="hs-identifier hs-var">w</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156195"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156196"><span class="hs-identifier hs-var">dcSrc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156197"><span class="hs-identifier hs-var">xSrc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156198"><span class="hs-identifier hs-var">ySrc</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156199"><span class="hs-identifier hs-var">bm</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156200"><span class="hs-identifier hs-var">xMask</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156201"><span class="hs-identifier hs-var">yMask</span></a></span><span> </span><span class="annot"><span class="annottext">RasterOp3
+</span><a href="#local-6989586621679156202"><span class="hs-identifier hs-var">rop</span></a></span><span>
+</span><span id="line-173"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h MaskBlt&quot;</span><span>
+</span><span id="line-174"></span><span>  </span><span id="c_MaskBlt"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_MaskBlt"><span class="hs-identifier hs-var">c_MaskBlt</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HBITMAP"><span class="hs-identifier hs-type">HBITMAP</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#RasterOp4"><span class="hs-identifier hs-type">RasterOp4</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-175"></span><span>
+</span><span id="line-176"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#stretchBlt"><span class="hs-identifier hs-type">stretchBlt</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#RasterOp3"><span class="hs-identifier hs-type">RasterOp3</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-177"></span><span id="stretchBlt"><span class="annot"><span class="annottext">stretchBlt :: HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; RasterOp3
+-&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#stretchBlt"><span class="hs-identifier hs-var hs-var">stretchBlt</span></a></span></span><span> </span><span id="local-6989586621679156205"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156205"><span class="hs-identifier hs-var">dcDest</span></a></span></span><span> </span><span id="local-6989586621679156206"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156206"><span class="hs-identifier hs-var">xDest</span></a></span></span><span> </span><span id="local-6989586621679156207"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156207"><span class="hs-identifier hs-var">yDest</span></a></span></span><span> </span><span id="local-6989586621679156208"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156208"><span class="hs-identifier hs-var">wDest</span></a></span></span><span> </span><span id="local-6989586621679156209"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156209"><span class="hs-identifier hs-var">hDest</span></a></span></span><span> </span><span id="local-6989586621679156210"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156210"><span class="hs-identifier hs-var">hdcSrc</span></a></span></span><span> </span><span id="local-6989586621679156211"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156211"><span class="hs-identifier hs-var">xSrc</span></a></span></span><span> </span><span id="local-6989586621679156212"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156212"><span class="hs-identifier hs-var">ySrc</span></a></span></span><span> </span><span id="local-6989586621679156213"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156213"><span class="hs-identifier hs-var">wSrc</span></a></span></span><span> </span><span id="local-6989586621679156214"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156214"><span class="hs-identifier hs-var">hSrc</span></a></span></span><span> </span><span id="local-6989586621679156215"><span class="annot"><span class="annottext">RasterOp3
+</span><a href="#local-6989586621679156215"><span class="hs-identifier hs-var">rop</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-178"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;StretchBlt&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-179"></span><span>    </span><span class="annot"><span class="annottext">HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; RasterOp3
+-&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_StretchBlt"><span class="hs-identifier hs-var">c_StretchBlt</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156205"><span class="hs-identifier hs-var">dcDest</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156206"><span class="hs-identifier hs-var">xDest</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156207"><span class="hs-identifier hs-var">yDest</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156208"><span class="hs-identifier hs-var">wDest</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156209"><span class="hs-identifier hs-var">hDest</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156210"><span class="hs-identifier hs-var">hdcSrc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156211"><span class="hs-identifier hs-var">xSrc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156212"><span class="hs-identifier hs-var">ySrc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156213"><span class="hs-identifier hs-var">wSrc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156214"><span class="hs-identifier hs-var">hSrc</span></a></span><span> </span><span class="annot"><span class="annottext">RasterOp3
+</span><a href="#local-6989586621679156215"><span class="hs-identifier hs-var">rop</span></a></span><span>
+</span><span id="line-180"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h StretchBlt&quot;</span><span>
+</span><span id="line-181"></span><span>  </span><span id="c_StretchBlt"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_StretchBlt"><span class="hs-identifier hs-var">c_StretchBlt</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#RasterOp3"><span class="hs-identifier hs-type">RasterOp3</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-182"></span><span>
+</span><span id="line-183"></span><span class="hs-comment">-- We deviate slightly from the Win32 interface</span><span>
+</span><span id="line-184"></span><span>
+</span><span id="line-185"></span><span class="hs-comment">-- %C typedef POINT ThreePts[3];</span><span>
+</span><span id="line-186"></span><span>
+</span><span id="line-187"></span><span class="hs-comment">-- Old 2nd line:</span><span>
+</span><span id="line-188"></span><span class="hs-comment">-- %start POINT vertices[3];</span><span>
+</span><span id="line-189"></span><span>
+</span><span id="line-190"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#plgBlt"><span class="hs-identifier hs-type">plgBlt</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#MbHBITMAP"><span class="hs-identifier hs-type">MbHBITMAP</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-191"></span><span id="plgBlt"><span class="annot"><span class="annottext">plgBlt :: HDC
+-&gt; POINT
+-&gt; POINT
+-&gt; POINT
+-&gt; HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; MbHBITMAP
+-&gt; Int32
+-&gt; Int32
+-&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#plgBlt"><span class="hs-identifier hs-var hs-var">plgBlt</span></a></span></span><span> </span><span id="local-6989586621679156218"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156218"><span class="hs-identifier hs-var">hdDest</span></a></span></span><span> </span><span id="local-6989586621679156219"><span class="annot"><span class="annottext">POINT
+</span><a href="#local-6989586621679156219"><span class="hs-identifier hs-var">p1</span></a></span></span><span> </span><span id="local-6989586621679156220"><span class="annot"><span class="annottext">POINT
+</span><a href="#local-6989586621679156220"><span class="hs-identifier hs-var">p2</span></a></span></span><span> </span><span id="local-6989586621679156221"><span class="annot"><span class="annottext">POINT
+</span><a href="#local-6989586621679156221"><span class="hs-identifier hs-var">p3</span></a></span></span><span> </span><span id="local-6989586621679156222"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156222"><span class="hs-identifier hs-var">hdSrc</span></a></span></span><span> </span><span id="local-6989586621679156223"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156223"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679156224"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156224"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span id="local-6989586621679156225"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156225"><span class="hs-identifier hs-var">w</span></a></span></span><span> </span><span id="local-6989586621679156226"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156226"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span id="local-6989586621679156227"><span class="annot"><span class="annottext">MbHBITMAP
+</span><a href="#local-6989586621679156227"><span class="hs-identifier hs-var">mb_bm</span></a></span></span><span> </span><span id="local-6989586621679156228"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156228"><span class="hs-identifier hs-var">xMask</span></a></span></span><span> </span><span id="local-6989586621679156229"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156229"><span class="hs-identifier hs-var">yMask</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-192"></span><span>  </span><span class="annot"><span class="annottext">[POINT] -&gt; (Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ()
+forall a. [POINT] -&gt; (Ptr POINT -&gt; Int -&gt; IO a) -&gt; IO a
+</span><a href="Graphics.Win32.GDI.Types.html#withPOINTArray"><span class="hs-identifier hs-var">withPOINTArray</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">POINT
+</span><a href="#local-6989586621679156219"><span class="hs-identifier hs-var">p1</span></a></span><span class="hs-special">,</span><span class="annot"><span class="annottext">POINT
+</span><a href="#local-6989586621679156220"><span class="hs-identifier hs-var">p2</span></a></span><span class="hs-special">,</span><span class="annot"><span class="annottext">POINT
+</span><a href="#local-6989586621679156221"><span class="hs-identifier hs-var">p3</span></a></span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">((Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ())
+-&gt; (Ptr POINT -&gt; Int -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679156230"><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156230"><span class="hs-identifier hs-var">vertices</span></a></span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-193"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;PlgBlt&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-194"></span><span>    </span><span class="annot"><span class="annottext">HDC
+-&gt; Ptr POINT
+-&gt; HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; Int32
+-&gt; HDC
+-&gt; Int32
+-&gt; Int32
+-&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_PlgBlt"><span class="hs-identifier hs-var">c_PlgBlt</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156218"><span class="hs-identifier hs-var">hdDest</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156230"><span class="hs-identifier hs-var">vertices</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156222"><span class="hs-identifier hs-var">hdSrc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156223"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156224"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156225"><span class="hs-identifier hs-var">w</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156226"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">MbHBITMAP -&gt; HDC
+forall a. Maybe (Ptr a) -&gt; Ptr a
+</span><a href="System.Win32.Types.html#maybePtr"><span class="hs-identifier hs-var">maybePtr</span></a></span><span> </span><span class="annot"><span class="annottext">MbHBITMAP
+</span><a href="#local-6989586621679156227"><span class="hs-identifier hs-var">mb_bm</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156228"><span class="hs-identifier hs-var">xMask</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156229"><span class="hs-identifier hs-var">yMask</span></a></span><span>
+</span><span id="line-195"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h PlgBlt&quot;</span><span>
+</span><span id="line-196"></span><span>  </span><span id="c_PlgBlt"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_PlgBlt"><span class="hs-identifier hs-var">c_PlgBlt</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#POINT"><span class="hs-identifier hs-type">POINT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HBITMAP"><span class="hs-identifier hs-type">HBITMAP</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-197"></span><span>
+</span><span id="line-198"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
+</span><span id="line-199"></span><span class="hs-comment">-- Fonts and Text</span><span>
+</span><span id="line-200"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
+</span><span id="line-201"></span><span>
+</span><span id="line-202"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#textOut"><span class="hs-identifier hs-type">textOut</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-203"></span><span id="textOut"><span class="annot"><span class="annottext">textOut :: HDC -&gt; Int32 -&gt; Int32 -&gt; String -&gt; IO ()
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#textOut"><span class="hs-identifier hs-var hs-var">textOut</span></a></span></span><span> </span><span id="local-6989586621679156234"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156234"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156235"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156235"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679156236"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156236"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span id="local-6989586621679156237"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679156237"><span class="hs-identifier hs-var">str</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-204"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; ((LPTSTR, Int) -&gt; IO ()) -&gt; IO ()
+forall a. String -&gt; ((LPTSTR, Int) -&gt; IO a) -&gt; IO a
+</span><a href="System.Win32.Types.html#withTStringLen"><span class="hs-identifier hs-var">withTStringLen</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679156237"><span class="hs-identifier hs-var">str</span></a></span><span> </span><span class="annot"><span class="annottext">(((LPTSTR, Int) -&gt; IO ()) -&gt; IO ())
+-&gt; ((LPTSTR, Int) -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679156239"><span class="annot"><span class="annottext">LPTSTR
+</span><a href="#local-6989586621679156239"><span class="hs-identifier hs-var">c_str</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679156240"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679156240"><span class="hs-identifier hs-var">len</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-205"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;TextOut&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HDC -&gt; Int32 -&gt; Int32 -&gt; LPTSTR -&gt; Int -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_TextOut"><span class="hs-identifier hs-var">c_TextOut</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156234"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156235"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679156236"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">LPTSTR
+</span><a href="#local-6989586621679156239"><span class="hs-identifier hs-var">c_str</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679156240"><span class="hs-identifier hs-var">len</span></a></span><span>
+</span><span id="line-206"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h TextOutW&quot;</span><span>
+</span><span id="line-207"></span><span>  </span><span id="c_TextOut"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_TextOut"><span class="hs-identifier hs-var">c_TextOut</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#INT"><span class="hs-identifier hs-type">INT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#LPCTSTR"><span class="hs-identifier hs-type">LPCTSTR</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-208"></span><span>
+</span><span id="line-209"></span><span class="hs-comment">-- missing TabbedTextOut from WinFonts.ss; GSL ???</span><span>
+</span><span id="line-210"></span><span>
+</span><span id="line-211"></span><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#getTextExtentPoint32"><span class="hs-identifier hs-type">getTextExtentPoint32</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#SIZE"><span class="hs-identifier hs-type">SIZE</span></a></span><span>
+</span><span id="line-212"></span><span id="getTextExtentPoint32"><span class="annot"><span class="annottext">getTextExtentPoint32 :: HDC -&gt; String -&gt; IO POINT
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#getTextExtentPoint32"><span class="hs-identifier hs-var hs-var">getTextExtentPoint32</span></a></span></span><span> </span><span id="local-6989586621679156245"><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156245"><span class="hs-identifier hs-var">dc</span></a></span></span><span> </span><span id="local-6989586621679156246"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679156246"><span class="hs-identifier hs-var">str</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-213"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; ((LPTSTR, Int) -&gt; IO POINT) -&gt; IO POINT
+forall a. String -&gt; ((LPTSTR, Int) -&gt; IO a) -&gt; IO a
+</span><a href="System.Win32.Types.html#withTStringLen"><span class="hs-identifier hs-var">withTStringLen</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679156246"><span class="hs-identifier hs-var">str</span></a></span><span> </span><span class="annot"><span class="annottext">(((LPTSTR, Int) -&gt; IO POINT) -&gt; IO POINT)
+-&gt; ((LPTSTR, Int) -&gt; IO POINT) -&gt; IO POINT
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679156247"><span class="annot"><span class="annottext">LPTSTR
+</span><a href="#local-6989586621679156247"><span class="hs-identifier hs-var">c_str</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679156248"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679156248"><span class="hs-identifier hs-var">len</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-214"></span><span>  </span><span class="annot"><span class="annottext">(Ptr POINT -&gt; IO POINT) -&gt; IO POINT
+forall a. (Ptr POINT -&gt; IO a) -&gt; IO a
+</span><a href="Graphics.Win32.GDI.Types.html#allocaSIZE"><span class="hs-identifier hs-var">allocaSIZE</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr POINT -&gt; IO POINT) -&gt; IO POINT)
+-&gt; (Ptr POINT -&gt; IO POINT) -&gt; IO POINT
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679156250"><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156250"><span class="hs-identifier hs-var">p_size</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-215"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
+</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;GetTextExtentPoint32&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-216"></span><span>    </span><span class="annot"><span class="annottext">HDC -&gt; LPTSTR -&gt; Int -&gt; Ptr POINT -&gt; IO Bool
+</span><a href="Graphics.Win32.GDI.Graphics2D.html#c_GetTextExtentPoint32"><span class="hs-identifier hs-var">c_GetTextExtentPoint32</span></a></span><span> </span><span class="annot"><span class="annottext">HDC
+</span><a href="#local-6989586621679156245"><span class="hs-identifier hs-var">dc</span></a></span><span> </span><span class="annot"><span class="annottext">LPTSTR
+</span><a href="#local-6989586621679156247"><span class="hs-identifier hs-var">c_str</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679156248"><span class="hs-identifier hs-var">len</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156250"><span class="hs-identifier hs-var">p_size</span></a></span><span>
+</span><span id="line-217"></span><span>  </span><span class="annot"><span class="annottext">Ptr POINT -&gt; IO POINT
+</span><a href="Graphics.Win32.GDI.Types.html#peekSIZE"><span class="hs-identifier hs-var">peekSIZE</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr POINT
+</span><a href="#local-6989586621679156250"><span class="hs-identifier hs-var">p_size</span></a></span><span>
+</span><span id="line-218"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h GetTextExtentPoint32W&quot;</span><span>
+</span><span id="line-219"></span><span>  </span><span id="c_GetTextExtentPoint32"><span class="annot"><a href="Graphics.Win32.GDI.Graphics2D.html#c_GetTextExtentPoint32"><span class="hs-identifier hs-var">c_GetTextExtentPoint32</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HDC"><span class="hs-identifier hs-type">HDC</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="System.Win32.Types.html#LPCTSTR"><span class="hs-identifier hs-type">LPCTSTR</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#SIZE"><span class="hs-identifier hs-type">SIZE</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-220"></span><span>
+</span><span id="line-221"></span><span class="hs-comment">-- missing getTabbedTextExtent from WinFonts.ss; GSL ???</span><span>
+</span><span id="line-222"></span><span class="hs-comment">-- missing SetTextJustification from WinFonts.ss; GSL ???</span><span>
+</span><span id="line-223"></span><span class="hs-comment">-- missing a whole family of techandfamily functionality; GSL ???</span><span>
+</span><span id="line-224"></span><span class="hs-comment">-- missing DrawText and DrawTextFormat in WinFonts.ss; GSL ???</span><span>
+</span><span id="line-225"></span><span>
+</span><span id="line-226"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
+</span><span id="line-227"></span><span class="hs-comment">-- End</span><span>
+</span><span id="line-228"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
+</span><span id="line-229"></span></pre></body></html>

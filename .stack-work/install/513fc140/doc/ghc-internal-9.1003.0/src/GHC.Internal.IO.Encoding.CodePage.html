@@ -1,0 +1,616 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE BangPatterns #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE CPP #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE MagicHash #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE NoImplicitPrelude #-}</span><span>
+</span><span id="line-5"></span><span class="hs-pragma">{-# LANGUAGE NondecreasingIndentation #-}</span><span>
+</span><span id="line-6"></span><span class="hs-pragma">{-# LANGUAGE Trustworthy #-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html"><span class="hs-identifier">GHC.Internal.IO.Encoding.CodePage</span></a></span><span class="hs-special">(</span><span class="hs-cpp">
+#if defined(mingw32_HOST_OS)
+</span><span>                        </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#codePageEncoding"><span class="hs-identifier">codePageEncoding</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#mkCodePageEncoding"><span class="hs-identifier">mkCodePageEncoding</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>                        </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#localeEncoding"><span class="hs-identifier">localeEncoding</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#mkLocaleEncoding"><span class="hs-identifier">mkLocaleEncoding</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#CodePage"><span class="hs-identifier">CodePage</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>                        </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#getCurrentCodePage"><span class="hs-identifier">getCurrentCodePage</span></a></span><span class="hs-cpp">
+#endif
+</span><span>                            </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span class="hs-cpp">
+
+#if !defined(mingw32_HOST_OS)
+</span><span>
+</span><span id="line-18"></span><span class="hs-comment">-- See W1 of Note [Tracking dependencies on primitives] in GHC.Internal.Base</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">GHC.Types</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-cpp">
+
+#else
+</span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.Base.html"><span class="hs-identifier">GHC.Internal.Base</span></a></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.Show.html"><span class="hs-identifier">GHC.Internal.Show</span></a></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.Num.html"><span class="hs-identifier">GHC.Internal.Num</span></a></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.Enum.html"><span class="hs-identifier">GHC.Internal.Enum</span></a></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.Word.html"><span class="hs-identifier">GHC.Internal.Word</span></a></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.html"><span class="hs-identifier">GHC.Internal.IO</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Unsafe.html#unsafePerformIO"><span class="hs-identifier">unsafePerformIO</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Failure.html"><span class="hs-identifier">GHC.Internal.IO.Encoding.Failure</span></a></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Types.html"><span class="hs-identifier">GHC.Internal.IO.Encoding.Types</span></a></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Buffer.html"><span class="hs-identifier">GHC.Internal.IO.Buffer</span></a></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.Data.Bits.html"><span class="hs-identifier">GHC.Internal.Data.Bits</span></a></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.Data.Maybe.html"><span class="hs-identifier">GHC.Internal.Data.Maybe</span></a></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.Data.OldList.html"><span class="hs-identifier">GHC.Internal.Data.OldList</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.List.html#lookup"><span class="hs-identifier">lookup</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.API.html"><span class="hs-identifier">GHC.Internal.IO.Encoding.CodePage.API</span></a></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">API</span></span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html"><span class="hs-identifier">GHC.Internal.IO.Encoding.CodePage.Table</span></a></span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.UTF8.html"><span class="hs-identifier">GHC.Internal.IO.Encoding.UTF8</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Encoding.UTF8.html#mkUTF8"><span class="hs-identifier">mkUTF8</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.UTF16.html"><span class="hs-identifier">GHC.Internal.IO.Encoding.UTF16</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Encoding.UTF16.html#mkUTF16le"><span class="hs-identifier">mkUTF16le</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.UTF16.html#mkUTF16be"><span class="hs-identifier">mkUTF16be</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.UTF32.html"><span class="hs-identifier">GHC.Internal.IO.Encoding.UTF32</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Encoding.UTF32.html#mkUTF32le"><span class="hs-identifier">mkUTF32le</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.UTF32.html#mkUTF32be"><span class="hs-identifier">mkUTF32be</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.Windows.html"><span class="hs-identifier">GHC.Internal.Windows</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.Windows.html#DWORD"><span class="hs-identifier">DWORD</span></a></span><span class="hs-special">)</span><span class="hs-cpp">
+
+#include &quot;windows_cconv.h&quot;
+</span><span>
+</span><span id="line-46"></span><span class="hs-keyword">type</span><span> </span><span id="CodePage"><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#CodePage"><span class="hs-identifier hs-var">CodePage</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="GHC.Internal.Windows.html#DWORD"><span class="hs-identifier hs-type">DWORD</span></a></span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- note CodePage = UInt which might not work on Win64.  But the Win32 package</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- also has this issue.</span><span>
+</span><span id="line-50"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#getCurrentCodePage"><span class="hs-identifier hs-type">getCurrentCodePage</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#CodePage"><span class="hs-identifier hs-type">CodePage</span></a></span><span>
+</span><span id="line-51"></span><span id="getCurrentCodePage"><span class="annot"><span class="annottext">getCurrentCodePage :: IO Word32
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#getCurrentCodePage"><span class="hs-identifier hs-var hs-var">getCurrentCodePage</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-52"></span><span>    </span><span id="local-6989586621679637361"><span class="annot"><a href="#local-6989586621679637361"><span class="hs-identifier hs-var">conCP</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO Word32
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#getConsoleCP"><span class="hs-identifier hs-var">getConsoleCP</span></a></span><span>
+</span><span id="line-53"></span><span>    </span><span class="hs-keyword">if</span><span> </span><span class="annot"><a href="#local-6989586621679637361"><span class="hs-identifier hs-type">conCP</span></a></span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Classes.html#%3E"><span class="hs-operator hs-type">&gt;</span></a></span><span> </span><span class="annot"><span class="hs-number">0</span></span><span>
+</span><span id="line-54"></span><span>        </span><span class="hs-keyword">then</span><span> </span><span class="annot"><a href="GHC.Internal.Base.html#return"><span class="hs-identifier hs-type">return</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637361"><span class="hs-identifier hs-type">conCP</span></a></span><span>
+</span><span id="line-55"></span><span>        </span><span class="hs-keyword">else</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#getACP"><span class="hs-identifier hs-type">getACP</span></a></span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- Since the Win32 package depends on base, we have to import these ourselves:</span><span>
+</span><span id="line-58"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h GetConsoleCP&quot;</span><span>
+</span><span id="line-59"></span><span>    </span><span id="getConsoleCP"><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#getConsoleCP"><span class="hs-identifier hs-var">getConsoleCP</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.Word.html#Word32"><span class="hs-identifier hs-type">Word32</span></a></span><span>
+</span><span id="line-60"></span><span>
+</span><span id="line-61"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h GetACP&quot;</span><span>
+</span><span id="line-62"></span><span>    </span><span id="getACP"><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#getACP"><span class="hs-identifier hs-var">getACP</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.Word.html#Word32"><span class="hs-identifier hs-type">Word32</span></a></span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span class="hs-pragma">{-# NOINLINE</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#currentCodePage"><span class="hs-pragma hs-type">currentCodePage</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-65"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#currentCodePage"><span class="hs-identifier hs-type">currentCodePage</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.Word.html#Word32"><span class="hs-identifier hs-type">Word32</span></a></span><span>
+</span><span id="line-66"></span><span id="currentCodePage"><span class="annot"><span class="annottext">currentCodePage :: Word32
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#currentCodePage"><span class="hs-identifier hs-var hs-var">currentCodePage</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO Word32 -&gt; Word32
+forall a. IO a -&gt; a
+</span><a href="GHC.Internal.IO.Unsafe.html#unsafePerformIO"><span class="hs-identifier hs-var">unsafePerformIO</span></a></span><span> </span><span class="annot"><span class="annottext">IO Word32
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#getCurrentCodePage"><span class="hs-identifier hs-var">getCurrentCodePage</span></a></span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#localeEncoding"><span class="hs-identifier hs-type">localeEncoding</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Types.html#TextEncoding"><span class="hs-identifier hs-type">TextEncoding</span></a></span><span>
+</span><span id="line-69"></span><span id="localeEncoding"><span class="annot"><span class="annottext">localeEncoding :: TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#localeEncoding"><span class="hs-identifier hs-var hs-var">localeEncoding</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CodingFailureMode -&gt; TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#mkLocaleEncoding"><span class="hs-identifier hs-var">mkLocaleEncoding</span></a></span><span> </span><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="GHC.Internal.IO.Encoding.Failure.html#ErrorOnCodingFailure"><span class="hs-identifier hs-var">ErrorOnCodingFailure</span></a></span><span>
+</span><span id="line-70"></span><span>
+</span><span id="line-71"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#mkLocaleEncoding"><span class="hs-identifier hs-type">mkLocaleEncoding</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Failure.html#CodingFailureMode"><span class="hs-identifier hs-type">CodingFailureMode</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Types.html#TextEncoding"><span class="hs-identifier hs-type">TextEncoding</span></a></span><span>
+</span><span id="line-72"></span><span id="mkLocaleEncoding"><span class="annot"><span class="annottext">mkLocaleEncoding :: CodingFailureMode -&gt; TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#mkLocaleEncoding"><span class="hs-identifier hs-var hs-var">mkLocaleEncoding</span></a></span></span><span> </span><span id="local-6989586621679637367"><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637367"><span class="hs-identifier hs-var">cfm</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CodingFailureMode -&gt; Word32 -&gt; TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#mkCodePageEncoding"><span class="hs-identifier hs-var">mkCodePageEncoding</span></a></span><span> </span><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637367"><span class="hs-identifier hs-var">cfm</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#currentCodePage"><span class="hs-identifier hs-var">currentCodePage</span></a></span><span>
+</span><span id="line-73"></span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#codePageEncoding"><span class="hs-identifier hs-type">codePageEncoding</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.Word.html#Word32"><span class="hs-identifier hs-type">Word32</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Types.html#TextEncoding"><span class="hs-identifier hs-type">TextEncoding</span></a></span><span>
+</span><span id="line-76"></span><span id="codePageEncoding"><span class="annot"><span class="annottext">codePageEncoding :: Word32 -&gt; TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#codePageEncoding"><span class="hs-identifier hs-var hs-var">codePageEncoding</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CodingFailureMode -&gt; Word32 -&gt; TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#mkCodePageEncoding"><span class="hs-identifier hs-var">mkCodePageEncoding</span></a></span><span> </span><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="GHC.Internal.IO.Encoding.Failure.html#ErrorOnCodingFailure"><span class="hs-identifier hs-var">ErrorOnCodingFailure</span></a></span><span>
+</span><span id="line-77"></span><span>
+</span><span id="line-78"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#mkCodePageEncoding"><span class="hs-identifier hs-type">mkCodePageEncoding</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Failure.html#CodingFailureMode"><span class="hs-identifier hs-type">CodingFailureMode</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.Word.html#Word32"><span class="hs-identifier hs-type">Word32</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Types.html#TextEncoding"><span class="hs-identifier hs-type">TextEncoding</span></a></span><span>
+</span><span id="line-79"></span><span id="mkCodePageEncoding"><span class="annot"><span class="annottext">mkCodePageEncoding :: CodingFailureMode -&gt; Word32 -&gt; TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#mkCodePageEncoding"><span class="hs-identifier hs-var hs-var">mkCodePageEncoding</span></a></span></span><span> </span><span id="local-6989586621679637368"><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637368"><span class="hs-identifier hs-var">cfm</span></a></span></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><span class="hs-number">65001</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CodingFailureMode -&gt; TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.UTF8.html#mkUTF8"><span class="hs-identifier hs-var">mkUTF8</span></a></span><span> </span><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637368"><span class="hs-identifier hs-var">cfm</span></a></span><span>
+</span><span id="line-80"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#mkCodePageEncoding"><span class="hs-identifier hs-var">mkCodePageEncoding</span></a></span><span> </span><span id="local-6989586621679637369"><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637369"><span class="hs-identifier hs-var">cfm</span></a></span></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><span class="hs-number">1200</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CodingFailureMode -&gt; TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.UTF16.html#mkUTF16le"><span class="hs-identifier hs-var">mkUTF16le</span></a></span><span> </span><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637369"><span class="hs-identifier hs-var">cfm</span></a></span><span>
+</span><span id="line-81"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#mkCodePageEncoding"><span class="hs-identifier hs-var">mkCodePageEncoding</span></a></span><span> </span><span id="local-6989586621679637370"><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637370"><span class="hs-identifier hs-var">cfm</span></a></span></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><span class="hs-number">1201</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CodingFailureMode -&gt; TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.UTF16.html#mkUTF16be"><span class="hs-identifier hs-var">mkUTF16be</span></a></span><span> </span><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637370"><span class="hs-identifier hs-var">cfm</span></a></span><span>
+</span><span id="line-82"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#mkCodePageEncoding"><span class="hs-identifier hs-var">mkCodePageEncoding</span></a></span><span> </span><span id="local-6989586621679637371"><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637371"><span class="hs-identifier hs-var">cfm</span></a></span></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><span class="hs-number">12000</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CodingFailureMode -&gt; TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.UTF32.html#mkUTF32le"><span class="hs-identifier hs-var">mkUTF32le</span></a></span><span> </span><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637371"><span class="hs-identifier hs-var">cfm</span></a></span><span>
+</span><span id="line-83"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#mkCodePageEncoding"><span class="hs-identifier hs-var">mkCodePageEncoding</span></a></span><span> </span><span id="local-6989586621679637372"><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637372"><span class="hs-identifier hs-var">cfm</span></a></span></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><span class="hs-number">12001</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CodingFailureMode -&gt; TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.UTF32.html#mkUTF32be"><span class="hs-identifier hs-var">mkUTF32be</span></a></span><span> </span><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637372"><span class="hs-identifier hs-var">cfm</span></a></span><span>
+</span><span id="line-84"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#mkCodePageEncoding"><span class="hs-identifier hs-var">mkCodePageEncoding</span></a></span><span> </span><span id="local-6989586621679637373"><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637373"><span class="hs-identifier hs-var">cfm</span></a></span></span><span> </span><span id="local-6989586621679637374"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679637374"><span class="hs-identifier hs-var">cp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TextEncoding
+-&gt; (CodePageArrays -&gt; TextEncoding)
+-&gt; Maybe CodePageArrays
+-&gt; TextEncoding
+forall b a. b -&gt; (a -&gt; b) -&gt; Maybe a -&gt; b
+</span><a href="GHC.Internal.Data.Maybe.html#maybe"><span class="hs-identifier hs-var">maybe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CodingFailureMode -&gt; Word32 -&gt; TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.CodePage.API.html#mkCodePageEncoding"><span class="hs-identifier hs-var">API.mkCodePageEncoding</span></a></span><span> </span><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637373"><span class="hs-identifier hs-var">cfm</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679637374"><span class="hs-identifier hs-var">cp</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CodingFailureMode -&gt; Word32 -&gt; CodePageArrays -&gt; TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#buildEncoding"><span class="hs-identifier hs-var">buildEncoding</span></a></span><span> </span><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637373"><span class="hs-identifier hs-var">cfm</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679637374"><span class="hs-identifier hs-var">cp</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Word32 -&gt; [(Word32, CodePageArrays)] -&gt; Maybe CodePageArrays
+forall a b. Eq a =&gt; a -&gt; [(a, b)] -&gt; Maybe b
+</span><a href="GHC.Internal.List.html#lookup"><span class="hs-identifier hs-var">lookup</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679637374"><span class="hs-identifier hs-var">cp</span></a></span><span> </span><span class="annot"><span class="annottext">[(Word32, CodePageArrays)]
+</span><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#codePageMap"><span class="hs-identifier hs-var">codePageMap</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#buildEncoding"><span class="hs-identifier hs-type">buildEncoding</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Failure.html#CodingFailureMode"><span class="hs-identifier hs-type">CodingFailureMode</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.Word.html#Word32"><span class="hs-identifier hs-type">Word32</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#CodePageArrays"><span class="hs-identifier hs-type">CodePageArrays</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Types.html#TextEncoding"><span class="hs-identifier hs-type">TextEncoding</span></a></span><span>
+</span><span id="line-87"></span><span id="buildEncoding"><span class="annot"><span class="annottext">buildEncoding :: CodingFailureMode -&gt; Word32 -&gt; CodePageArrays -&gt; TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#buildEncoding"><span class="hs-identifier hs-var hs-var">buildEncoding</span></a></span></span><span> </span><span id="local-6989586621679637379"><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637379"><span class="hs-identifier hs-var">cfm</span></a></span></span><span> </span><span id="local-6989586621679637380"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679637380"><span class="hs-identifier hs-var">cp</span></a></span></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#SingleByteCP"><span class="hs-identifier hs-type">SingleByteCP</span></a></span><span> </span><span class="hs-special">{</span><span class="annot"><span class="annottext">decoderArray :: CodePageArrays -&gt; ConvArray Char
+</span><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#decoderArray"><span class="hs-identifier hs-var">decoderArray</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="local-6989586621679637383"><span class="annot"><span class="annottext">ConvArray Char
+</span><a href="#local-6989586621679637383"><span class="hs-identifier hs-var">dec</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">encoderArray :: CodePageArrays -&gt; CompactArray Char Word8
+</span><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#encoderArray"><span class="hs-identifier hs-var">encoderArray</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="local-6989586621679637385"><span class="annot"><span class="annottext">CompactArray Char Word8
+</span><a href="#local-6989586621679637385"><span class="hs-identifier hs-var">enc</span></a></span></span><span class="hs-special">}</span><span>
+</span><span id="line-88"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Types.html#TextEncoding"><span class="hs-identifier hs-type">TextEncoding</span></a></span><span> </span><span class="hs-special">{</span><span>
+</span><span id="line-89"></span><span>      </span><span class="annot"><span class="annottext">textEncodingName :: String
+</span><a href="GHC.Internal.IO.Encoding.Types.html#textEncodingName"><span class="hs-identifier hs-var">textEncodingName</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;CP&quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><a href="GHC.Internal.Base.html#%2B%2B"><span class="hs-operator hs-var">++</span></a></span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><a href="GHC.Internal.Show.html#show"><span class="hs-identifier hs-var">show</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679637380"><span class="hs-identifier hs-var">cp</span></a></span><span>
+</span><span id="line-90"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">mkTextDecoder :: IO (TextDecoder ())
+</span><a href="GHC.Internal.IO.Encoding.Types.html#mkTextDecoder"><span class="hs-identifier hs-var">mkTextDecoder</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TextDecoder () -&gt; IO (TextDecoder ())
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><a href="GHC.Internal.Base.html#return"><span class="hs-identifier hs-var">return</span></a></span><span> </span><span class="annot"><span class="annottext">(TextDecoder () -&gt; IO (TextDecoder ()))
+-&gt; TextDecoder () -&gt; IO (TextDecoder ())
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="GHC.Internal.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">(Buffer Word8 -&gt; Buffer Char -&gt; IO (Buffer Word8, Buffer Char))
+-&gt; (Buffer Word8
+    -&gt; Buffer Char -&gt; IO (CodingProgress, Buffer Word8, Buffer Char))
+-&gt; TextDecoder ()
+forall from to.
+(Buffer from -&gt; Buffer to -&gt; IO (Buffer from, Buffer to))
+-&gt; (Buffer from
+    -&gt; Buffer to -&gt; IO (CodingProgress, Buffer from, Buffer to))
+-&gt; BufferCodec from to ()
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#simpleCodec"><span class="hs-identifier hs-var">simpleCodec</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CodingFailureMode
+-&gt; Buffer Word8 -&gt; Buffer Char -&gt; IO (Buffer Word8, Buffer Char)
+</span><a href="GHC.Internal.IO.Encoding.Failure.html#recoverDecode"><span class="hs-identifier hs-var">recoverDecode</span></a></span><span> </span><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637379"><span class="hs-identifier hs-var">cfm</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">((Buffer Word8
+  -&gt; Buffer Char -&gt; IO (CodingProgress, Buffer Word8, Buffer Char))
+ -&gt; TextDecoder ())
+-&gt; (Buffer Word8
+    -&gt; Buffer Char -&gt; IO (CodingProgress, Buffer Word8, Buffer Char))
+-&gt; TextDecoder ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="GHC.Internal.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">ConvArray Char
+-&gt; Buffer Word8
+-&gt; Buffer Char
+-&gt; IO (CodingProgress, Buffer Word8, Buffer Char)
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#decodeFromSingleByte"><span class="hs-identifier hs-var">decodeFromSingleByte</span></a></span><span> </span><span class="annot"><span class="annottext">ConvArray Char
+</span><a href="#local-6989586621679637383"><span class="hs-identifier hs-var">dec</span></a></span><span>
+</span><span id="line-91"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">mkTextEncoder :: IO (TextEncoder ())
+</span><a href="GHC.Internal.IO.Encoding.Types.html#mkTextEncoder"><span class="hs-identifier hs-var">mkTextEncoder</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TextEncoder () -&gt; IO (TextEncoder ())
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><a href="GHC.Internal.Base.html#return"><span class="hs-identifier hs-var">return</span></a></span><span> </span><span class="annot"><span class="annottext">(TextEncoder () -&gt; IO (TextEncoder ()))
+-&gt; TextEncoder () -&gt; IO (TextEncoder ())
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="GHC.Internal.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">(Buffer Char -&gt; Buffer Word8 -&gt; IO (Buffer Char, Buffer Word8))
+-&gt; (Buffer Char
+    -&gt; Buffer Word8 -&gt; IO (CodingProgress, Buffer Char, Buffer Word8))
+-&gt; TextEncoder ()
+forall from to.
+(Buffer from -&gt; Buffer to -&gt; IO (Buffer from, Buffer to))
+-&gt; (Buffer from
+    -&gt; Buffer to -&gt; IO (CodingProgress, Buffer from, Buffer to))
+-&gt; BufferCodec from to ()
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#simpleCodec"><span class="hs-identifier hs-var">simpleCodec</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CodingFailureMode
+-&gt; Buffer Char -&gt; Buffer Word8 -&gt; IO (Buffer Char, Buffer Word8)
+</span><a href="GHC.Internal.IO.Encoding.Failure.html#recoverEncode"><span class="hs-identifier hs-var">recoverEncode</span></a></span><span> </span><span class="annot"><span class="annottext">CodingFailureMode
+</span><a href="#local-6989586621679637379"><span class="hs-identifier hs-var">cfm</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">((Buffer Char
+  -&gt; Buffer Word8 -&gt; IO (CodingProgress, Buffer Char, Buffer Word8))
+ -&gt; TextEncoder ())
+-&gt; (Buffer Char
+    -&gt; Buffer Word8 -&gt; IO (CodingProgress, Buffer Char, Buffer Word8))
+-&gt; TextEncoder ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="GHC.Internal.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">CompactArray Char Word8
+-&gt; Buffer Char
+-&gt; Buffer Word8
+-&gt; IO (CodingProgress, Buffer Char, Buffer Word8)
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#encodeToSingleByte"><span class="hs-identifier hs-var">encodeToSingleByte</span></a></span><span> </span><span class="annot"><span class="annottext">CompactArray Char Word8
+</span><a href="#local-6989586621679637385"><span class="hs-identifier hs-var">enc</span></a></span><span>
+</span><span id="line-92"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-93"></span><span>
+</span><span id="line-94"></span><span id="local-6989586621679637291"><span id="local-6989586621679637292"><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#simpleCodec"><span class="hs-identifier hs-type">simpleCodec</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#Buffer"><span class="hs-identifier hs-type">Buffer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637291"><span class="hs-identifier hs-type">from</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#Buffer"><span class="hs-identifier hs-type">Buffer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637292"><span class="hs-identifier hs-type">to</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#Buffer"><span class="hs-identifier hs-type">Buffer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637291"><span class="hs-identifier hs-type">from</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#Buffer"><span class="hs-identifier hs-type">Buffer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637292"><span class="hs-identifier hs-type">to</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span>            </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#Buffer"><span class="hs-identifier hs-type">Buffer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637291"><span class="hs-identifier hs-type">from</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#Buffer"><span class="hs-identifier hs-type">Buffer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637292"><span class="hs-identifier hs-type">to</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Encoding.Types.html#CodingProgress"><span class="hs-identifier hs-type">CodingProgress</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#Buffer"><span class="hs-identifier hs-type">Buffer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637291"><span class="hs-identifier hs-type">from</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#Buffer"><span class="hs-identifier hs-type">Buffer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637292"><span class="hs-identifier hs-type">to</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-96"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Types.html#BufferCodec"><span class="hs-identifier hs-type">BufferCodec</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637291"><span class="hs-identifier hs-type">from</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637292"><span class="hs-identifier hs-type">to</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-97"></span><span id="simpleCodec"><span class="annot"><span class="annottext">simpleCodec :: forall from to.
+(Buffer from -&gt; Buffer to -&gt; IO (Buffer from, Buffer to))
+-&gt; (Buffer from
+    -&gt; Buffer to -&gt; IO (CodingProgress, Buffer from, Buffer to))
+-&gt; BufferCodec from to ()
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#simpleCodec"><span class="hs-identifier hs-var hs-var">simpleCodec</span></a></span></span><span> </span><span id="local-6989586621679637399"><span class="annot"><span class="annottext">Buffer from -&gt; Buffer to -&gt; IO (Buffer from, Buffer to)
+</span><a href="#local-6989586621679637399"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679637400"><span class="annot"><span class="annottext">Buffer from
+-&gt; Buffer to -&gt; IO (CodingProgress, Buffer from, Buffer to)
+</span><a href="#local-6989586621679637400"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Types.html#BufferCodec"><span class="hs-identifier hs-type">BufferCodec</span></a></span><span> </span><span class="hs-special">{</span><span>
+</span><span id="line-98"></span><span>    </span><span class="annot"><span class="annottext">encode :: Buffer from
+-&gt; Buffer to -&gt; IO (CodingProgress, Buffer from, Buffer to)
+</span><a href="GHC.Internal.IO.Encoding.Types.html#encode"><span class="hs-identifier hs-var">encode</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Buffer from
+-&gt; Buffer to -&gt; IO (CodingProgress, Buffer from, Buffer to)
+</span><a href="#local-6989586621679637400"><span class="hs-identifier hs-var">f</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-99"></span><span>    </span><span class="annot"><span class="annottext">recover :: Buffer from -&gt; Buffer to -&gt; IO (Buffer from, Buffer to)
+</span><a href="GHC.Internal.IO.Encoding.Types.html#recover"><span class="hs-identifier hs-var">recover</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Buffer from -&gt; Buffer to -&gt; IO (Buffer from, Buffer to)
+</span><a href="#local-6989586621679637399"><span class="hs-identifier hs-var">r</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-100"></span><span>    </span><span class="annot"><span class="annottext">close :: IO ()
+</span><a href="GHC.Internal.IO.Encoding.Types.html#close"><span class="hs-identifier hs-var">close</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">() -&gt; IO ()
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><a href="GHC.Internal.Base.html#return"><span class="hs-identifier hs-var">return</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-101"></span><span>    </span><span class="annot"><span class="annottext">getState :: IO ()
+</span><a href="GHC.Internal.IO.Encoding.Types.html#getState"><span class="hs-identifier hs-var">getState</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">() -&gt; IO ()
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><a href="GHC.Internal.Base.html#return"><span class="hs-identifier hs-var">return</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-102"></span><span>    </span><span class="annot"><span class="annottext">setState :: () -&gt; IO ()
+</span><a href="GHC.Internal.IO.Encoding.Types.html#setState"><span class="hs-identifier hs-var">setState</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">() -&gt; IO ()
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><a href="GHC.Internal.Base.html#return"><span class="hs-identifier hs-var">return</span></a></span><span>
+</span><span id="line-103"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-104"></span><span>
+</span><span id="line-105"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#decodeFromSingleByte"><span class="hs-identifier hs-type">decodeFromSingleByte</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#ConvArray"><span class="hs-identifier hs-type">ConvArray</span></a></span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Char"><span class="hs-identifier hs-type">Char</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Types.html#DecodeBuffer"><span class="hs-identifier hs-type">DecodeBuffer</span></a></span><span>
+</span><span id="line-106"></span><span id="decodeFromSingleByte"><span class="annot"><span class="annottext">decodeFromSingleByte :: ConvArray Char
+-&gt; Buffer Word8
+-&gt; Buffer Char
+-&gt; IO (CodingProgress, Buffer Word8, Buffer Char)
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#decodeFromSingleByte"><span class="hs-identifier hs-var hs-var">decodeFromSingleByte</span></a></span></span><span> </span><span id="local-6989586621679637408"><span class="annot"><span class="annottext">ConvArray Char
+</span><a href="#local-6989586621679637408"><span class="hs-identifier hs-var">convArr</span></a></span></span><span>
+</span><span id="line-107"></span><span>    </span><span id="local-6989586621679637409"><span class="annot"><span class="annottext">input :: Buffer Word8
+</span><a href="#local-6989586621679637409"><span class="hs-identifier hs-var">input</span></a></span></span><span class="hs-glyph">@</span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#Buffer"><span class="hs-identifier hs-type">Buffer</span></a></span><span>  </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">bufRaw :: forall e. Buffer e -&gt; RawBuffer e
+</span><a href="GHC.Internal.IO.Buffer.html#bufRaw"><span class="hs-identifier hs-var">bufRaw</span></a></span><span class="hs-glyph">=</span><span id="local-6989586621679637412"><span class="annot"><span class="annottext">RawBuffer Word8
+</span><a href="#local-6989586621679637412"><span class="hs-identifier hs-var">iraw</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">bufL :: forall e. Buffer e -&gt; Int
+</span><a href="GHC.Internal.IO.Buffer.html#bufL"><span class="hs-identifier hs-var">bufL</span></a></span><span class="hs-glyph">=</span><span id="local-6989586621679637414"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637414"><span class="hs-identifier hs-var">ir0</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">bufR :: forall e. Buffer e -&gt; Int
+</span><a href="GHC.Internal.IO.Buffer.html#bufR"><span class="hs-identifier hs-var">bufR</span></a></span><span class="hs-glyph">=</span><span id="local-6989586621679637416"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637416"><span class="hs-identifier hs-var">iw</span></a></span></span><span class="hs-special">,</span><span>  </span><span class="annot"><span class="annottext">bufSize :: forall e. Buffer e -&gt; Int
+</span><a href="GHC.Internal.IO.Buffer.html#bufSize"><span class="hs-identifier hs-var">bufSize</span></a></span><span class="hs-glyph">=</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-108"></span><span>    </span><span id="local-6989586621679637418"><span class="annot"><span class="annottext">output :: Buffer Char
+</span><a href="#local-6989586621679637418"><span class="hs-identifier hs-var">output</span></a></span></span><span class="hs-glyph">@</span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#Buffer"><span class="hs-identifier hs-type">Buffer</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">bufRaw :: forall e. Buffer e -&gt; RawBuffer e
+</span><a href="GHC.Internal.IO.Buffer.html#bufRaw"><span class="hs-identifier hs-var">bufRaw</span></a></span><span class="hs-glyph">=</span><span id="local-6989586621679637419"><span class="annot"><span class="annottext">RawBuffer Char
+</span><a href="#local-6989586621679637419"><span class="hs-identifier hs-var">oraw</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">bufL :: forall e. Buffer e -&gt; Int
+</span><a href="GHC.Internal.IO.Buffer.html#bufL"><span class="hs-identifier hs-var">bufL</span></a></span><span class="hs-glyph">=</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span>   </span><span class="annot"><span class="annottext">bufR :: forall e. Buffer e -&gt; Int
+</span><a href="GHC.Internal.IO.Buffer.html#bufR"><span class="hs-identifier hs-var">bufR</span></a></span><span class="hs-glyph">=</span><span id="local-6989586621679637420"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637420"><span class="hs-identifier hs-var">ow0</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">bufSize :: forall e. Buffer e -&gt; Int
+</span><a href="GHC.Internal.IO.Buffer.html#bufSize"><span class="hs-identifier hs-var">bufSize</span></a></span><span class="hs-glyph">=</span><span id="local-6989586621679637421"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637421"><span class="hs-identifier hs-var">os</span></a></span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-109"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">let</span><span>
+</span><span id="line-110"></span><span>        </span><span id="local-6989586621679637432"><span class="annot"><span class="annottext">done :: a -&gt; Int -&gt; Int -&gt; m (a, Buffer Word8, Buffer Char)
+</span><a href="#local-6989586621679637432"><span class="hs-identifier hs-var hs-var">done</span></a></span></span><span> </span><span id="local-6989586621679637433"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679637433"><span class="hs-identifier hs-var">why</span></a></span></span><span> </span><span class="hs-glyph">!</span><span id="local-6989586621679637434"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637434"><span class="hs-identifier hs-var">ir</span></a></span></span><span> </span><span class="hs-glyph">!</span><span id="local-6989586621679637435"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637435"><span class="hs-identifier hs-var">ow</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(a, Buffer Word8, Buffer Char) -&gt; m (a, Buffer Word8, Buffer Char)
+forall a. a -&gt; m a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><a href="GHC.Internal.Base.html#return"><span class="hs-identifier hs-var">return</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679637433"><span class="hs-identifier hs-var">why</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-111"></span><span>                                   </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637434"><span class="hs-identifier hs-var">ir</span></a></span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Classes.html#%3D%3D"><span class="hs-operator hs-var">==</span></a></span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637416"><span class="hs-identifier hs-var">iw</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Buffer Word8
+</span><a href="#local-6989586621679637409"><span class="hs-identifier hs-var">input</span></a></span><span class="hs-special">{</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#bufL"><span class="hs-identifier hs-var">bufL</span></a></span><span class="hs-glyph">=</span><span class="annot"><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#bufR"><span class="hs-identifier hs-var">bufR</span></a></span><span class="hs-glyph">=</span><span class="annot"><span class="hs-number">0</span></span><span class="hs-special">}</span><span>
+</span><span id="line-112"></span><span>                                             </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Buffer Word8
+</span><a href="#local-6989586621679637409"><span class="hs-identifier hs-var">input</span></a></span><span class="hs-special">{</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#bufL"><span class="hs-identifier hs-var">bufL</span></a></span><span class="hs-glyph">=</span><span class="annot"><a href="#local-6989586621679637434"><span class="hs-identifier hs-type">ir</span></a></span><span class="hs-special">}</span><span class="hs-special">,</span><span>
+</span><span id="line-113"></span><span>                                   </span><span class="annot"><span class="annottext">Buffer Char
+</span><a href="#local-6989586621679637418"><span class="hs-identifier hs-var">output</span></a></span><span> </span><span class="hs-special">{</span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#bufR"><span class="hs-identifier hs-var">bufR</span></a></span><span class="hs-glyph">=</span><span class="annot"><a href="#local-6989586621679637435"><span class="hs-identifier hs-type">ow</span></a></span><span class="hs-special">}</span><span class="hs-special">)</span><span>
+</span><span id="line-114"></span><span>        </span><span id="local-6989586621679637451"><span class="annot"><span class="annottext">loop :: Int -&gt; Int -&gt; IO (CodingProgress, Buffer Word8, Buffer Char)
+</span><a href="#local-6989586621679637451"><span class="hs-identifier hs-var hs-var">loop</span></a></span></span><span> </span><span class="hs-glyph">!</span><span id="local-6989586621679637452"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637452"><span class="hs-identifier hs-var">ir</span></a></span></span><span> </span><span class="hs-glyph">!</span><span id="local-6989586621679637453"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637453"><span class="hs-identifier hs-var">ow</span></a></span></span><span>
+</span><span id="line-115"></span><span>            </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637453"><span class="hs-identifier hs-var">ow</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Classes.html#%3E%3D"><span class="hs-operator hs-var">&gt;=</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637421"><span class="hs-identifier hs-var">os</span></a></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CodingProgress
+-&gt; Int -&gt; Int -&gt; IO (CodingProgress, Buffer Word8, Buffer Char)
+forall {m :: * -&gt; *} {a}.
+Monad m =&gt;
+a -&gt; Int -&gt; Int -&gt; m (a, Buffer Word8, Buffer Char)
+</span><a href="#local-6989586621679637432"><span class="hs-identifier hs-var">done</span></a></span><span> </span><span class="annot"><span class="annottext">CodingProgress
+</span><a href="GHC.Internal.IO.Encoding.Types.html#OutputUnderflow"><span class="hs-identifier hs-var">OutputUnderflow</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637452"><span class="hs-identifier hs-var">ir</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637453"><span class="hs-identifier hs-var">ow</span></a></span><span>
+</span><span id="line-116"></span><span>            </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637452"><span class="hs-identifier hs-var">ir</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Classes.html#%3E%3D"><span class="hs-operator hs-var">&gt;=</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637416"><span class="hs-identifier hs-var">iw</span></a></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CodingProgress
+-&gt; Int -&gt; Int -&gt; IO (CodingProgress, Buffer Word8, Buffer Char)
+forall {m :: * -&gt; *} {a}.
+Monad m =&gt;
+a -&gt; Int -&gt; Int -&gt; m (a, Buffer Word8, Buffer Char)
+</span><a href="#local-6989586621679637432"><span class="hs-identifier hs-var">done</span></a></span><span> </span><span class="annot"><span class="annottext">CodingProgress
+</span><a href="GHC.Internal.IO.Encoding.Types.html#InputUnderflow"><span class="hs-identifier hs-var">InputUnderflow</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637452"><span class="hs-identifier hs-var">ir</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637453"><span class="hs-identifier hs-var">ow</span></a></span><span>
+</span><span id="line-117"></span><span>            </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="GHC.Internal.Base.html#otherwise"><span class="hs-identifier hs-var">otherwise</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-118"></span><span>                </span><span id="local-6989586621679637456"><span class="annot"><a href="#local-6989586621679637456"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">RawBuffer Word8 -&gt; Int -&gt; IO Word8
+</span><a href="GHC.Internal.IO.Buffer.html#readWord8Buf"><span class="hs-identifier hs-var">readWord8Buf</span></a></span><span> </span><span class="annot"><span class="annottext">RawBuffer Word8
+</span><a href="#local-6989586621679637412"><span class="hs-identifier hs-var">iraw</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637452"><span class="hs-identifier hs-var">ir</span></a></span><span>
+</span><span id="line-119"></span><span>                </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679637458"><span class="annot"><a href="#local-6989586621679637458"><span class="hs-identifier hs-var hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ConvArray Char -&gt; Word8 -&gt; Char
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#lookupConv"><span class="hs-identifier hs-var">lookupConv</span></a></span><span> </span><span class="annot"><span class="annottext">ConvArray Char
+</span><a href="#local-6989586621679637408"><span class="hs-identifier hs-var">convArr</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679637456"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-120"></span><span>                </span><span class="hs-keyword">if</span><span> </span><span class="annot"><a href="#local-6989586621679637458"><span class="hs-identifier hs-type">c</span></a></span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Classes.html#%3D%3D"><span class="hs-operator hs-type">==</span></a></span><span class="annot"><span class="hs-char">'\0'</span></span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Classes.html#%26%26"><span class="hs-operator hs-type">&amp;&amp;</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637456"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Classes.html#%2F%3D"><span class="hs-operator hs-type">/=</span></a></span><span> </span><span class="annot"><span class="hs-number">0</span></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><a href="#local-6989586621679637462"><span class="hs-identifier hs-type">invalid</span></a></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-121"></span><span>                </span><span id="local-6989586621679637463"><span class="annot"><a href="#local-6989586621679637463"><span class="hs-identifier hs-var">ow'</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#writeCharBuf"><span class="hs-identifier hs-type">writeCharBuf</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637419"><span class="hs-identifier hs-type">oraw</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637453"><span class="hs-identifier hs-type">ow</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637458"><span class="hs-identifier hs-type">c</span></a></span><span>
+</span><span id="line-122"></span><span>                </span><span class="annot"><a href="#local-6989586621679637451"><span class="hs-identifier hs-type">loop</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679637452"><span class="hs-identifier hs-type">ir</span></a></span><span class="annot"><a href="GHC.Internal.Num.html#%2B"><span class="hs-operator hs-type">+</span></a></span><span class="annot"><span class="hs-number">1</span></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679637463"><span class="hs-identifier hs-type">ow'</span></a></span><span>
+</span><span id="line-123"></span><span>          </span><span class="hs-keyword">where</span><span>
+</span><span id="line-124"></span><span>            </span><span id="local-6989586621679637462"><span class="annot"><span class="annottext">invalid :: IO (CodingProgress, Buffer Word8, Buffer Char)
+</span><a href="#local-6989586621679637462"><span class="hs-identifier hs-var hs-var">invalid</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CodingProgress
+-&gt; Int -&gt; Int -&gt; IO (CodingProgress, Buffer Word8, Buffer Char)
+forall {m :: * -&gt; *} {a}.
+Monad m =&gt;
+a -&gt; Int -&gt; Int -&gt; m (a, Buffer Word8, Buffer Char)
+</span><a href="#local-6989586621679637432"><span class="hs-identifier hs-var">done</span></a></span><span> </span><span class="annot"><span class="annottext">CodingProgress
+</span><a href="GHC.Internal.IO.Encoding.Types.html#InvalidSequence"><span class="hs-identifier hs-var">InvalidSequence</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637452"><span class="hs-identifier hs-var">ir</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637453"><span class="hs-identifier hs-var">ow</span></a></span><span>
+</span><span id="line-125"></span><span>    </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; IO (CodingProgress, Buffer Word8, Buffer Char)
+</span><a href="#local-6989586621679637451"><span class="hs-identifier hs-var">loop</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637414"><span class="hs-identifier hs-var">ir0</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637420"><span class="hs-identifier hs-var">ow0</span></a></span><span>
+</span><span id="line-126"></span><span>
+</span><span id="line-127"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#encodeToSingleByte"><span class="hs-identifier hs-type">encodeToSingleByte</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#CompactArray"><span class="hs-identifier hs-type">CompactArray</span></a></span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Char"><span class="hs-identifier hs-type">Char</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.Word.html#Word8"><span class="hs-identifier hs-type">Word8</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Types.html#EncodeBuffer"><span class="hs-identifier hs-type">EncodeBuffer</span></a></span><span>
+</span><span id="line-128"></span><span id="encodeToSingleByte"><span class="annot"><span class="annottext">encodeToSingleByte :: CompactArray Char Word8
+-&gt; Buffer Char
+-&gt; Buffer Word8
+-&gt; IO (CodingProgress, Buffer Char, Buffer Word8)
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#encodeToSingleByte"><span class="hs-identifier hs-var hs-var">encodeToSingleByte</span></a></span></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#CompactArray"><span class="hs-identifier hs-type">CompactArray</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">encoderMax :: forall a b. CompactArray a b -&gt; a
+</span><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#encoderMax"><span class="hs-identifier hs-var">encoderMax</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="local-6989586621679637475"><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679637475"><span class="hs-identifier hs-var">maxChar</span></a></span></span><span class="hs-special">,</span><span>
+</span><span id="line-129"></span><span>                         </span><span class="annot"><span class="annottext">encoderIndices :: forall a b. CompactArray a b -&gt; ConvArray Int
+</span><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#encoderIndices"><span class="hs-identifier hs-var">encoderIndices</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="local-6989586621679637477"><span class="annot"><span class="annottext">ConvArray Int
+</span><a href="#local-6989586621679637477"><span class="hs-identifier hs-var">indices</span></a></span></span><span class="hs-special">,</span><span>
+</span><span id="line-130"></span><span>                         </span><span class="annot"><span class="annottext">encoderValues :: forall a b. CompactArray a b -&gt; ConvArray b
+</span><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#encoderValues"><span class="hs-identifier hs-var">encoderValues</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="local-6989586621679637479"><span class="annot"><span class="annottext">ConvArray Word8
+</span><a href="#local-6989586621679637479"><span class="hs-identifier hs-var">values</span></a></span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-131"></span><span>    </span><span id="local-6989586621679637480"><span class="annot"><span class="annottext">input :: Buffer Char
+</span><a href="#local-6989586621679637480"><span class="hs-identifier hs-var">input</span></a></span></span><span class="hs-glyph">@</span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#Buffer"><span class="hs-identifier hs-type">Buffer</span></a></span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">bufRaw :: forall e. Buffer e -&gt; RawBuffer e
+</span><a href="GHC.Internal.IO.Buffer.html#bufRaw"><span class="hs-identifier hs-var">bufRaw</span></a></span><span class="hs-glyph">=</span><span id="local-6989586621679637481"><span class="annot"><span class="annottext">RawBuffer Char
+</span><a href="#local-6989586621679637481"><span class="hs-identifier hs-var">iraw</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">bufL :: forall e. Buffer e -&gt; Int
+</span><a href="GHC.Internal.IO.Buffer.html#bufL"><span class="hs-identifier hs-var">bufL</span></a></span><span class="hs-glyph">=</span><span id="local-6989586621679637482"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637482"><span class="hs-identifier hs-var">ir0</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">bufR :: forall e. Buffer e -&gt; Int
+</span><a href="GHC.Internal.IO.Buffer.html#bufR"><span class="hs-identifier hs-var">bufR</span></a></span><span class="hs-glyph">=</span><span id="local-6989586621679637483"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637483"><span class="hs-identifier hs-var">iw</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">bufSize :: forall e. Buffer e -&gt; Int
+</span><a href="GHC.Internal.IO.Buffer.html#bufSize"><span class="hs-identifier hs-var">bufSize</span></a></span><span class="hs-glyph">=</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-132"></span><span>    </span><span id="local-6989586621679637484"><span class="annot"><span class="annottext">output :: Buffer Word8
+</span><a href="#local-6989586621679637484"><span class="hs-identifier hs-var">output</span></a></span></span><span class="hs-glyph">@</span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#Buffer"><span class="hs-identifier hs-type">Buffer</span></a></span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">bufRaw :: forall e. Buffer e -&gt; RawBuffer e
+</span><a href="GHC.Internal.IO.Buffer.html#bufRaw"><span class="hs-identifier hs-var">bufRaw</span></a></span><span class="hs-glyph">=</span><span id="local-6989586621679637485"><span class="annot"><span class="annottext">RawBuffer Word8
+</span><a href="#local-6989586621679637485"><span class="hs-identifier hs-var">oraw</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">bufL :: forall e. Buffer e -&gt; Int
+</span><a href="GHC.Internal.IO.Buffer.html#bufL"><span class="hs-identifier hs-var">bufL</span></a></span><span class="hs-glyph">=</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span>   </span><span class="annot"><span class="annottext">bufR :: forall e. Buffer e -&gt; Int
+</span><a href="GHC.Internal.IO.Buffer.html#bufR"><span class="hs-identifier hs-var">bufR</span></a></span><span class="hs-glyph">=</span><span id="local-6989586621679637486"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637486"><span class="hs-identifier hs-var">ow0</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">bufSize :: forall e. Buffer e -&gt; Int
+</span><a href="GHC.Internal.IO.Buffer.html#bufSize"><span class="hs-identifier hs-var">bufSize</span></a></span><span class="hs-glyph">=</span><span id="local-6989586621679637487"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637487"><span class="hs-identifier hs-var">os</span></a></span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-133"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">let</span><span>
+</span><span id="line-134"></span><span>        </span><span id="local-6989586621679637495"><span class="annot"><span class="annottext">done :: a -&gt; Int -&gt; Int -&gt; m (a, Buffer Char, Buffer Word8)
+</span><a href="#local-6989586621679637495"><span class="hs-identifier hs-var hs-var">done</span></a></span></span><span> </span><span id="local-6989586621679637496"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679637496"><span class="hs-identifier hs-var">why</span></a></span></span><span> </span><span class="hs-glyph">!</span><span id="local-6989586621679637497"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637497"><span class="hs-identifier hs-var">ir</span></a></span></span><span> </span><span class="hs-glyph">!</span><span id="local-6989586621679637498"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637498"><span class="hs-identifier hs-var">ow</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(a, Buffer Char, Buffer Word8) -&gt; m (a, Buffer Char, Buffer Word8)
+forall a. a -&gt; m a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><a href="GHC.Internal.Base.html#return"><span class="hs-identifier hs-var">return</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679637496"><span class="hs-identifier hs-var">why</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-135"></span><span>                                   </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637497"><span class="hs-identifier hs-var">ir</span></a></span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Classes.html#%3D%3D"><span class="hs-operator hs-var">==</span></a></span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637483"><span class="hs-identifier hs-var">iw</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Buffer Char
+</span><a href="#local-6989586621679637480"><span class="hs-identifier hs-var">input</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#bufL"><span class="hs-identifier hs-var">bufL</span></a></span><span class="hs-glyph">=</span><span class="annot"><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#bufR"><span class="hs-identifier hs-var">bufR</span></a></span><span class="hs-glyph">=</span><span class="annot"><span class="hs-number">0</span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-136"></span><span>                                             </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Buffer Char
+</span><a href="#local-6989586621679637480"><span class="hs-identifier hs-var">input</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#bufL"><span class="hs-identifier hs-var">bufL</span></a></span><span class="hs-glyph">=</span><span class="annot"><a href="#local-6989586621679637497"><span class="hs-identifier hs-type">ir</span></a></span><span> </span><span class="hs-special">}</span><span class="hs-special">,</span><span>
+</span><span id="line-137"></span><span>                                   </span><span class="annot"><span class="annottext">Buffer Word8
+</span><a href="#local-6989586621679637484"><span class="hs-identifier hs-var">output</span></a></span><span> </span><span class="hs-special">{</span><span class="annot"><a href="GHC.Internal.IO.Buffer.html#bufR"><span class="hs-identifier hs-var">bufR</span></a></span><span class="hs-glyph">=</span><span class="annot"><a href="#local-6989586621679637498"><span class="hs-identifier hs-type">ow</span></a></span><span class="hs-special">}</span><span class="hs-special">)</span><span>
+</span><span id="line-138"></span><span>        </span><span id="local-6989586621679637510"><span class="annot"><span class="annottext">loop :: Int -&gt; Int -&gt; IO (CodingProgress, Buffer Char, Buffer Word8)
+</span><a href="#local-6989586621679637510"><span class="hs-identifier hs-var hs-var">loop</span></a></span></span><span> </span><span class="hs-glyph">!</span><span id="local-6989586621679637511"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637511"><span class="hs-identifier hs-var">ir</span></a></span></span><span> </span><span class="hs-glyph">!</span><span id="local-6989586621679637512"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637512"><span class="hs-identifier hs-var">ow</span></a></span></span><span>
+</span><span id="line-139"></span><span>            </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637512"><span class="hs-identifier hs-var">ow</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Classes.html#%3E%3D"><span class="hs-operator hs-var">&gt;=</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637487"><span class="hs-identifier hs-var">os</span></a></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CodingProgress
+-&gt; Int -&gt; Int -&gt; IO (CodingProgress, Buffer Char, Buffer Word8)
+forall {m :: * -&gt; *} {a}.
+Monad m =&gt;
+a -&gt; Int -&gt; Int -&gt; m (a, Buffer Char, Buffer Word8)
+</span><a href="#local-6989586621679637495"><span class="hs-identifier hs-var">done</span></a></span><span> </span><span class="annot"><span class="annottext">CodingProgress
+</span><a href="GHC.Internal.IO.Encoding.Types.html#OutputUnderflow"><span class="hs-identifier hs-var">OutputUnderflow</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637511"><span class="hs-identifier hs-var">ir</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637512"><span class="hs-identifier hs-var">ow</span></a></span><span>
+</span><span id="line-140"></span><span>            </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637511"><span class="hs-identifier hs-var">ir</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Classes.html#%3E%3D"><span class="hs-operator hs-var">&gt;=</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637483"><span class="hs-identifier hs-var">iw</span></a></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CodingProgress
+-&gt; Int -&gt; Int -&gt; IO (CodingProgress, Buffer Char, Buffer Word8)
+forall {m :: * -&gt; *} {a}.
+Monad m =&gt;
+a -&gt; Int -&gt; Int -&gt; m (a, Buffer Char, Buffer Word8)
+</span><a href="#local-6989586621679637495"><span class="hs-identifier hs-var">done</span></a></span><span> </span><span class="annot"><span class="annottext">CodingProgress
+</span><a href="GHC.Internal.IO.Encoding.Types.html#InputUnderflow"><span class="hs-identifier hs-var">InputUnderflow</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637511"><span class="hs-identifier hs-var">ir</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637512"><span class="hs-identifier hs-var">ow</span></a></span><span>
+</span><span id="line-141"></span><span>            </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="GHC.Internal.Base.html#otherwise"><span class="hs-identifier hs-var">otherwise</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-142"></span><span>                </span><span class="hs-special">(</span><span id="local-6989586621679637513"><span class="annot"><a href="#local-6989586621679637513"><span class="hs-identifier hs-var">c</span></a></span></span><span class="hs-special">,</span><span id="local-6989586621679637514"><span class="annot"><a href="#local-6989586621679637514"><span class="hs-identifier hs-var">ir'</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">RawBuffer Char -&gt; Int -&gt; IO (Char, Int)
+</span><a href="GHC.Internal.IO.Buffer.html#readCharBuf"><span class="hs-identifier hs-var">readCharBuf</span></a></span><span> </span><span class="annot"><span class="annottext">RawBuffer Char
+</span><a href="#local-6989586621679637481"><span class="hs-identifier hs-var">iraw</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637511"><span class="hs-identifier hs-var">ir</span></a></span><span>
+</span><span id="line-143"></span><span>                </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#lookupCompact"><span class="hs-identifier hs-type">lookupCompact</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637475"><span class="hs-identifier hs-type">maxChar</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637477"><span class="hs-identifier hs-type">indices</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637479"><span class="hs-identifier hs-type">values</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679637513"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-144"></span><span>                    </span><span class="annot"><span class="annottext">Maybe Word8
+</span><a href="GHC.Internal.Maybe.html#Nothing"><span class="hs-identifier hs-var">Nothing</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IO (CodingProgress, Buffer Char, Buffer Word8)
+</span><a href="#local-6989586621679637517"><span class="hs-identifier hs-var">invalid</span></a></span><span>
+</span><span id="line-145"></span><span>                    </span><span class="annot"><a href="GHC.Internal.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679637513"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Classes.html#%2F%3D"><span class="hs-operator hs-var">/=</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'\0'</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IO (CodingProgress, Buffer Char, Buffer Word8)
+</span><a href="#local-6989586621679637517"><span class="hs-identifier hs-var">invalid</span></a></span><span>
+</span><span id="line-146"></span><span>                    </span><span class="annot"><a href="GHC.Internal.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span id="local-6989586621679637518"><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679637518"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-147"></span><span>                        </span><span class="annot"><span class="annottext">RawBuffer Word8 -&gt; Int -&gt; Word8 -&gt; IO ()
+</span><a href="GHC.Internal.IO.Buffer.html#writeWord8Buf"><span class="hs-identifier hs-var">writeWord8Buf</span></a></span><span> </span><span class="annot"><span class="annottext">RawBuffer Word8
+</span><a href="#local-6989586621679637485"><span class="hs-identifier hs-var">oraw</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637512"><span class="hs-identifier hs-var">ow</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679637518"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-148"></span><span>                        </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; IO (CodingProgress, Buffer Char, Buffer Word8)
+</span><a href="#local-6989586621679637510"><span class="hs-identifier hs-var">loop</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637514"><span class="hs-identifier hs-var">ir'</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637512"><span class="hs-identifier hs-var">ow</span></a></span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><a href="GHC.Internal.Num.html#%2B"><span class="hs-operator hs-var">+</span></a></span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span>
+</span><span id="line-149"></span><span>            </span><span class="hs-keyword">where</span><span>
+</span><span id="line-150"></span><span>                </span><span id="local-6989586621679637517"><span class="annot"><span class="annottext">invalid :: IO (CodingProgress, Buffer Char, Buffer Word8)
+</span><a href="#local-6989586621679637517"><span class="hs-identifier hs-var hs-var">invalid</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CodingProgress
+-&gt; Int -&gt; Int -&gt; IO (CodingProgress, Buffer Char, Buffer Word8)
+forall {m :: * -&gt; *} {a}.
+Monad m =&gt;
+a -&gt; Int -&gt; Int -&gt; m (a, Buffer Char, Buffer Word8)
+</span><a href="#local-6989586621679637495"><span class="hs-identifier hs-var">done</span></a></span><span> </span><span class="annot"><span class="annottext">CodingProgress
+</span><a href="GHC.Internal.IO.Encoding.Types.html#InvalidSequence"><span class="hs-identifier hs-var">InvalidSequence</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637511"><span class="hs-identifier hs-var">ir</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637512"><span class="hs-identifier hs-var">ow</span></a></span><span>
+</span><span id="line-151"></span><span>    </span><span class="hs-keyword">in</span><span>
+</span><span id="line-152"></span><span>    </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; IO (CodingProgress, Buffer Char, Buffer Word8)
+</span><a href="#local-6989586621679637510"><span class="hs-identifier hs-var">loop</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637482"><span class="hs-identifier hs-var">ir0</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637486"><span class="hs-identifier hs-var">ow0</span></a></span><span>
+</span><span id="line-153"></span><span>
+</span><span id="line-154"></span><span>
+</span><span id="line-155"></span><span class="hs-comment">--------------------------------------------</span><span>
+</span><span id="line-156"></span><span class="hs-comment">-- Array access functions</span><span>
+</span><span id="line-157"></span><span>
+</span><span id="line-158"></span><span class="hs-comment">-- {-# INLINE lookupConv #-}</span><span>
+</span><span id="line-159"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#lookupConv"><span class="hs-identifier hs-type">lookupConv</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#ConvArray"><span class="hs-identifier hs-type">ConvArray</span></a></span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Char"><span class="hs-identifier hs-type">Char</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.Word.html#Word8"><span class="hs-identifier hs-type">Word8</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Char"><span class="hs-identifier hs-type">Char</span></a></span><span>
+</span><span id="line-160"></span><span id="lookupConv"><span class="annot"><span class="annottext">lookupConv :: ConvArray Char -&gt; Word8 -&gt; Char
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#lookupConv"><span class="hs-identifier hs-var hs-var">lookupConv</span></a></span></span><span> </span><span id="local-6989586621679637523"><span class="annot"><span class="annottext">ConvArray Char
+</span><a href="#local-6989586621679637523"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ConvArray Char -&gt; Int -&gt; Char
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#indexChar"><span class="hs-identifier hs-var">indexChar</span></a></span><span> </span><span class="annot"><span class="annottext">ConvArray Char
+</span><a href="#local-6989586621679637523"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">(Int -&gt; Char) -&gt; (Word8 -&gt; Int) -&gt; Word8 -&gt; Char
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><a href="GHC.Internal.Base.html#."><span class="hs-operator hs-var">.</span></a></span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Int
+forall a. Enum a =&gt; a -&gt; Int
+</span><a href="GHC.Internal.Enum.html#fromEnum"><span class="hs-identifier hs-var">fromEnum</span></a></span><span>
+</span><span id="line-161"></span><span>
+</span><span id="line-162"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#lookupCompact"><span class="hs-pragma hs-type">lookupCompact</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-163"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#lookupCompact"><span class="hs-identifier hs-type">lookupCompact</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Char"><span class="hs-identifier hs-type">Char</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#ConvArray"><span class="hs-identifier hs-type">ConvArray</span></a></span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Int"><span class="hs-identifier hs-type">Int</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#ConvArray"><span class="hs-identifier hs-type">ConvArray</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.Word.html#Word8"><span class="hs-identifier hs-type">Word8</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Char"><span class="hs-identifier hs-type">Char</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.Word.html#Word8"><span class="hs-identifier hs-type">Word8</span></a></span><span>
+</span><span id="line-164"></span><span id="lookupCompact"><span class="annot"><span class="annottext">lookupCompact :: Char -&gt; ConvArray Int -&gt; ConvArray Word8 -&gt; Char -&gt; Maybe Word8
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#lookupCompact"><span class="hs-identifier hs-var hs-var">lookupCompact</span></a></span></span><span> </span><span id="local-6989586621679637527"><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679637527"><span class="hs-identifier hs-var">maxVal</span></a></span></span><span> </span><span id="local-6989586621679637528"><span class="annot"><span class="annottext">ConvArray Int
+</span><a href="#local-6989586621679637528"><span class="hs-identifier hs-var">indexes</span></a></span></span><span> </span><span id="local-6989586621679637529"><span class="annot"><span class="annottext">ConvArray Word8
+</span><a href="#local-6989586621679637529"><span class="hs-identifier hs-var">values</span></a></span></span><span> </span><span id="local-6989586621679637530"><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679637530"><span class="hs-identifier hs-var">x</span></a></span></span><span>
+</span><span id="line-165"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679637530"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Classes.html#%3E"><span class="hs-operator hs-var">&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679637527"><span class="hs-identifier hs-var">maxVal</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Word8
+forall a. Maybe a
+</span><a href="GHC.Internal.Maybe.html#Nothing"><span class="hs-identifier hs-var">Nothing</span></a></span><span>
+</span><span id="line-166"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="GHC.Internal.Base.html#otherwise"><span class="hs-identifier hs-var">otherwise</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Maybe Word8
+forall a. a -&gt; Maybe a
+</span><a href="GHC.Internal.Maybe.html#Just"><span class="hs-identifier hs-var">Just</span></a></span><span> </span><span class="annot"><span class="annottext">(Word8 -&gt; Maybe Word8) -&gt; Word8 -&gt; Maybe Word8
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="GHC.Internal.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">ConvArray Word8 -&gt; Int -&gt; Word8
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#indexWord8"><span class="hs-identifier hs-var">indexWord8</span></a></span><span> </span><span class="annot"><span class="annottext">ConvArray Word8
+</span><a href="#local-6989586621679637529"><span class="hs-identifier hs-var">values</span></a></span><span> </span><span class="annot"><span class="annottext">(Int -&gt; Word8) -&gt; Int -&gt; Word8
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="GHC.Internal.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637532"><span class="hs-identifier hs-var">j</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><a href="GHC.Internal.Num.html#%2B"><span class="hs-operator hs-var">+</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637533"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Bits a =&gt; a -&gt; a -&gt; a
+</span><a href="GHC.Internal.Bits.html#.%26."><span class="hs-operator hs-var">.&amp;.</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637535"><span class="hs-identifier hs-var">mask</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-167"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-168"></span><span>    </span><span id="local-6989586621679637533"><span class="annot"><span class="annottext">i :: Int
+</span><a href="#local-6989586621679637533"><span class="hs-identifier hs-var hs-var">i</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Char -&gt; Int
+forall a. Enum a =&gt; a -&gt; Int
+</span><a href="GHC.Internal.Enum.html#fromEnum"><span class="hs-identifier hs-var">fromEnum</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679637530"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-169"></span><span>    </span><span id="local-6989586621679637535"><span class="annot"><span class="annottext">mask :: Int
+</span><a href="#local-6989586621679637535"><span class="hs-identifier hs-var hs-var">mask</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Bits a =&gt; a -&gt; Int -&gt; a
+</span><a href="GHC.Internal.Bits.html#shiftL"><span class="hs-operator hs-var">`shiftL`</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637544"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><a href="GHC.Internal.Num.html#-"><span class="hs-glyph hs-var">-</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span>
+</span><span id="line-170"></span><span>    </span><span id="local-6989586621679637546"><span class="annot"><span class="annottext">k :: Int
+</span><a href="#local-6989586621679637546"><span class="hs-identifier hs-var hs-var">k</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637533"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Bits a =&gt; a -&gt; Int -&gt; a
+</span><a href="GHC.Internal.Bits.html#shiftR"><span class="hs-operator hs-var">`shiftR`</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637544"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-171"></span><span>    </span><span id="local-6989586621679637532"><span class="annot"><span class="annottext">j :: Int
+</span><a href="#local-6989586621679637532"><span class="hs-identifier hs-var hs-var">j</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ConvArray Int -&gt; Int -&gt; Int
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#indexInt"><span class="hs-identifier hs-var">indexInt</span></a></span><span> </span><span class="annot"><span class="annottext">ConvArray Int
+</span><a href="#local-6989586621679637528"><span class="hs-identifier hs-var">indexes</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679637546"><span class="hs-identifier hs-var">k</span></a></span><span>
+</span><span id="line-172"></span><span>    </span><span id="local-6989586621679637544"><span class="annot"><span class="annottext">n :: Int
+</span><a href="#local-6989586621679637544"><span class="hs-identifier hs-var hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#blockBitSize"><span class="hs-identifier hs-var">blockBitSize</span></a></span><span>
+</span><span id="line-173"></span><span>
+</span><span id="line-174"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#indexInt"><span class="hs-pragma hs-type">indexInt</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-175"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#indexInt"><span class="hs-identifier hs-type">indexInt</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#ConvArray"><span class="hs-identifier hs-type">ConvArray</span></a></span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Int"><span class="hs-identifier hs-type">Int</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Int"><span class="hs-identifier hs-type">Int</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Int"><span class="hs-identifier hs-type">Int</span></a></span><span>
+</span><span id="line-176"></span><span id="indexInt"><span class="annot"><span class="annottext">indexInt :: ConvArray Int -&gt; Int -&gt; Int
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#indexInt"><span class="hs-identifier hs-var hs-var">indexInt</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#ConvArray"><span class="hs-identifier hs-type">ConvArray</span></a></span><span> </span><span id="local-6989586621679637551"><span class="annot"><span class="annottext">Addr#
+</span><a href="#local-6989586621679637551"><span class="hs-identifier hs-var">p</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#I%23"><span class="hs-identifier hs-type">I#</span></a></span><span> </span><span id="local-6989586621679637552"><span class="annot"><span class="annottext">Int#
+</span><a href="#local-6989586621679637552"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int# -&gt; Int
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#I%23"><span class="hs-identifier hs-var">I#</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int16# -&gt; Int#
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Prim.html#int16ToInt%23"><span class="hs-identifier hs-var">int16ToInt#</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Addr# -&gt; Int# -&gt; Int16#
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Prim.html#indexInt16OffAddr%23"><span class="hs-identifier hs-var">indexInt16OffAddr#</span></a></span><span> </span><span class="annot"><span class="annottext">Addr#
+</span><a href="#local-6989586621679637551"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">Int#
+</span><a href="#local-6989586621679637552"><span class="hs-identifier hs-var">i</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-177"></span><span>
+</span><span id="line-178"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#indexWord8"><span class="hs-pragma hs-type">indexWord8</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-179"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#indexWord8"><span class="hs-identifier hs-type">indexWord8</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#ConvArray"><span class="hs-identifier hs-type">ConvArray</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.Word.html#Word8"><span class="hs-identifier hs-type">Word8</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Int"><span class="hs-identifier hs-type">Int</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.Word.html#Word8"><span class="hs-identifier hs-type">Word8</span></a></span><span>
+</span><span id="line-180"></span><span id="indexWord8"><span class="annot"><span class="annottext">indexWord8 :: ConvArray Word8 -&gt; Int -&gt; Word8
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#indexWord8"><span class="hs-identifier hs-var hs-var">indexWord8</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#ConvArray"><span class="hs-identifier hs-type">ConvArray</span></a></span><span> </span><span id="local-6989586621679637553"><span class="annot"><span class="annottext">Addr#
+</span><a href="#local-6989586621679637553"><span class="hs-identifier hs-var">p</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#I%23"><span class="hs-identifier hs-type">I#</span></a></span><span> </span><span id="local-6989586621679637554"><span class="annot"><span class="annottext">Int#
+</span><a href="#local-6989586621679637554"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8# -&gt; Word8
+</span><a href="GHC.Internal.Word.html#W8%23"><span class="hs-identifier hs-var">W8#</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Addr# -&gt; Int# -&gt; Word8#
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Prim.html#indexWord8OffAddr%23"><span class="hs-identifier hs-var">indexWord8OffAddr#</span></a></span><span> </span><span class="annot"><span class="annottext">Addr#
+</span><a href="#local-6989586621679637553"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">Int#
+</span><a href="#local-6989586621679637554"><span class="hs-identifier hs-var">i</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-181"></span><span>
+</span><span id="line-182"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#indexChar"><span class="hs-pragma hs-type">indexChar</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-183"></span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.html#indexChar"><span class="hs-identifier hs-type">indexChar</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#ConvArray"><span class="hs-identifier hs-type">ConvArray</span></a></span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Char"><span class="hs-identifier hs-type">Char</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Int"><span class="hs-identifier hs-type">Int</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Char"><span class="hs-identifier hs-type">Char</span></a></span><span>
+</span><span id="line-184"></span><span id="indexChar"><span class="annot"><span class="annottext">indexChar :: ConvArray Char -&gt; Int -&gt; Char
+</span><a href="GHC.Internal.IO.Encoding.CodePage.html#indexChar"><span class="hs-identifier hs-var hs-var">indexChar</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Encoding.CodePage.Table.html#ConvArray"><span class="hs-identifier hs-type">ConvArray</span></a></span><span> </span><span id="local-6989586621679637556"><span class="annot"><span class="annottext">Addr#
+</span><a href="#local-6989586621679637556"><span class="hs-identifier hs-var">p</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#I%23"><span class="hs-identifier hs-type">I#</span></a></span><span> </span><span id="local-6989586621679637557"><span class="annot"><span class="annottext">Int#
+</span><a href="#local-6989586621679637557"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Char# -&gt; Char
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#C%23"><span class="hs-identifier hs-var">C#</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int# -&gt; Char#
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Prim.html#chr%23"><span class="hs-identifier hs-var">chr#</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int16# -&gt; Int#
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Prim.html#int16ToInt%23"><span class="hs-identifier hs-var">int16ToInt#</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Addr# -&gt; Int# -&gt; Int16#
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Prim.html#indexInt16OffAddr%23"><span class="hs-identifier hs-var">indexInt16OffAddr#</span></a></span><span> </span><span class="annot"><span class="annottext">Addr#
+</span><a href="#local-6989586621679637556"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">Int#
+</span><a href="#local-6989586621679637557"><span class="hs-identifier hs-var">i</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-cpp">
+
+#endif
+</span><span>
+</span><span id="line-188"></span></pre></body></html>

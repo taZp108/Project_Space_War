@@ -1,0 +1,31 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LINE 1 &quot;libraries\\Win32\\System\\Win32\\SymbolicLink\\Internal.hsc&quot; #-}</span><span>
+</span><span id="line-1"></span><span class="hs-pragma">{-# LANGUAGE CPP #-}</span><span>
+</span><span id="line-2"></span><span class="hs-comment">{- |
+   Module      :  System.Win32.SymbolicLink.Internal
+   Copyright   :  2012 shelarcy
+   License     :  BSD-style
+
+   Maintainer  :  shelarcy@gmail.com
+   Stability   :  Provisional
+   Portability :  Non-portable (Win32 API)
+-}</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">System.Win32.SymbolicLink.Internal</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.Win32.Types</span><span class="hs-cpp">
+
+#include &quot;windows_cconv.h&quot;
+</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">type</span><span> </span><span class="hs-identifier">SymbolicLinkFlags</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">DWORD</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-identifier">sYMBOLIC_LINK_FLAG_FILE</span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SymbolicLinkFlags</span><span>
+</span><span id="line-20"></span><span class="annot"><a href="System.Win32.SymbolicLink.Internal.html#sYMBOLIC_LINK_FLAG_FILE"><span class="hs-identifier hs-type">sYMBOLIC_LINK_FLAG_FILE</span></a></span><span>       </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">0</span><span>
+</span><span id="line-21"></span><span id="sYMBOLIC_LINK_FLAG_FILE"></span><span class="hs-identifier">sYMBOLIC_LINK_FLAG_DIRECTORY</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SymbolicLinkFlags</span><span>
+</span><span id="line-22"></span><span class="annot"><a href="System.Win32.SymbolicLink.Internal.html#sYMBOLIC_LINK_FLAG_DIRECTORY"><span class="hs-identifier hs-type">sYMBOLIC_LINK_FLAG_DIRECTORY</span></a></span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">1</span><span>
+</span><span id="line-23"></span><span class="hs-identifier">sYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SymbolicLinkFlags</span><span>
+</span><span id="line-24"></span><span class="annot"><a href="System.Win32.SymbolicLink.Internal.html#sYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE"><span class="hs-identifier hs-type">sYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE</span></a></span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">2</span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-pragma">{-# LINE 24 &quot;libraries\\Win32\\System\\Win32\\SymbolicLink\\Internal.hsc&quot; #-}</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h CreateSymbolicLinkW&quot;</span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-identifier">c_CreateSymbolicLink</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">LPTSTR</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">LPTSTR</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">SymbolicLinkFlags</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">BOOL</span><span>
+</span><span id="line-27"></span></pre></body></html>

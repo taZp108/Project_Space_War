@@ -1,0 +1,545 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span>  </span><span class="hs-pragma">{-# LANGUAGE Trustworthy #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE CPP, NoImplicitPrelude #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- Module      :  GHC.Internal.IO.Handle.Windows</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Copyright   :  (c) The University of Glasgow, 2017</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- License     :  see libraries/base/LICENSE</span><span>
+</span><span id="line-9"></span><span class="hs-comment">--</span><span>
+</span><span id="line-10"></span><span class="hs-comment">-- Maintainer  :  libraries@haskell.org</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- Stability   :  internal</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- Portability :  non-portable</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--</span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- Handle operations implemented by Windows native handles</span><span>
+</span><span id="line-15"></span><span class="hs-comment">--</span><span>
+</span><span id="line-16"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html"><span class="hs-identifier">GHC.Internal.IO.Handle.Windows</span></a></span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-19"></span><span>  </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#stdin"><span class="hs-identifier">stdin</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#stdout"><span class="hs-identifier">stdout</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#stderr"><span class="hs-identifier">stderr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>  </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#openFile"><span class="hs-identifier">openFile</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#openBinaryFile"><span class="hs-identifier">openBinaryFile</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#openFileBlocking"><span class="hs-identifier">openFileBlocking</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>  </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#handleToHANDLE"><span class="hs-identifier">handleToHANDLE</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#mkHandleFromHANDLE"><span class="hs-identifier">mkHandleFromHANDLE</span></a></span><span>
+</span><span id="line-22"></span><span> </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.Data.Maybe.html"><span class="hs-identifier">GHC.Internal.Data.Maybe</span></a></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.Data.Typeable.html"><span class="hs-identifier">GHC.Internal.Data.Typeable</span></a></span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.Base.html"><span class="hs-identifier">GHC.Internal.Base</span></a></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.MVar.html"><span class="hs-identifier">GHC.Internal.MVar</span></a></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.html"><span class="hs-identifier">GHC.Internal.IO</span></a></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.BufferedIO.html"><span class="hs-identifier">GHC.Internal.IO.BufferedIO</span></a></span><span> </span><span class="hs-keyword">hiding</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.BufferedIO.html#flushWriteBuffer"><span class="hs-identifier">flushWriteBuffer</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.html"><span class="hs-identifier">GHC.Internal.IO.Encoding</span></a></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Device.html"><span class="hs-identifier">GHC.Internal.IO.Device</span></a></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">IODevice</span></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Exception.html"><span class="hs-identifier">GHC.Internal.IO.Exception</span></a></span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.IOMode.html"><span class="hs-identifier">GHC.Internal.IO.IOMode</span></a></span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html"><span class="hs-identifier">GHC.Internal.IO.Handle.Types</span></a></span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Internals.html"><span class="hs-identifier">GHC.Internal.IO.Handle.Internals</span></a></span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Windows.Handle.html"><span class="hs-identifier">GHC.Internal.IO.Windows.Handle</span></a></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Win</span></span><span>
+</span><span id="line-38"></span><span>
+</span><span id="line-39"></span><span class="hs-comment">-- ---------------------------------------------------------------------------</span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- Standard Handles</span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- Three handles are allocated during program initialisation.  The first</span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- two manage input or output from the Haskell program's standard input</span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- or output channel respectively.  The third manages output to the</span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- standard error channel. These handles are initially open.</span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span class="hs-comment">-- | If the std handles are redirected to file handles then WriteConsole etc</span><span>
+</span><span id="line-48"></span><span class="hs-comment">--   won't work anymore. When the handle is created test it and if it's a file</span><span>
+</span><span id="line-49"></span><span class="hs-comment">--   handle then just convert it to the proper IODevice so WriteFile is used</span><span>
+</span><span id="line-50"></span><span class="hs-comment">--   instead. This is done here so it's buffered and only happens once.</span><span>
+</span><span id="line-51"></span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#mkConsoleHandle"><span class="hs-identifier hs-type">mkConsoleHandle</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Windows.Handle.html#IoHandle"><span class="hs-identifier hs-type">Win.IoHandle</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Windows.Handle.html#ConsoleHandle"><span class="hs-identifier hs-type">Win.ConsoleHandle</span></a></span><span>
+</span><span id="line-52"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.html#FilePath"><span class="hs-identifier hs-type">FilePath</span></a></span><span>
+</span><span id="line-53"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#HandleType"><span class="hs-identifier hs-type">HandleType</span></a></span><span>
+</span><span id="line-54"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Bool"><span class="hs-identifier hs-type">Bool</span></a></span><span>                     </span><span class="hs-comment">-- buffered?</span><span>
+</span><span id="line-55"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Types.html#TextEncoding"><span class="hs-identifier hs-type">TextEncoding</span></a></span><span>
+</span><span id="line-56"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#NewlineMode"><span class="hs-identifier hs-type">NewlineMode</span></a></span><span>
+</span><span id="line-57"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Internals.html#HandleFinalizer"><span class="hs-identifier hs-type">HandleFinalizer</span></a></span><span>
+</span><span id="line-58"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.MVar.html#MVar"><span class="hs-identifier hs-type">MVar</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#Handle__"><span class="hs-identifier hs-type">Handle__</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#Handle"><span class="hs-identifier hs-type">Handle</span></a></span><span>
+</span><span id="line-60"></span><span id="mkConsoleHandle"><span class="annot"><span class="annottext">mkConsoleHandle :: IoHandle ConsoleHandle
+-&gt; FilePath
+-&gt; HandleType
+-&gt; Bool
+-&gt; Maybe TextEncoding
+-&gt; NewlineMode
+-&gt; Maybe HandleFinalizer
+-&gt; Maybe (MVar Handle__)
+-&gt; IO Handle
+</span><a href="GHC.Internal.IO.Handle.Windows.html#mkConsoleHandle"><span class="hs-identifier hs-var hs-var">mkConsoleHandle</span></a></span></span><span> </span><span id="local-6989586621679645794"><span class="annot"><span class="annottext">IoHandle ConsoleHandle
+</span><a href="#local-6989586621679645794"><span class="hs-identifier hs-var">dev</span></a></span></span><span> </span><span id="local-6989586621679645795"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645795"><span class="hs-identifier hs-var">filepath</span></a></span></span><span> </span><span id="local-6989586621679645796"><span class="annot"><span class="annottext">HandleType
+</span><a href="#local-6989586621679645796"><span class="hs-identifier hs-var">ha_type</span></a></span></span><span> </span><span id="local-6989586621679645797"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679645797"><span class="hs-identifier hs-var">buffered</span></a></span></span><span> </span><span id="local-6989586621679645798"><span class="annot"><span class="annottext">Maybe TextEncoding
+</span><a href="#local-6989586621679645798"><span class="hs-identifier hs-var">mb_codec</span></a></span></span><span> </span><span id="local-6989586621679645799"><span class="annot"><span class="annottext">NewlineMode
+</span><a href="#local-6989586621679645799"><span class="hs-identifier hs-var">nl</span></a></span></span><span> </span><span id="local-6989586621679645800"><span class="annot"><span class="annottext">Maybe HandleFinalizer
+</span><a href="#local-6989586621679645800"><span class="hs-identifier hs-var">finalizer</span></a></span></span><span> </span><span id="local-6989586621679645801"><span class="annot"><span class="annottext">Maybe (MVar Handle__)
+</span><a href="#local-6989586621679645801"><span class="hs-identifier hs-var">other_side</span></a></span></span><span>
+</span><span id="line-61"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span> </span><span id="local-6989586621679645802"><span class="annot"><a href="#local-6989586621679645802"><span class="hs-identifier hs-var">isTerm</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IoHandle ConsoleHandle -&gt; IO Bool
+forall a. IODevice a =&gt; a -&gt; IO Bool
+</span><a href="GHC.Internal.IO.Device.html#isTerminal"><span class="hs-identifier hs-var">IODevice.isTerminal</span></a></span><span> </span><span class="annot"><span class="annottext">IoHandle ConsoleHandle
+</span><a href="#local-6989586621679645794"><span class="hs-identifier hs-var">dev</span></a></span><span>
+</span><span id="line-62"></span><span>      </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="#local-6989586621679645802"><span class="hs-identifier hs-type">isTerm</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-63"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#True"><span class="hs-identifier hs-var">True</span></a></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IoHandle ConsoleHandle
+-&gt; FilePath
+-&gt; HandleType
+-&gt; Bool
+-&gt; Maybe TextEncoding
+-&gt; NewlineMode
+-&gt; Maybe HandleFinalizer
+-&gt; Maybe (MVar Handle__)
+-&gt; IO Handle
+forall dev.
+(RawIO dev, IODevice dev, BufferedIO dev, Typeable dev) =&gt;
+dev
+-&gt; FilePath
+-&gt; HandleType
+-&gt; Bool
+-&gt; Maybe TextEncoding
+-&gt; NewlineMode
+-&gt; Maybe HandleFinalizer
+-&gt; Maybe (MVar Handle__)
+-&gt; IO Handle
+</span><a href="GHC.Internal.IO.Handle.Internals.html#mkHandle"><span class="hs-identifier hs-var">mkHandle</span></a></span><span> </span><span class="annot"><span class="annottext">IoHandle ConsoleHandle
+</span><a href="#local-6989586621679645794"><span class="hs-identifier hs-var">dev</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645795"><span class="hs-identifier hs-var">filepath</span></a></span><span> </span><span class="annot"><span class="annottext">HandleType
+</span><a href="#local-6989586621679645796"><span class="hs-identifier hs-var">ha_type</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679645797"><span class="hs-identifier hs-var">buffered</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe TextEncoding
+</span><a href="#local-6989586621679645798"><span class="hs-identifier hs-var">mb_codec</span></a></span><span> </span><span class="annot"><span class="annottext">NewlineMode
+</span><a href="#local-6989586621679645799"><span class="hs-identifier hs-var">nl</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe HandleFinalizer
+</span><a href="#local-6989586621679645800"><span class="hs-identifier hs-var">finalizer</span></a></span><span>
+</span><span id="line-64"></span><span>                          </span><span class="annot"><span class="annottext">Maybe (MVar Handle__)
+</span><a href="#local-6989586621679645801"><span class="hs-identifier hs-var">other_side</span></a></span><span>
+</span><span id="line-65"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#False"><span class="hs-identifier hs-var">False</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Io NativeHandle
+-&gt; FilePath
+-&gt; HandleType
+-&gt; Bool
+-&gt; Maybe TextEncoding
+-&gt; NewlineMode
+-&gt; Maybe HandleFinalizer
+-&gt; Maybe (MVar Handle__)
+-&gt; IO Handle
+forall dev.
+(RawIO dev, IODevice dev, BufferedIO dev, Typeable dev) =&gt;
+dev
+-&gt; FilePath
+-&gt; HandleType
+-&gt; Bool
+-&gt; Maybe TextEncoding
+-&gt; NewlineMode
+-&gt; Maybe HandleFinalizer
+-&gt; Maybe (MVar Handle__)
+-&gt; IO Handle
+</span><a href="GHC.Internal.IO.Handle.Internals.html#mkHandle"><span class="hs-identifier hs-var">mkHandle</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IoHandle ConsoleHandle -&gt; Bool -&gt; Io NativeHandle
+</span><a href="GHC.Internal.IO.Windows.Handle.html#convertHandle"><span class="hs-identifier hs-var">Win.convertHandle</span></a></span><span> </span><span class="annot"><span class="annottext">IoHandle ConsoleHandle
+</span><a href="#local-6989586621679645794"><span class="hs-identifier hs-var">dev</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#False"><span class="hs-identifier hs-var">False</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645795"><span class="hs-identifier hs-var">filepath</span></a></span><span> </span><span class="annot"><span class="annottext">HandleType
+</span><a href="#local-6989586621679645796"><span class="hs-identifier hs-var">ha_type</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679645797"><span class="hs-identifier hs-var">buffered</span></a></span><span>
+</span><span id="line-66"></span><span>                            </span><span class="annot"><span class="annottext">Maybe TextEncoding
+</span><a href="#local-6989586621679645798"><span class="hs-identifier hs-var">mb_codec</span></a></span><span> </span><span class="annot"><span class="annottext">NewlineMode
+</span><a href="#local-6989586621679645799"><span class="hs-identifier hs-var">nl</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe HandleFinalizer
+</span><a href="#local-6989586621679645800"><span class="hs-identifier hs-var">finalizer</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (MVar Handle__)
+</span><a href="#local-6989586621679645801"><span class="hs-identifier hs-var">other_side</span></a></span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span class="annot"><span class="hs-comment">-- | A handle managing input from the Haskell program's standard input channel.</span></span><span>
+</span><span id="line-69"></span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#stdin"><span class="hs-identifier hs-type">stdin</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#Handle"><span class="hs-identifier hs-type">Handle</span></a></span><span>
+</span><span id="line-70"></span><span class="hs-pragma">{-# NOINLINE</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#stdin"><span class="hs-pragma hs-type">stdin</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-71"></span><span id="stdin"><span class="annot"><span class="annottext">stdin :: Handle
+</span><a href="GHC.Internal.IO.Handle.Windows.html#stdin"><span class="hs-identifier hs-var hs-var">stdin</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO Handle -&gt; Handle
+forall a. IO a -&gt; a
+</span><a href="GHC.Internal.IO.Unsafe.html#unsafePerformIO"><span class="hs-identifier hs-var">unsafePerformIO</span></a></span><span> </span><span class="annot"><span class="annottext">(IO Handle -&gt; Handle) -&gt; IO Handle -&gt; Handle
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="GHC.Internal.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-72"></span><span>   </span><span id="local-6989586621679645807"><span class="annot"><a href="#local-6989586621679645807"><span class="hs-identifier hs-var">enc</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.html#getLocaleEncoding"><span class="hs-identifier hs-var">getLocaleEncoding</span></a></span><span>
+</span><span id="line-73"></span><span>   </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#mkConsoleHandle"><span class="hs-identifier hs-type">mkConsoleHandle</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Windows.Handle.html#stdin"><span class="hs-identifier hs-type">Win.stdin</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;&lt;stdin&gt;&quot;</span></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#ReadHandle"><span class="hs-identifier hs-type">ReadHandle</span></a></span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#True"><span class="hs-identifier hs-type">True</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645807"><span class="hs-identifier hs-type">enc</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span>                   </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#nativeNewlineMode"><span class="hs-identifier hs-type">nativeNewlineMode</span></a></span><span class="hs-comment">{-translate newlines-}</span><span>
+</span><span id="line-75"></span><span>                   </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#stdHandleFinalizer"><span class="hs-identifier hs-type">stdHandleFinalizer</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="GHC.Internal.Maybe.html#Nothing"><span class="hs-identifier hs-type">Nothing</span></a></span><span>
+</span><span id="line-76"></span><span>
+</span><span id="line-77"></span><span class="annot"><span class="hs-comment">-- | A handle managing output to the Haskell program's standard output channel.</span></span><span>
+</span><span id="line-78"></span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#stdout"><span class="hs-identifier hs-type">stdout</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#Handle"><span class="hs-identifier hs-type">Handle</span></a></span><span>
+</span><span id="line-79"></span><span class="hs-pragma">{-# NOINLINE</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#stdout"><span class="hs-pragma hs-type">stdout</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-80"></span><span id="stdout"><span class="annot"><span class="annottext">stdout :: Handle
+</span><a href="GHC.Internal.IO.Handle.Windows.html#stdout"><span class="hs-identifier hs-var hs-var">stdout</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO Handle -&gt; Handle
+forall a. IO a -&gt; a
+</span><a href="GHC.Internal.IO.Unsafe.html#unsafePerformIO"><span class="hs-identifier hs-var">unsafePerformIO</span></a></span><span> </span><span class="annot"><span class="annottext">(IO Handle -&gt; Handle) -&gt; IO Handle -&gt; Handle
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="GHC.Internal.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-81"></span><span>   </span><span id="local-6989586621679645813"><span class="annot"><a href="#local-6989586621679645813"><span class="hs-identifier hs-var">enc</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.html#getLocaleEncoding"><span class="hs-identifier hs-var">getLocaleEncoding</span></a></span><span>
+</span><span id="line-82"></span><span>   </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#mkConsoleHandle"><span class="hs-identifier hs-type">mkConsoleHandle</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Windows.Handle.html#stdout"><span class="hs-identifier hs-type">Win.stdout</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;&lt;stdout&gt;&quot;</span></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#WriteHandle"><span class="hs-identifier hs-type">WriteHandle</span></a></span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#True"><span class="hs-identifier hs-type">True</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645813"><span class="hs-identifier hs-type">enc</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-83"></span><span>                   </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#nativeNewlineMode"><span class="hs-identifier hs-type">nativeNewlineMode</span></a></span><span class="hs-comment">{-translate newlines-}</span><span>
+</span><span id="line-84"></span><span>                   </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#stdHandleFinalizer"><span class="hs-identifier hs-type">stdHandleFinalizer</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="GHC.Internal.Maybe.html#Nothing"><span class="hs-identifier hs-type">Nothing</span></a></span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="annot"><span class="hs-comment">-- | A handle managing output to the Haskell program's standard error channel.</span></span><span>
+</span><span id="line-87"></span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#stderr"><span class="hs-identifier hs-type">stderr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#Handle"><span class="hs-identifier hs-type">Handle</span></a></span><span>
+</span><span id="line-88"></span><span class="hs-pragma">{-# NOINLINE</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#stderr"><span class="hs-pragma hs-type">stderr</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-89"></span><span id="stderr"><span class="annot"><span class="annottext">stderr :: Handle
+</span><a href="GHC.Internal.IO.Handle.Windows.html#stderr"><span class="hs-identifier hs-var hs-var">stderr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO Handle -&gt; Handle
+forall a. IO a -&gt; a
+</span><a href="GHC.Internal.IO.Unsafe.html#unsafePerformIO"><span class="hs-identifier hs-var">unsafePerformIO</span></a></span><span> </span><span class="annot"><span class="annottext">(IO Handle -&gt; Handle) -&gt; IO Handle -&gt; Handle
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="GHC.Internal.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-90"></span><span>   </span><span id="local-6989586621679645816"><span class="annot"><a href="#local-6989586621679645816"><span class="hs-identifier hs-var">enc</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO TextEncoding
+</span><a href="GHC.Internal.IO.Encoding.html#getLocaleEncoding"><span class="hs-identifier hs-var">getLocaleEncoding</span></a></span><span>
+</span><span id="line-91"></span><span>   </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#mkConsoleHandle"><span class="hs-identifier hs-type">mkConsoleHandle</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Windows.Handle.html#stderr"><span class="hs-identifier hs-type">Win.stderr</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;&lt;stderr&gt;&quot;</span></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#WriteHandle"><span class="hs-identifier hs-type">WriteHandle</span></a></span><span>
+</span><span id="line-92"></span><span>                   </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#False"><span class="hs-identifier hs-type">False</span></a></span><span class="hs-comment">{-stderr is unbuffered-}</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645816"><span class="hs-identifier hs-type">enc</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-93"></span><span>                   </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#nativeNewlineMode"><span class="hs-identifier hs-type">nativeNewlineMode</span></a></span><span class="hs-comment">{-translate newlines-}</span><span>
+</span><span id="line-94"></span><span>                  </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#stdHandleFinalizer"><span class="hs-identifier hs-type">stdHandleFinalizer</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="GHC.Internal.Maybe.html#Nothing"><span class="hs-identifier hs-type">Nothing</span></a></span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#stdHandleFinalizer"><span class="hs-identifier hs-type">stdHandleFinalizer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.html#FilePath"><span class="hs-identifier hs-type">FilePath</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.MVar.html#MVar"><span class="hs-identifier hs-type">MVar</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#Handle__"><span class="hs-identifier hs-type">Handle__</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-97"></span><span id="stdHandleFinalizer"><span class="annot"><span class="annottext">stdHandleFinalizer :: HandleFinalizer
+</span><a href="GHC.Internal.IO.Handle.Windows.html#stdHandleFinalizer"><span class="hs-identifier hs-var hs-var">stdHandleFinalizer</span></a></span></span><span> </span><span id="local-6989586621679645818"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645818"><span class="hs-identifier hs-var">fp</span></a></span></span><span> </span><span id="local-6989586621679645819"><span class="annot"><span class="annottext">MVar Handle__
+</span><a href="#local-6989586621679645819"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-98"></span><span>  </span><span id="local-6989586621679645820"><span class="annot"><a href="#local-6989586621679645820"><span class="hs-identifier hs-var">h_</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MVar Handle__ -&gt; IO Handle__
+forall a. MVar a -&gt; IO a
+</span><a href="GHC.Internal.MVar.html#takeMVar"><span class="hs-identifier hs-var">takeMVar</span></a></span><span> </span><span class="annot"><span class="annottext">MVar Handle__
+</span><a href="#local-6989586621679645819"><span class="hs-identifier hs-var">m</span></a></span><span>
+</span><span id="line-99"></span><span>  </span><span class="annot"><a href="GHC.Internal.IO.Handle.Internals.html#flushWriteBuffer"><span class="hs-identifier hs-type">flushWriteBuffer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645820"><span class="hs-identifier hs-type">h_</span></a></span><span>
+</span><span id="line-100"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#haType"><span class="hs-identifier hs-var">haType</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645820"><span class="hs-identifier hs-type">h_</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-101"></span><span>      </span><span class="annot"><span class="annottext">HandleType
+</span><a href="GHC.Internal.IO.Handle.Types.html#ClosedHandle"><span class="hs-identifier hs-var">ClosedHandle</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; IO ()
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><a href="GHC.Internal.Base.html#return"><span class="hs-identifier hs-var">return</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-102"></span><span>      </span><span id="local-6989586621679645825"><span class="annot"><span class="annottext">HandleType
+</span><a href="#local-6989586621679645825"><span class="hs-identifier hs-var">_other</span></a></span></span><span>       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Handle__ -&gt; IO ()
+</span><a href="GHC.Internal.IO.Handle.Internals.html#closeTextCodecs"><span class="hs-identifier hs-var">closeTextCodecs</span></a></span><span> </span><span class="annot"><span class="annottext">Handle__
+</span><a href="#local-6989586621679645820"><span class="hs-identifier hs-var">h_</span></a></span><span>
+</span><span id="line-103"></span><span>  </span><span class="annot"><a href="GHC.Internal.MVar.html#putMVar"><span class="hs-identifier hs-type">putMVar</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645819"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Handle.Internals.html#ioe_finalizedHandle"><span class="hs-identifier hs-type">ioe_finalizedHandle</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645818"><span class="hs-identifier hs-type">fp</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-104"></span><span>
+</span><span id="line-105"></span><span class="hs-comment">-- ---------------------------------------------------------------------------</span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- Opening and Closing Files</span><span>
+</span><span id="line-107"></span><span>
+</span><span id="line-108"></span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#addFilePathToIOError"><span class="hs-identifier hs-type">addFilePathToIOError</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.Base.html#String"><span class="hs-identifier hs-type">String</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.html#FilePath"><span class="hs-identifier hs-type">FilePath</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Exception.html#IOException"><span class="hs-identifier hs-type">IOException</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Exception.html#IOException"><span class="hs-identifier hs-type">IOException</span></a></span><span>
+</span><span id="line-109"></span><span id="addFilePathToIOError"><span class="annot"><span class="annottext">addFilePathToIOError :: FilePath -&gt; FilePath -&gt; IOException -&gt; IOException
+</span><a href="GHC.Internal.IO.Handle.Windows.html#addFilePathToIOError"><span class="hs-identifier hs-var hs-var">addFilePathToIOError</span></a></span></span><span> </span><span id="local-6989586621679645830"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645830"><span class="hs-identifier hs-var">fun</span></a></span></span><span> </span><span id="local-6989586621679645831"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645831"><span class="hs-identifier hs-var">fp</span></a></span></span><span> </span><span id="local-6989586621679645832"><span class="annot"><span class="annottext">IOException
+</span><a href="#local-6989586621679645832"><span class="hs-identifier hs-var">ioe</span></a></span></span><span>
+</span><span id="line-110"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IOException
+</span><a href="#local-6989586621679645832"><span class="hs-identifier hs-var">ioe</span></a></span><span class="hs-special">{</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Exception.html#ioe_location"><span class="hs-identifier hs-var">ioe_location</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679645830"><span class="hs-identifier hs-type">fun</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Exception.html#ioe_filename"><span class="hs-identifier hs-var">ioe_filename</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="GHC.Internal.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645831"><span class="hs-identifier hs-type">fp</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-111"></span><span>
+</span><span id="line-112"></span><span class="hs-comment">-- | Computation 'openFile' @file mode@ allocates and returns a new, open</span><span>
+</span><span id="line-113"></span><span class="hs-comment">-- handle to manage the file @file@.  It manages input if @mode@</span><span>
+</span><span id="line-114"></span><span class="hs-comment">-- is 'ReadMode', output if @mode@ is 'WriteMode' or 'AppendMode',</span><span>
+</span><span id="line-115"></span><span class="hs-comment">-- and both input and output if mode is 'ReadWriteMode'.</span><span>
+</span><span id="line-116"></span><span class="hs-comment">--</span><span>
+</span><span id="line-117"></span><span class="hs-comment">-- If the file does not exist and it is opened for output, it should be</span><span>
+</span><span id="line-118"></span><span class="hs-comment">-- created as a new file.  If @mode@ is 'WriteMode' and the file</span><span>
+</span><span id="line-119"></span><span class="hs-comment">-- already exists, then it should be truncated to zero length.</span><span>
+</span><span id="line-120"></span><span class="hs-comment">-- Some operating systems delete empty files, so there is no guarantee</span><span>
+</span><span id="line-121"></span><span class="hs-comment">-- that the file will exist following an 'openFile' with @mode@</span><span>
+</span><span id="line-122"></span><span class="hs-comment">-- 'WriteMode' unless it is subsequently written to successfully.</span><span>
+</span><span id="line-123"></span><span class="hs-comment">-- The handle is positioned at the end of the file if @mode@ is</span><span>
+</span><span id="line-124"></span><span class="hs-comment">-- 'AppendMode', and otherwise at the beginning (in which case its</span><span>
+</span><span id="line-125"></span><span class="hs-comment">-- internal position is 0).</span><span>
+</span><span id="line-126"></span><span class="hs-comment">-- The initial buffer mode is implementation-dependent.</span><span>
+</span><span id="line-127"></span><span class="hs-comment">--</span><span>
+</span><span id="line-128"></span><span class="hs-comment">-- This operation may fail with:</span><span>
+</span><span id="line-129"></span><span class="hs-comment">--</span><span>
+</span><span id="line-130"></span><span class="hs-comment">--  * 'isAlreadyInUseError' if the file is already open and cannot be reopened;</span><span>
+</span><span id="line-131"></span><span class="hs-comment">--</span><span>
+</span><span id="line-132"></span><span class="hs-comment">--  * 'isDoesNotExistError' if the file does not exist; or</span><span>
+</span><span id="line-133"></span><span class="hs-comment">--</span><span>
+</span><span id="line-134"></span><span class="hs-comment">--  * 'isPermissionError' if the user does not have permission to open the file.</span><span>
+</span><span id="line-135"></span><span class="hs-comment">--</span><span>
+</span><span id="line-136"></span><span class="hs-comment">-- Note: if you will be working with files containing binary data, you'll want to</span><span>
+</span><span id="line-137"></span><span class="hs-comment">-- be using 'openBinaryFile'.</span><span>
+</span><span id="line-138"></span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#openFile"><span class="hs-identifier hs-type">openFile</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.html#FilePath"><span class="hs-identifier hs-type">FilePath</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.IOMode.html#IOMode"><span class="hs-identifier hs-type">IOMode</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#Handle"><span class="hs-identifier hs-type">Handle</span></a></span><span>
+</span><span id="line-139"></span><span id="openFile"><span class="annot"><span class="annottext">openFile :: FilePath -&gt; IOMode -&gt; IO Handle
+</span><a href="GHC.Internal.IO.Handle.Windows.html#openFile"><span class="hs-identifier hs-var hs-var">openFile</span></a></span></span><span> </span><span id="local-6989586621679645839"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645839"><span class="hs-identifier hs-var">fp</span></a></span></span><span> </span><span id="local-6989586621679645840"><span class="annot"><span class="annottext">IOMode
+</span><a href="#local-6989586621679645840"><span class="hs-identifier hs-var">im</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-140"></span><span>  </span><span class="annot"><span class="annottext">IO Handle -&gt; (IOException -&gt; IO Handle) -&gt; IO Handle
+forall e a. Exception e =&gt; IO a -&gt; (e -&gt; IO a) -&gt; IO a
+</span><a href="GHC.Internal.IO.html#catchException"><span class="hs-identifier hs-var">catchException</span></a></span><span>
+</span><span id="line-141"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FilePath -&gt; IOMode -&gt; Bool -&gt; Bool -&gt; IO Handle
+</span><a href="GHC.Internal.IO.Handle.Windows.html#openFile%27"><span class="hs-identifier hs-var">openFile'</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645839"><span class="hs-identifier hs-var">fp</span></a></span><span> </span><span class="annot"><span class="annottext">IOMode
+</span><a href="#local-6989586621679645840"><span class="hs-identifier hs-var">im</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="GHC.Internal.IO.Handle.Windows.html#dEFAULT_OPEN_IN_BINARY_MODE"><span class="hs-identifier hs-var">dEFAULT_OPEN_IN_BINARY_MODE</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#True"><span class="hs-identifier hs-var">True</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-142"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679645844"><span class="annot"><span class="annottext">IOException
+</span><a href="#local-6989586621679645844"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IOException -&gt; IO Handle
+forall a. IOException -&gt; IO a
+</span><a href="GHC.Internal.IO.Exception.html#ioError"><span class="hs-identifier hs-var">ioError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FilePath -&gt; FilePath -&gt; IOException -&gt; IOException
+</span><a href="GHC.Internal.IO.Handle.Windows.html#addFilePathToIOError"><span class="hs-identifier hs-var">addFilePathToIOError</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;openFile&quot;</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645839"><span class="hs-identifier hs-var">fp</span></a></span><span> </span><span class="annot"><span class="annottext">IOException
+</span><a href="#local-6989586621679645844"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-143"></span><span>
+</span><span id="line-144"></span><span class="hs-comment">-- | Like 'openFile', but opens the file in ordinary blocking mode.</span><span>
+</span><span id="line-145"></span><span class="hs-comment">-- This can be useful for opening a FIFO for writing: if we open in</span><span>
+</span><span id="line-146"></span><span class="hs-comment">-- non-blocking mode then the open will fail if there are no readers,</span><span>
+</span><span id="line-147"></span><span class="hs-comment">-- whereas a blocking open will block until a reader appear.</span><span>
+</span><span id="line-148"></span><span class="hs-comment">--</span><span>
+</span><span id="line-149"></span><span class="hs-comment">-- @since base-4.4.0.0</span><span>
+</span><span id="line-150"></span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#openFileBlocking"><span class="hs-identifier hs-type">openFileBlocking</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.html#FilePath"><span class="hs-identifier hs-type">FilePath</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.IOMode.html#IOMode"><span class="hs-identifier hs-type">IOMode</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#Handle"><span class="hs-identifier hs-type">Handle</span></a></span><span>
+</span><span id="line-151"></span><span id="openFileBlocking"><span class="annot"><span class="annottext">openFileBlocking :: FilePath -&gt; IOMode -&gt; IO Handle
+</span><a href="GHC.Internal.IO.Handle.Windows.html#openFileBlocking"><span class="hs-identifier hs-var hs-var">openFileBlocking</span></a></span></span><span> </span><span id="local-6989586621679645846"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645846"><span class="hs-identifier hs-var">fp</span></a></span></span><span> </span><span id="local-6989586621679645847"><span class="annot"><span class="annottext">IOMode
+</span><a href="#local-6989586621679645847"><span class="hs-identifier hs-var">im</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-152"></span><span>  </span><span class="annot"><span class="annottext">IO Handle -&gt; (IOException -&gt; IO Handle) -&gt; IO Handle
+forall e a. Exception e =&gt; IO a -&gt; (e -&gt; IO a) -&gt; IO a
+</span><a href="GHC.Internal.IO.html#catchException"><span class="hs-identifier hs-var">catchException</span></a></span><span>
+</span><span id="line-153"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FilePath -&gt; IOMode -&gt; Bool -&gt; Bool -&gt; IO Handle
+</span><a href="GHC.Internal.IO.Handle.Windows.html#openFile%27"><span class="hs-identifier hs-var">openFile'</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645846"><span class="hs-identifier hs-var">fp</span></a></span><span> </span><span class="annot"><span class="annottext">IOMode
+</span><a href="#local-6989586621679645847"><span class="hs-identifier hs-var">im</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="GHC.Internal.IO.Handle.Windows.html#dEFAULT_OPEN_IN_BINARY_MODE"><span class="hs-identifier hs-var">dEFAULT_OPEN_IN_BINARY_MODE</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#False"><span class="hs-identifier hs-var">False</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-154"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679645848"><span class="annot"><span class="annottext">IOException
+</span><a href="#local-6989586621679645848"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IOException -&gt; IO Handle
+forall a. IOException -&gt; IO a
+</span><a href="GHC.Internal.IO.Exception.html#ioError"><span class="hs-identifier hs-var">ioError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FilePath -&gt; FilePath -&gt; IOException -&gt; IOException
+</span><a href="GHC.Internal.IO.Handle.Windows.html#addFilePathToIOError"><span class="hs-identifier hs-var">addFilePathToIOError</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;openFileBlocking&quot;</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645846"><span class="hs-identifier hs-var">fp</span></a></span><span> </span><span class="annot"><span class="annottext">IOException
+</span><a href="#local-6989586621679645848"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-155"></span><span>
+</span><span id="line-156"></span><span class="hs-comment">-- | Like 'openFile', but open the file in binary mode.</span><span>
+</span><span id="line-157"></span><span class="hs-comment">-- On Windows, reading a file in text mode (which is the default)</span><span>
+</span><span id="line-158"></span><span class="hs-comment">-- will translate CRLF to LF, and writing will translate LF to CRLF.</span><span>
+</span><span id="line-159"></span><span class="hs-comment">-- This is usually what you want with text files.  With binary files</span><span>
+</span><span id="line-160"></span><span class="hs-comment">-- this is undesirable; also, as usual under Microsoft operating systems,</span><span>
+</span><span id="line-161"></span><span class="hs-comment">-- text mode treats control-Z as EOF.  Binary mode turns off all special</span><span>
+</span><span id="line-162"></span><span class="hs-comment">-- treatment of end-of-line and end-of-file characters.</span><span>
+</span><span id="line-163"></span><span class="hs-comment">-- (See also 'hSetBinaryMode'.)</span><span>
+</span><span id="line-164"></span><span>
+</span><span id="line-165"></span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#openBinaryFile"><span class="hs-identifier hs-type">openBinaryFile</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.html#FilePath"><span class="hs-identifier hs-type">FilePath</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.IOMode.html#IOMode"><span class="hs-identifier hs-type">IOMode</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#Handle"><span class="hs-identifier hs-type">Handle</span></a></span><span>
+</span><span id="line-166"></span><span id="openBinaryFile"><span class="annot"><span class="annottext">openBinaryFile :: FilePath -&gt; IOMode -&gt; IO Handle
+</span><a href="GHC.Internal.IO.Handle.Windows.html#openBinaryFile"><span class="hs-identifier hs-var hs-var">openBinaryFile</span></a></span></span><span> </span><span id="local-6989586621679645849"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645849"><span class="hs-identifier hs-var">fp</span></a></span></span><span> </span><span id="local-6989586621679645850"><span class="annot"><span class="annottext">IOMode
+</span><a href="#local-6989586621679645850"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-167"></span><span>  </span><span class="annot"><span class="annottext">IO Handle -&gt; (IOException -&gt; IO Handle) -&gt; IO Handle
+forall e a. Exception e =&gt; IO a -&gt; (e -&gt; IO a) -&gt; IO a
+</span><a href="GHC.Internal.IO.html#catchException"><span class="hs-identifier hs-var">catchException</span></a></span><span>
+</span><span id="line-168"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FilePath -&gt; IOMode -&gt; Bool -&gt; Bool -&gt; IO Handle
+</span><a href="GHC.Internal.IO.Handle.Windows.html#openFile%27"><span class="hs-identifier hs-var">openFile'</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645849"><span class="hs-identifier hs-var">fp</span></a></span><span> </span><span class="annot"><span class="annottext">IOMode
+</span><a href="#local-6989586621679645850"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#True"><span class="hs-identifier hs-var">True</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#True"><span class="hs-identifier hs-var">True</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-169"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679645851"><span class="annot"><span class="annottext">IOException
+</span><a href="#local-6989586621679645851"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IOException -&gt; IO Handle
+forall a. IOException -&gt; IO a
+</span><a href="GHC.Internal.IO.Exception.html#ioError"><span class="hs-identifier hs-var">ioError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FilePath -&gt; FilePath -&gt; IOException -&gt; IOException
+</span><a href="GHC.Internal.IO.Handle.Windows.html#addFilePathToIOError"><span class="hs-identifier hs-var">addFilePathToIOError</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;openBinaryFile&quot;</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645849"><span class="hs-identifier hs-var">fp</span></a></span><span> </span><span class="annot"><span class="annottext">IOException
+</span><a href="#local-6989586621679645851"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-170"></span><span>
+</span><span id="line-171"></span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#openFile%27"><span class="hs-identifier hs-type">openFile'</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.Base.html#String"><span class="hs-identifier hs-type">String</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.IOMode.html#IOMode"><span class="hs-identifier hs-type">IOMode</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Bool"><span class="hs-identifier hs-type">Bool</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Bool"><span class="hs-identifier hs-type">Bool</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#Handle"><span class="hs-identifier hs-type">Handle</span></a></span><span>
+</span><span id="line-172"></span><span id="openFile%27"><span class="annot"><span class="annottext">openFile' :: FilePath -&gt; IOMode -&gt; Bool -&gt; Bool -&gt; IO Handle
+</span><a href="GHC.Internal.IO.Handle.Windows.html#openFile%27"><span class="hs-identifier hs-var hs-var">openFile'</span></a></span></span><span> </span><span id="local-6989586621679645852"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645852"><span class="hs-identifier hs-var">filepath</span></a></span></span><span> </span><span id="local-6989586621679645853"><span class="annot"><span class="annottext">IOMode
+</span><a href="#local-6989586621679645853"><span class="hs-identifier hs-var">iomode</span></a></span></span><span> </span><span id="local-6989586621679645854"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679645854"><span class="hs-identifier hs-var">binary</span></a></span></span><span> </span><span id="local-6989586621679645855"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679645855"><span class="hs-identifier hs-var">non_blocking</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-173"></span><span>  </span><span class="hs-comment">-- first open the file to get a Win32 handle</span><span>
+</span><span id="line-174"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679645856"><span class="annot"><a href="#local-6989586621679645856"><span class="hs-identifier hs-var">hwnd</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679645857"><span class="annot"><a href="#local-6989586621679645857"><span class="hs-identifier hs-var">hwnd_type</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IOMode -&gt; Bool -&gt; IO (Io NativeHandle, IODeviceType)
+</span><a href="GHC.Internal.IO.Windows.Handle.html#openFile"><span class="hs-identifier hs-var">Win.openFile</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645852"><span class="hs-identifier hs-var">filepath</span></a></span><span> </span><span class="annot"><span class="annottext">IOMode
+</span><a href="#local-6989586621679645853"><span class="hs-identifier hs-var">iomode</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679645855"><span class="hs-identifier hs-var">non_blocking</span></a></span><span>
+</span><span id="line-175"></span><span>
+</span><span id="line-176"></span><span>  </span><span id="local-6989586621679645859"><span class="annot"><a href="#local-6989586621679645859"><span class="hs-identifier hs-var">mb_codec</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><a href="#local-6989586621679645854"><span class="hs-identifier hs-type">binary</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><a href="GHC.Internal.Base.html#return"><span class="hs-identifier hs-type">return</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.Maybe.html#Nothing"><span class="hs-identifier hs-type">Nothing</span></a></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><a href="GHC.Internal.Base.html#fmap"><span class="hs-identifier hs-type">fmap</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.html#getLocaleEncoding"><span class="hs-identifier hs-type">getLocaleEncoding</span></a></span><span>
+</span><span id="line-177"></span><span>
+</span><span id="line-178"></span><span>  </span><span class="hs-comment">-- then use it to make a Handle</span><span>
+</span><span id="line-179"></span><span>  </span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#mkHandleFromHANDLE"><span class="hs-identifier hs-type">mkHandleFromHANDLE</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645856"><span class="hs-identifier hs-type">hwnd</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645857"><span class="hs-identifier hs-type">hwnd_type</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645852"><span class="hs-identifier hs-type">filepath</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645853"><span class="hs-identifier hs-type">iomode</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645859"><span class="hs-identifier hs-type">mb_codec</span></a></span><span>
+</span><span id="line-180"></span><span>            </span><span class="annot"><a href="GHC.Internal.IO.html#onException"><span class="hs-operator hs-type">`onException`</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Device.html#close"><span class="hs-identifier hs-type">IODevice.close</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645856"><span class="hs-identifier hs-type">hwnd</span></a></span><span>
+</span><span id="line-181"></span><span>        </span><span class="hs-comment">-- NB. don't forget to close the Handle if mkHandleFromHANDLE fails,</span><span>
+</span><span id="line-182"></span><span>        </span><span class="hs-comment">-- otherwise this Handle leaks.</span><span>
+</span><span id="line-183"></span><span>
+</span><span id="line-184"></span><span class="hs-comment">-- ---------------------------------------------------------------------------</span><span>
+</span><span id="line-185"></span><span class="hs-comment">-- Converting Windows Handles from/to Handles</span><span>
+</span><span id="line-186"></span><span>
+</span><span id="line-187"></span><span id="local-6989586621679645724"><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#mkHandleFromHANDLE"><span class="hs-identifier hs-type">mkHandleFromHANDLE</span></a></span><span>
+</span><span id="line-188"></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Device.html#RawIO"><span class="hs-identifier hs-type">RawIO</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645724"><span class="hs-identifier hs-type">dev</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Device.html#IODevice"><span class="hs-identifier hs-type">IODevice.IODevice</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645724"><span class="hs-identifier hs-type">dev</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.IO.BufferedIO.html#BufferedIO"><span class="hs-identifier hs-type">BufferedIO</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645724"><span class="hs-identifier hs-type">dev</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.Data.Typeable.Internal.html#Typeable"><span class="hs-identifier hs-type">Typeable</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645724"><span class="hs-identifier hs-type">dev</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679645724"><span class="hs-identifier hs-type">dev</span></a></span><span>
+</span><span id="line-189"></span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Device.html#IODeviceType"><span class="hs-identifier hs-type">IODeviceType</span></a></span><span>
+</span><span id="line-190"></span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.html#FilePath"><span class="hs-identifier hs-type">FilePath</span></a></span><span>  </span><span class="hs-comment">-- a string describing this Windows handle (e.g. the filename)</span><span>
+</span><span id="line-191"></span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.IO.IOMode.html#IOMode"><span class="hs-identifier hs-type">IOMode</span></a></span><span>
+</span><span id="line-192"></span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="GHC.Internal.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Encoding.Types.html#TextEncoding"><span class="hs-identifier hs-type">TextEncoding</span></a></span><span>
+</span><span id="line-193"></span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#Handle"><span class="hs-identifier hs-type">Handle</span></a></span></span><span>
+</span><span id="line-194"></span><span>
+</span><span id="line-195"></span><span id="mkHandleFromHANDLE"><span class="annot"><span class="annottext">mkHandleFromHANDLE :: forall dev.
+(RawIO dev, IODevice dev, BufferedIO dev, Typeable dev) =&gt;
+dev
+-&gt; IODeviceType
+-&gt; FilePath
+-&gt; IOMode
+-&gt; Maybe TextEncoding
+-&gt; IO Handle
+</span><a href="GHC.Internal.IO.Handle.Windows.html#mkHandleFromHANDLE"><span class="hs-identifier hs-var hs-var">mkHandleFromHANDLE</span></a></span></span><span> </span><span id="local-6989586621679645876"><span class="annot"><span class="annottext">dev
+</span><a href="#local-6989586621679645876"><span class="hs-identifier hs-var">dev</span></a></span></span><span> </span><span id="local-6989586621679645877"><span class="annot"><span class="annottext">IODeviceType
+</span><a href="#local-6989586621679645877"><span class="hs-identifier hs-var">hw_type</span></a></span></span><span> </span><span id="local-6989586621679645878"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645878"><span class="hs-identifier hs-var">filepath</span></a></span></span><span> </span><span id="local-6989586621679645879"><span class="annot"><span class="annottext">IOMode
+</span><a href="#local-6989586621679645879"><span class="hs-identifier hs-var">iomode</span></a></span></span><span> </span><span id="local-6989586621679645880"><span class="annot"><span class="annottext">Maybe TextEncoding
+</span><a href="#local-6989586621679645880"><span class="hs-identifier hs-var">mb_codec</span></a></span></span><span>
+</span><span id="line-196"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-197"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679645881"><span class="annot"><span class="annottext">nl :: NewlineMode
+</span><a href="#local-6989586621679645881"><span class="hs-identifier hs-var hs-var">nl</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Maybe TextEncoding -&gt; Bool
+forall a. Maybe a -&gt; Bool
+</span><a href="GHC.Internal.Data.Maybe.html#isJust"><span class="hs-identifier hs-var">isJust</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe TextEncoding
+</span><a href="#local-6989586621679645880"><span class="hs-identifier hs-var">mb_codec</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NewlineMode
+</span><a href="GHC.Internal.IO.Handle.Types.html#nativeNewlineMode"><span class="hs-identifier hs-var">nativeNewlineMode</span></a></span><span>
+</span><span id="line-198"></span><span>           </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="GHC.Internal.Base.html#otherwise"><span class="hs-identifier hs-var">otherwise</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NewlineMode
+</span><a href="GHC.Internal.IO.Handle.Types.html#noNewlineTranslation"><span class="hs-identifier hs-var">noNewlineTranslation</span></a></span><span>
+</span><span id="line-199"></span><span>
+</span><span id="line-200"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">IODeviceType
+</span><a href="#local-6989586621679645877"><span class="hs-identifier hs-var">hw_type</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-201"></span><span>        </span><span class="annot"><span class="annottext">IODeviceType
+</span><a href="GHC.Internal.IO.Device.html#Directory"><span class="hs-identifier hs-var">Directory</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-202"></span><span>           </span><span class="annot"><span class="annottext">IOException -&gt; IO Handle
+forall a. HasCallStack =&gt; IOException -&gt; IO a
+</span><a href="GHC.Internal.IO.Exception.html#ioException"><span class="hs-identifier hs-var">ioException</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe Handle
+-&gt; IOErrorType
+-&gt; FilePath
+-&gt; FilePath
+-&gt; Maybe CInt
+-&gt; Maybe FilePath
+-&gt; IOException
+</span><a href="GHC.Internal.IO.Exception.html#IOError"><span class="hs-identifier hs-var">IOError</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Handle
+forall a. Maybe a
+</span><a href="GHC.Internal.Maybe.html#Nothing"><span class="hs-identifier hs-var">Nothing</span></a></span><span> </span><span class="annot"><span class="annottext">IOErrorType
+</span><a href="GHC.Internal.IO.Exception.html#InappropriateType"><span class="hs-identifier hs-var">InappropriateType</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;openFile&quot;</span></span><span>
+</span><span id="line-203"></span><span>                           </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;is a directory&quot;</span></span><span> </span><span class="annot"><span class="annottext">Maybe CInt
+forall a. Maybe a
+</span><a href="GHC.Internal.Maybe.html#Nothing"><span class="hs-identifier hs-var">Nothing</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe FilePath
+forall a. Maybe a
+</span><a href="GHC.Internal.Maybe.html#Nothing"><span class="hs-identifier hs-var">Nothing</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-204"></span><span>
+</span><span id="line-205"></span><span>        </span><span class="annot"><span class="annottext">IODeviceType
+</span><a href="GHC.Internal.IO.Device.html#Stream"><span class="hs-identifier hs-var">Stream</span></a></span><span>
+</span><span id="line-206"></span><span>           </span><span class="hs-comment">-- only *Streams* can be DuplexHandles.  Other read/write</span><span>
+</span><span id="line-207"></span><span>           </span><span class="hs-comment">-- Handles must share a buffer.</span><span>
+</span><span id="line-208"></span><span>           </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">IOMode
+</span><a href="GHC.Internal.IO.IOMode.html#ReadWriteMode"><span class="hs-identifier hs-var">ReadWriteMode</span></a></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IOMode
+</span><a href="#local-6989586621679645879"><span class="hs-identifier hs-var">iomode</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-209"></span><span>                </span><span class="annot"><span class="annottext">dev -&gt; FilePath -&gt; Maybe TextEncoding -&gt; NewlineMode -&gt; IO Handle
+forall dev.
+(RawIO dev, IODevice dev, BufferedIO dev, Typeable dev) =&gt;
+dev -&gt; FilePath -&gt; Maybe TextEncoding -&gt; NewlineMode -&gt; IO Handle
+</span><a href="GHC.Internal.IO.Handle.Internals.html#mkDuplexHandle"><span class="hs-identifier hs-var">mkDuplexHandle</span></a></span><span> </span><span class="annot"><span class="annottext">dev
+</span><a href="#local-6989586621679645876"><span class="hs-identifier hs-var">dev</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645878"><span class="hs-identifier hs-var">filepath</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe TextEncoding
+</span><a href="#local-6989586621679645880"><span class="hs-identifier hs-var">mb_codec</span></a></span><span> </span><span class="annot"><span class="annottext">NewlineMode
+</span><a href="#local-6989586621679645881"><span class="hs-identifier hs-var">nl</span></a></span><span>
+</span><span id="line-210"></span><span>
+</span><span id="line-211"></span><span>
+</span><span id="line-212"></span><span>        </span><span id="local-6989586621679645890"><span class="annot"><span class="annottext">IODeviceType
+</span><a href="#local-6989586621679645890"><span class="hs-identifier hs-var">_other</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">dev
+-&gt; FilePath
+-&gt; IOMode
+-&gt; Maybe TextEncoding
+-&gt; NewlineMode
+-&gt; IO Handle
+forall dev.
+(RawIO dev, IODevice dev, BufferedIO dev, Typeable dev) =&gt;
+dev
+-&gt; FilePath
+-&gt; IOMode
+-&gt; Maybe TextEncoding
+-&gt; NewlineMode
+-&gt; IO Handle
+</span><a href="GHC.Internal.IO.Handle.Internals.html#mkFileHandle"><span class="hs-identifier hs-var">mkFileHandle</span></a></span><span> </span><span class="annot"><span class="annottext">dev
+</span><a href="#local-6989586621679645876"><span class="hs-identifier hs-var">dev</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645878"><span class="hs-identifier hs-var">filepath</span></a></span><span> </span><span class="annot"><span class="annottext">IOMode
+</span><a href="#local-6989586621679645879"><span class="hs-identifier hs-var">iomode</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe TextEncoding
+</span><a href="#local-6989586621679645880"><span class="hs-identifier hs-var">mb_codec</span></a></span><span> </span><span class="annot"><span class="annottext">NewlineMode
+</span><a href="#local-6989586621679645881"><span class="hs-identifier hs-var">nl</span></a></span><span>
+</span><span id="line-213"></span><span>
+</span><span id="line-214"></span><span class="hs-comment">-- | Turn an existing Handle into a Win32 HANDLE. This function throws an</span><span>
+</span><span id="line-215"></span><span class="hs-comment">-- IOError if the Handle does not reference a HANDLE</span><span>
+</span><span id="line-216"></span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#handleToHANDLE"><span class="hs-identifier hs-type">handleToHANDLE</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#Handle"><span class="hs-identifier hs-type">Handle</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#IO"><span class="hs-identifier hs-type">IO</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.Windows.html#HANDLE"><span class="hs-identifier hs-type">Win.HANDLE</span></a></span><span>
+</span><span id="line-217"></span><span id="handleToHANDLE"><span class="annot"><span class="annottext">handleToHANDLE :: Handle -&gt; IO HANDLE
+</span><a href="GHC.Internal.IO.Handle.Windows.html#handleToHANDLE"><span class="hs-identifier hs-var hs-var">handleToHANDLE</span></a></span></span><span> </span><span id="local-6989586621679645892"><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679645892"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679645892"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-218"></span><span>  </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#FileHandle"><span class="hs-identifier hs-type">FileHandle</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679645894"><span class="annot"><span class="annottext">MVar Handle__
+</span><a href="#local-6989586621679645894"><span class="hs-identifier hs-var">mv</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-219"></span><span>    </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#Handle__"><span class="hs-identifier hs-type">Handle__</span></a></span><span class="hs-special">{</span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#haDevice"><span class="hs-identifier hs-var">haDevice</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="local-6989586621679645911"><span class="annot"><a href="#local-6989586621679645911"><span class="hs-identifier hs-var">dev</span></a></span></span><span class="hs-special">}</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MVar Handle__ -&gt; IO Handle__
+forall a. MVar a -&gt; IO a
+</span><a href="GHC.Internal.MVar.html#readMVar"><span class="hs-identifier hs-var">readMVar</span></a></span><span> </span><span class="annot"><span class="annottext">MVar Handle__
+</span><a href="#local-6989586621679645894"><span class="hs-identifier hs-var">mv</span></a></span><span>
+</span><span id="line-220"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.Data.Typeable.html#cast"><span class="hs-identifier hs-type">cast</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645911"><span class="hs-identifier hs-type">dev</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Windows.Handle.html#Io"><span class="hs-identifier hs-type">Win.Io</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Windows.Handle.html#NativeHandle"><span class="hs-identifier hs-type">Win.NativeHandle</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-221"></span><span>          </span><span class="annot"><a href="GHC.Internal.Data.Typeable.html#cast"><span class="hs-identifier hs-type">cast</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679645911"><span class="hs-identifier hs-type">dev</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GHC.Internal.Maybe.html#Maybe"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.IO.Windows.Handle.html#Io"><span class="hs-identifier hs-type">Win.Io</span></a></span><span> </span><span class="annot"><a href="GHC.Internal.IO.Windows.Handle.html#ConsoleHandle"><span class="hs-identifier hs-type">Win.ConsoleHandle</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-222"></span><span>      </span><span class="hs-special">(</span><span class="annot"><a href="GHC.Internal.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span id="local-6989586621679645914"><span class="annot"><span class="annottext">Io NativeHandle
+</span><a href="#local-6989586621679645914"><span class="hs-identifier hs-var">hwnd</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe (IoHandle ConsoleHandle)
+</span><a href="GHC.Internal.Maybe.html#Nothing"><span class="hs-identifier hs-var">Nothing</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">HANDLE -&gt; IO HANDLE
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><a href="GHC.Internal.Base.html#return"><span class="hs-identifier hs-var">return</span></a></span><span> </span><span class="annot"><span class="annottext">(HANDLE -&gt; IO HANDLE) -&gt; HANDLE -&gt; IO HANDLE
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="GHC.Internal.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Io NativeHandle -&gt; HANDLE
+forall a. RawHandle a =&gt; a -&gt; HANDLE
+</span><a href="GHC.Internal.IO.Windows.Handle.html#toHANDLE"><span class="hs-identifier hs-var">Win.toHANDLE</span></a></span><span> </span><span class="annot"><span class="annottext">Io NativeHandle
+</span><a href="#local-6989586621679645914"><span class="hs-identifier hs-var">hwnd</span></a></span><span>
+</span><span id="line-223"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe (Io NativeHandle)
+</span><a href="GHC.Internal.Maybe.html#Nothing"><span class="hs-identifier hs-var">Nothing</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GHC.Internal.Maybe.html#Just"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span id="local-6989586621679645916"><span class="annot"><span class="annottext">IoHandle ConsoleHandle
+</span><a href="#local-6989586621679645916"><span class="hs-identifier hs-var">hwnd</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">HANDLE -&gt; IO HANDLE
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><a href="GHC.Internal.Base.html#return"><span class="hs-identifier hs-var">return</span></a></span><span> </span><span class="annot"><span class="annottext">(HANDLE -&gt; IO HANDLE) -&gt; HANDLE -&gt; IO HANDLE
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="GHC.Internal.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">IoHandle ConsoleHandle -&gt; HANDLE
+forall a. RawHandle a =&gt; a -&gt; HANDLE
+</span><a href="GHC.Internal.IO.Windows.Handle.html#toHANDLE"><span class="hs-identifier hs-var">Win.toHANDLE</span></a></span><span> </span><span class="annot"><span class="annottext">IoHandle ConsoleHandle
+</span><a href="#local-6989586621679645916"><span class="hs-identifier hs-var">hwnd</span></a></span><span>
+</span><span id="line-224"></span><span>      </span><span class="annot"><span class="annottext">(Maybe (Io NativeHandle), Maybe (IoHandle ConsoleHandle))
+</span><span class="hs-identifier">_</span></span><span>                    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IO HANDLE
+forall {a}. FilePath -&gt; IO a
+</span><a href="#local-6989586621679645917"><span class="hs-identifier hs-var">throwErr</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;not a file HANDLE&quot;</span></span><span>
+</span><span id="line-225"></span><span>  </span><span class="annot"><a href="GHC.Internal.IO.Handle.Types.html#DuplexHandle"><span class="hs-identifier hs-type">DuplexHandle</span></a></span><span class="hs-special">{</span><span class="hs-special">}</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IO HANDLE
+forall {a}. FilePath -&gt; IO a
+</span><a href="#local-6989586621679645917"><span class="hs-identifier hs-var">throwErr</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;not a file handle&quot;</span></span><span>
+</span><span id="line-226"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-227"></span><span>    </span><span id="local-6989586621679645917"><span class="annot"><span class="annottext">throwErr :: FilePath -&gt; IO a
+</span><a href="#local-6989586621679645917"><span class="hs-identifier hs-var hs-var">throwErr</span></a></span></span><span> </span><span id="local-6989586621679645921"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645921"><span class="hs-identifier hs-var">msg</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IOException -&gt; IO a
+forall a. HasCallStack =&gt; IOException -&gt; IO a
+</span><a href="GHC.Internal.IO.Exception.html#ioException"><span class="hs-identifier hs-var">ioException</span></a></span><span> </span><span class="annot"><span class="annottext">(IOException -&gt; IO a) -&gt; IOException -&gt; IO a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><a href="GHC.Internal.Base.html#%24"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Handle
+-&gt; IOErrorType
+-&gt; FilePath
+-&gt; FilePath
+-&gt; Maybe CInt
+-&gt; Maybe FilePath
+-&gt; IOException
+</span><a href="GHC.Internal.IO.Exception.html#IOError"><span class="hs-identifier hs-var">IOError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Handle -&gt; Maybe Handle
+forall a. a -&gt; Maybe a
+</span><a href="GHC.Internal.Maybe.html#Just"><span class="hs-identifier hs-var">Just</span></a></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679645892"><span class="hs-identifier hs-var">h</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-228"></span><span>      </span><span class="annot"><span class="annottext">IOErrorType
+</span><a href="GHC.Internal.IO.Exception.html#InappropriateType"><span class="hs-identifier hs-var">InappropriateType</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;handleToHANDLE&quot;</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679645921"><span class="hs-identifier hs-var">msg</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe CInt
+forall a. Maybe a
+</span><a href="GHC.Internal.Maybe.html#Nothing"><span class="hs-identifier hs-var">Nothing</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe FilePath
+forall a. Maybe a
+</span><a href="GHC.Internal.Maybe.html#Nothing"><span class="hs-identifier hs-var">Nothing</span></a></span><span>
+</span><span id="line-229"></span><span>
+</span><span id="line-230"></span><span class="hs-comment">-- ---------------------------------------------------------------------------</span><span>
+</span><span id="line-231"></span><span class="hs-comment">-- Are files opened by default in text or binary mode, if the user doesn't</span><span>
+</span><span id="line-232"></span><span class="hs-comment">-- specify? The thing is, to the Win32 APIs which are lowerlevel there exist no</span><span>
+</span><span id="line-233"></span><span class="hs-comment">-- such thing as binary/text mode. That's strictly a thing of the C library on</span><span>
+</span><span id="line-234"></span><span class="hs-comment">-- top of it.  So I'm not sure what to do with this. -Tamar</span><span>
+</span><span id="line-235"></span><span>
+</span><span id="line-236"></span><span class="annot"><a href="GHC.Internal.IO.Handle.Windows.html#dEFAULT_OPEN_IN_BINARY_MODE"><span class="hs-identifier hs-type">dEFAULT_OPEN_IN_BINARY_MODE</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#Bool"><span class="hs-identifier hs-type">Bool</span></a></span><span>
+</span><span id="line-237"></span><span id="dEFAULT_OPEN_IN_BINARY_MODE"><span class="annot"><span class="annottext">dEFAULT_OPEN_IN_BINARY_MODE :: Bool
+</span><a href="GHC.Internal.IO.Handle.Windows.html#dEFAULT_OPEN_IN_BINARY_MODE"><span class="hs-identifier hs-var hs-var">dEFAULT_OPEN_IN_BINARY_MODE</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="../../ghc-prim-0.12.0-fb7e/src/GHC.Types.html#False"><span class="hs-identifier hs-var">False</span></a></span><span>
+</span><span id="line-238"></span></pre></body></html>

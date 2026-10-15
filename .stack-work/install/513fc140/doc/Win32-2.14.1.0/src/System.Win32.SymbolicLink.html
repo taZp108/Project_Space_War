@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LINE 1 &quot;libraries\\Win32\\System\\Win32\\SymbolicLink.hsc&quot; #-}</span><span>
+</span><span id="line-1"></span><span class="hs-pragma">{-# LANGUAGE CPP #-}</span><span>
+</span><span id="line-2"></span><span class="hs-comment">{- |
+   Module      :  System.Win32.SymbolicLink
+   Copyright   :  2012 shelarcy
+   License     :  BSD-style
+
+   Maintainer  :  shelarcy@gmail.com
+   Stability   :  Provisional
+   Portability :  Non-portable (Win32 API)
+
+   Handling symbolic link using Win32 API. [Vista of later and desktop app only]
+
+   Note: When using the createSymbolicLink* functions without the
+   SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE flag, you should worry about UAC
+   (User Account Control) when use this module's function in your application:
+
+     * require to use 'Run As Administrator' to run your application.
+
+     * or modify your application's manifest file to add
+       \&lt;requestedExecutionLevel level='requireAdministrator' uiAccess='false'/\&gt;.
+
+   Starting from Windows 10 version 1703 (Creators Update), after enabling
+   Developer Mode, users can create symbolic links without requiring the
+   Administrator privilege in the current process. Supply a 'True' flag in
+   addition to the target and link name to enable this behavior.
+-}</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">System.Win32.SymbolicLink</span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="hs-identifier">SymbolicLinkFlags</span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sYMBOLIC_LINK_FLAG_FILE</span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sYMBOLIC_LINK_FLAG_DIRECTORY</span><span>
+</span><span id="line-31"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE</span><span>
+</span><span id="line-32"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">createSymbolicLink</span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">createSymbolicLink'</span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">createSymbolicLinkFile</span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">createSymbolicLinkDirectory</span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.Win32.SymbolicLink.Internal</span><span>
+</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Data.Bits</span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="hs-operator">.|.</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.Win32.Types</span><span>
+</span><span id="line-41"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.Win32.File</span><span> </span><span class="hs-special">(</span><span> </span><span class="hs-identifier">failIfFalseWithRetry_</span><span> </span><span class="hs-special">)</span><span class="hs-cpp">
+
+#include &quot;windows_cconv.h&quot;
+</span><span>
+</span><span id="line-45"></span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- | createSymbolicLink* functions don't check that file is exist or not.</span><span>
+</span><span id="line-47"></span><span class="hs-comment">--</span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- NOTE: createSymbolicLink* functions are /flipped arguments/ to provide compatibility for Unix,</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- except 'createSymbolicLink''.</span><span>
+</span><span id="line-50"></span><span class="hs-comment">--</span><span>
+</span><span id="line-51"></span><span class="hs-comment">-- If you want to create symbolic link by Windows way, use 'createSymbolicLink'' instead.</span><span>
+</span><span id="line-52"></span><span class="hs-identifier">createSymbolicLink</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FilePath</span><span> </span><span class="hs-comment">-- ^ Target file path</span><span>
+</span><span id="line-53"></span><span>                   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">FilePath</span><span> </span><span class="hs-comment">-- ^ Symbolic link name</span><span>
+</span><span id="line-54"></span><span>                   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">SymbolicLinkFlags</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-55"></span><span class="hs-identifier">createSymbolicLink</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">flip</span><span> </span><span class="hs-identifier">createSymbolicLink'</span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span class="hs-identifier">createSymbolicLinkFile</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FilePath</span><span> </span><span class="hs-comment">-- ^ Target file path</span><span>
+</span><span id="line-58"></span><span>                       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">FilePath</span><span> </span><span class="hs-comment">-- ^ Symbolic link name</span><span>
+</span><span id="line-59"></span><span>                       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Bool</span><span> </span><span class="hs-comment">-- ^ Create the symbolic link with the unprivileged mode</span><span>
+</span><span id="line-60"></span><span>                       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span><span class="hs-identifier">createSymbolicLinkFile</span><span> </span><span class="hs-identifier">target</span><span> </span><span class="hs-identifier">link</span><span> </span><span class="hs-identifier">unprivileged</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-62"></span><span>  </span><span class="hs-identifier">createSymbolicLink'</span><span>
+</span><span id="line-63"></span><span>    </span><span class="hs-identifier">link</span><span>
+</span><span id="line-64"></span><span>    </span><span class="hs-identifier">target</span><span>
+</span><span id="line-65"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="hs-identifier">unprivileged</span><span>
+</span><span id="line-66"></span><span>        </span><span class="hs-keyword">then</span><span> </span><span class="hs-identifier">sYMBOLIC_LINK_FLAG_FILE</span><span> </span><span class="hs-operator">.|.</span><span> </span><span class="hs-identifier">sYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE</span><span>
+</span><span id="line-67"></span><span>        </span><span class="hs-keyword">else</span><span> </span><span class="hs-identifier">sYMBOLIC_LINK_FLAG_FILE</span><span>
+</span><span id="line-68"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span class="hs-identifier">createSymbolicLinkDirectory</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FilePath</span><span> </span><span class="hs-comment">-- ^ Target file path</span><span>
+</span><span id="line-71"></span><span>                            </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">FilePath</span><span> </span><span class="hs-comment">-- ^ Symbolic link name</span><span>
+</span><span id="line-72"></span><span>                            </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Bool</span><span> </span><span class="hs-comment">-- ^ Create the symbolic link with the unprivileged mode</span><span>
+</span><span id="line-73"></span><span>                            </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span class="hs-identifier">createSymbolicLinkDirectory</span><span> </span><span class="hs-identifier">target</span><span> </span><span class="hs-identifier">link</span><span> </span><span class="hs-identifier">unprivileged</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-75"></span><span>  </span><span class="hs-identifier">createSymbolicLink'</span><span>
+</span><span id="line-76"></span><span>    </span><span class="hs-identifier">link</span><span>
+</span><span id="line-77"></span><span>    </span><span class="hs-identifier">target</span><span>
+</span><span id="line-78"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="hs-identifier">unprivileged</span><span>
+</span><span id="line-79"></span><span>        </span><span class="hs-keyword">then</span><span>
+</span><span id="line-80"></span><span>          </span><span class="hs-identifier">sYMBOLIC_LINK_FLAG_DIRECTORY</span><span>
+</span><span id="line-81"></span><span>            </span><span class="hs-operator">.|.</span><span> </span><span class="hs-identifier">sYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE</span><span>
+</span><span id="line-82"></span><span>        </span><span class="hs-keyword">else</span><span> </span><span class="hs-identifier">sYMBOLIC_LINK_FLAG_DIRECTORY</span><span>
+</span><span id="line-83"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-84"></span><span>
+</span><span id="line-85"></span><span class="hs-identifier">createSymbolicLink'</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FilePath</span><span> </span><span class="hs-comment">-- ^ Symbolic link name</span><span>
+</span><span id="line-86"></span><span>                    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">FilePath</span><span> </span><span class="hs-comment">-- ^ Target file path</span><span>
+</span><span id="line-87"></span><span>                    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">SymbolicLinkFlags</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-88"></span><span class="hs-identifier">createSymbolicLink'</span><span> </span><span class="hs-identifier">link</span><span> </span><span class="hs-identifier">target</span><span> </span><span class="hs-identifier">flag</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-89"></span><span>    </span><span class="hs-identifier">withTString</span><span> </span><span class="hs-identifier">link</span><span> </span><span class="hs-operator">$</span><span> </span><span class="hs-glyph">\</span><span class="hs-identifier">c_link</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-90"></span><span>      </span><span class="hs-identifier">withTString</span><span> </span><span class="hs-identifier">target</span><span> </span><span class="hs-operator">$</span><span> </span><span class="hs-glyph">\</span><span class="hs-identifier">c_target</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-91"></span><span>        </span><span class="hs-identifier">failIfFalseWithRetry_</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">unwords</span><span> </span><span class="hs-special">[</span><span class="hs-string">&quot;CreateSymbolicLink&quot;</span><span class="hs-special">,</span><span class="hs-identifier">show</span><span> </span><span class="hs-identifier">link</span><span class="hs-special">,</span><span class="hs-identifier">show</span><span> </span><span class="hs-identifier">target</span><span class="hs-special">]</span><span class="hs-special">)</span><span> </span><span class="hs-operator">$</span><span>
+</span><span id="line-92"></span><span>          </span><span class="hs-identifier">c_CreateSymbolicLink</span><span> </span><span class="hs-identifier">c_link</span><span> </span><span class="hs-identifier">c_target</span><span> </span><span class="hs-identifier">flag</span><span>
+</span><span id="line-93"></span><span>
+</span><span id="line-94"></span></pre></body></html>

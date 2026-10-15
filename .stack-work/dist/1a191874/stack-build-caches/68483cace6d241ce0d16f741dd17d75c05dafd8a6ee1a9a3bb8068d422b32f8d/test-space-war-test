@@ -1,0 +1,20 @@
+? C:\Users\ASUS\AppData\Local\Programs\stack\x86_64-windows\ghc-9.10.3\lib\x86_64-windows-ghc-9.10.3\rts-1.0.2\include\ghcversion.h
+: hash: 7038bb968ecc358729edd5d1e72a638409aaf5ea6ab13ce6ec7f253daa3b6529
+D:\Dev\space-war\.stack-work\dist\1a191874\build\space-war-test\autogen\Paths_space_war.hs:
+  hash: 5ece0c763fef10870a87eb41adb1443a8d027ae8806d5964a79a9d35643a3db0
+D:\Dev\space-war\.stack-work\dist\1a191874\build\space-war-test\autogen\cabal_macros.h:
+  hash: 11399de4629f1042de8579a07f6218d410dd5a5c32a81e6fb756ade1cef1de34
+D:\Dev\space-war\package.yaml:
+  hash: 341af2dc5db348f8b2aa3464b9ddb0a4813462a2e91cf9de578bd8e09d8da76b
+D:\Dev\space-war\space-war.cabal:
+  hash: 46855b31b6bc84114a32c03d6472fe08f153050e95ad7689b092181087001d6c
+D:\Dev\space-war\test\Game\GenerateSpec.hs:
+  hash: d241699d94bfa552e10b4dc2e8b3a900e6a29d89c00d1e4df2c73b5f44fb3fc8
+D:\Dev\space-war\test\Game\StateSpec.hs:
+  hash: fda843ec3da2f26e73b0eff4699a9406a4f2c5b3f85555d6f7443a43f7a967d5
+D:\Dev\space-war\test\Game\TestUtil.hs:
+  hash: dba3e9ff981eb79e4c259b20e3713572f75dcd0af4dddc7cb4efb6ffd65b93af
+D:\Dev\space-war\test\Game\WorldSpec.hs:
+  hash: a2acd0b17efa03fdf52cc1ee4e6d857662a0397d7dd86d2ac709f2aceb1beb4c
+D:\Dev\space-war\test\Spec.hs:
+  hash: 3d4ac64b5397c0d6c2d746823702fc17cf9ae9ad83778c8e1560775352ddbc62

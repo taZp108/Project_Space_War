@@ -1,0 +1,1 @@
+This library contains direct bindings to the Windows Win32 APIs for Haskell.
