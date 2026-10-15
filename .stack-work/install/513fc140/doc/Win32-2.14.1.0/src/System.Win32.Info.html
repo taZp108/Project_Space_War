@@ -1,443 +1,0 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LINE 1 &quot;libraries\\Win32\\System\\Win32\\Info.hsc&quot; #-}</span><span>
-</span><span id="line-1"></span><span>
-</span><span id="line-2"></span><span class="hs-pragma">{-# LINE 2 &quot;libraries\\Win32\\System\\Win32\\Info.hsc&quot; #-}</span><span>
-</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE Safe #-}</span><span>
-</span><span id="line-3"></span><span>
-</span><span id="line-4"></span><span class="hs-pragma">{-# LINE 6 &quot;libraries\\Win32\\System\\Win32\\Info.hsc&quot; #-}</span><span>
-</span><span id="line-6"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
-</span><span id="line-7"></span><span class="hs-comment">-- |</span><span>
-</span><span id="line-8"></span><span class="hs-comment">-- Module      :  System.Win32.Info</span><span>
-</span><span id="line-9"></span><span class="hs-comment">-- Copyright   :  (c) Alastair Reid, 1997-2003</span><span>
-</span><span id="line-10"></span><span class="hs-comment">-- License     :  BSD-style (see the file libraries/base/LICENSE)</span><span>
-</span><span id="line-11"></span><span class="hs-comment">--</span><span>
-</span><span id="line-12"></span><span class="hs-comment">-- Maintainer  :  Esa Ilari Vuokko &lt;ei@vuokko.info&gt;</span><span>
-</span><span id="line-13"></span><span class="hs-comment">-- Stability   :  provisional</span><span>
-</span><span id="line-14"></span><span class="hs-comment">-- Portability :  portable</span><span>
-</span><span id="line-15"></span><span class="hs-comment">--</span><span>
-</span><span id="line-16"></span><span class="hs-comment">-- A collection of FFI declarations for interfacing with Win32.</span><span>
-</span><span id="line-17"></span><span class="hs-comment">--</span><span>
-</span><span id="line-18"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
-</span><span id="line-19"></span><span>
-</span><span id="line-20"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">System.Win32.Info</span><span>
-</span><span id="line-21"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-identifier">SystemColor</span><span>
-</span><span id="line-22"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_SCROLLBAR</span><span>
-</span><span id="line-23"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_BACKGROUND</span><span>
-</span><span id="line-24"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_ACTIVECAPTION</span><span>
-</span><span id="line-25"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_INACTIVECAPTION</span><span>
-</span><span id="line-26"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_MENU</span><span>
-</span><span id="line-27"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_WINDOW</span><span>
-</span><span id="line-28"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_WINDOWFRAME</span><span>
-</span><span id="line-29"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_MENUTEXT</span><span>
-</span><span id="line-30"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_WINDOWTEXT</span><span>
-</span><span id="line-31"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_CAPTIONTEXT</span><span>
-</span><span id="line-32"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_ACTIVEBORDER</span><span>
-</span><span id="line-33"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_INACTIVEBORDER</span><span>
-</span><span id="line-34"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_APPWORKSPACE</span><span>
-</span><span id="line-35"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_HIGHLIGHT</span><span>
-</span><span id="line-36"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_HIGHLIGHTTEXT</span><span>
-</span><span id="line-37"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_BTNFACE</span><span>
-</span><span id="line-38"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_BTNSHADOW</span><span>
-</span><span id="line-39"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_GRAYTEXT</span><span>
-</span><span id="line-40"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_BTNTEXT</span><span>
-</span><span id="line-41"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_INACTIVECAPTIONTEXT</span><span>
-</span><span id="line-42"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cOLOR_BTNHIGHLIGHT</span><span>
-</span><span id="line-43"></span><span>
-</span><span id="line-44"></span><span>      </span><span class="hs-comment">-- * Standard directories</span><span>
-</span><span id="line-45"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">getSystemDirectory</span><span>
-</span><span id="line-46"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">getWindowsDirectory</span><span>
-</span><span id="line-47"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">getCurrentDirectory</span><span>
-</span><span id="line-48"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">getTemporaryDirectory</span><span>
-</span><span id="line-49"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">getFullPathName</span><span>
-</span><span id="line-50"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">getLongPathName</span><span>
-</span><span id="line-51"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">getShortPathName</span><span>
-</span><span id="line-52"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">searchPath</span><span>
-</span><span id="line-53"></span><span>
-</span><span id="line-54"></span><span>      </span><span class="hs-comment">-- * System information</span><span>
-</span><span id="line-55"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">ProcessorArchitecture</span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
-</span><span id="line-56"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">SYSTEM_INFO</span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
-</span><span id="line-57"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">getSystemInfo</span><span>
-</span><span id="line-58"></span><span>
-</span><span id="line-59"></span><span>      </span><span class="hs-comment">-- * System metrics</span><span>
-</span><span id="line-60"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">SMSetting</span><span>
-</span><span id="line-61"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_ARRANGE</span><span>
-</span><span id="line-62"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CLEANBOOT</span><span>
-</span><span id="line-63"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CMETRICS</span><span>
-</span><span id="line-64"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CMOUSEBUTTONS</span><span>
-</span><span id="line-65"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXBORDER</span><span>
-</span><span id="line-66"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYBORDER</span><span>
-</span><span id="line-67"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXCURSOR</span><span>
-</span><span id="line-68"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYCURSOR</span><span>
-</span><span id="line-69"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXDLGFRAME</span><span>
-</span><span id="line-70"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYDLGFRAME</span><span>
-</span><span id="line-71"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXDOUBLECLK</span><span>
-</span><span id="line-72"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYDOUBLECLK</span><span>
-</span><span id="line-73"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXDRAG</span><span>
-</span><span id="line-74"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYDRAG</span><span>
-</span><span id="line-75"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXEDGE</span><span>
-</span><span id="line-76"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYEDGE</span><span>
-</span><span id="line-77"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXFRAME</span><span>
-</span><span id="line-78"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYFRAME</span><span>
-</span><span id="line-79"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXFULLSCREEN</span><span>
-</span><span id="line-80"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYFULLSCREEN</span><span>
-</span><span id="line-81"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXHSCROLL</span><span>
-</span><span id="line-82"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYVSCROLL</span><span>
-</span><span id="line-83"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXICON</span><span>
-</span><span id="line-84"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYICON</span><span>
-</span><span id="line-85"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXICONSPACING</span><span>
-</span><span id="line-86"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYICONSPACING</span><span>
-</span><span id="line-87"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXMAXIMIZED</span><span>
-</span><span id="line-88"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYMAXIMIZED</span><span>
-</span><span id="line-89"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXMENUCHECK</span><span>
-</span><span id="line-90"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYMENUCHECK</span><span>
-</span><span id="line-91"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXMENUSIZE</span><span>
-</span><span id="line-92"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYMENUSIZE</span><span>
-</span><span id="line-93"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXMIN</span><span>
-</span><span id="line-94"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYMIN</span><span>
-</span><span id="line-95"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXMINIMIZED</span><span>
-</span><span id="line-96"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYMINIMIZED</span><span>
-</span><span id="line-97"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXMINTRACK</span><span>
-</span><span id="line-98"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYMINTRACK</span><span>
-</span><span id="line-99"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXSCREEN</span><span>
-</span><span id="line-100"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYSCREEN</span><span>
-</span><span id="line-101"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXSIZE</span><span>
-</span><span id="line-102"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYSIZE</span><span>
-</span><span id="line-103"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXSIZEFRAME</span><span>
-</span><span id="line-104"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYSIZEFRAME</span><span>
-</span><span id="line-105"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXSMICON</span><span>
-</span><span id="line-106"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYSMICON</span><span>
-</span><span id="line-107"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXSMSIZE</span><span>
-</span><span id="line-108"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYSMSIZE</span><span>
-</span><span id="line-109"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CXVSCROLL</span><span>
-</span><span id="line-110"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYHSCROLL</span><span>
-</span><span id="line-111"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYVTHUMB</span><span>
-</span><span id="line-112"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYCAPTION</span><span>
-</span><span id="line-113"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYKANJIWINDOW</span><span>
-</span><span id="line-114"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYMENU</span><span>
-</span><span id="line-115"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_CYSMCAPTION</span><span>
-</span><span id="line-116"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_DBCSENABLED</span><span>
-</span><span id="line-117"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_DEBUG</span><span>
-</span><span id="line-118"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_MENUDROPALIGNMENT</span><span>
-</span><span id="line-119"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_MIDEASTENABLED</span><span>
-</span><span id="line-120"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_MOUSEPRESENT</span><span>
-</span><span id="line-121"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_NETWORK</span><span>
-</span><span id="line-122"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_PENWINDOWS</span><span>
-</span><span id="line-123"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_SECURE</span><span>
-</span><span id="line-124"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_SHOWSOUNDS</span><span>
-</span><span id="line-125"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_SLOWMACHINE</span><span>
-</span><span id="line-126"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sM_SWAPBUTTON</span><span>
-</span><span id="line-127"></span><span>
-</span><span id="line-128"></span><span>      </span><span class="hs-comment">-- * User name</span><span>
-</span><span id="line-129"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-identifier">getUserName</span><span>
-</span><span id="line-130"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-131"></span><span>
-</span><span id="line-132"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.Win32.Info.Internal</span><span>
-</span><span id="line-133"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Control.Exception</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">catch</span><span class="hs-special">)</span><span>
-</span><span id="line-134"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Foreign.Marshal.Alloc</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">alloca</span><span class="hs-special">)</span><span>
-</span><span id="line-135"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Foreign.Marshal.Utils</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">with</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">maybeWith</span><span class="hs-special">)</span><span>
-</span><span id="line-136"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Foreign.Marshal.Array</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">allocaArray</span><span class="hs-special">)</span><span>
-</span><span id="line-137"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Foreign.Ptr</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">nullPtr</span><span class="hs-special">)</span><span>
-</span><span id="line-138"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Foreign.Storable</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">Storable</span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
-</span><span id="line-139"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.IO.Error</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">isDoesNotExistError</span><span class="hs-special">)</span><span>
-</span><span id="line-140"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.Win32.Types</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">failIfFalse_</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">peekTStringLen</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">withTString</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">try</span><span class="hs-special">)</span><span>
-</span><span id="line-141"></span><span>
-</span><span id="line-142"></span><span>
-</span><span id="line-143"></span><span class="hs-pragma">{-# LINE 145 &quot;libraries\\Win32\\System\\Win32\\Info.hsc&quot; #-}</span><span class="hs-cpp">
-
-#include &quot;windows_cconv.h&quot;
-</span><span>
-</span><span id="line-148"></span><span>
-</span><span id="line-149"></span><span>
-</span><span id="line-150"></span><span>
-</span><span id="line-151"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-152"></span><span class="hs-comment">-- Environment Strings</span><span>
-</span><span id="line-153"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-154"></span><span>
-</span><span id="line-155"></span><span class="hs-comment">-- %fun ExpandEnvironmentStrings :: String -&gt; IO String</span><span>
-</span><span id="line-156"></span><span>
-</span><span id="line-157"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-158"></span><span class="hs-comment">-- Computer Name</span><span>
-</span><span id="line-159"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-160"></span><span>
-</span><span id="line-161"></span><span class="hs-comment">-- %fun GetComputerName :: IO String</span><span>
-</span><span id="line-162"></span><span class="hs-comment">-- %fun SetComputerName :: String -&gt; IO ()</span><span>
-</span><span id="line-163"></span><span class="hs-comment">-- %end free(arg1)</span><span>
-</span><span id="line-164"></span><span>
-</span><span id="line-165"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-166"></span><span class="hs-comment">-- Hardware Profiles</span><span>
-</span><span id="line-167"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-168"></span><span>
-</span><span id="line-169"></span><span class="hs-comment">-- %fun GetCurrentHwProfile :: IO HW_PROFILE_INFO</span><span>
-</span><span id="line-170"></span><span>
-</span><span id="line-171"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-172"></span><span class="hs-comment">-- Keyboard Type</span><span>
-</span><span id="line-173"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-174"></span><span>
-</span><span id="line-175"></span><span class="hs-comment">-- %fun GetKeyboardType :: KeyboardTypeKind -&gt; IO KeyboardType</span><span>
-</span><span id="line-176"></span><span>
-</span><span id="line-177"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-178"></span><span class="hs-comment">-- Standard Directories</span><span>
-</span><span id="line-179"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-180"></span><span>
-</span><span id="line-181"></span><span class="annot"><a href="System.Win32.Info.html#getSystemDirectory"><span class="hs-identifier hs-type">getSystemDirectory</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
-</span><span id="line-182"></span><span id="getSystemDirectory"><span class="annot"><span class="annottext">getSystemDirectory :: IO String
-</span><a href="System.Win32.Info.html#getSystemDirectory"><span class="hs-identifier hs-var hs-var">getSystemDirectory</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; (LPTSTR -&gt; DWORD -&gt; IO DWORD) -&gt; DWORD -&gt; IO String
-</span><a href="System.Win32.Types.html#try"><span class="hs-identifier hs-var">try</span></a></span><span> </span><span class="annot"><span class="annottext">String
-</span><span class="hs-string">&quot;GetSystemDirectory&quot;</span></span><span> </span><span class="annot"><span class="annottext">LPTSTR -&gt; DWORD -&gt; IO DWORD
-</span><a href="System.Win32.Info.Internal.html#c_getSystemDirectory"><span class="hs-identifier hs-var">c_getSystemDirectory</span></a></span><span> </span><span class="annot"><span class="annottext">DWORD
-</span><span class="hs-number">512</span></span><span>
-</span><span id="line-183"></span><span>
-</span><span id="line-184"></span><span class="annot"><a href="System.Win32.Info.html#getWindowsDirectory"><span class="hs-identifier hs-type">getWindowsDirectory</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
-</span><span id="line-185"></span><span id="getWindowsDirectory"><span class="annot"><span class="annottext">getWindowsDirectory :: IO String
-</span><a href="System.Win32.Info.html#getWindowsDirectory"><span class="hs-identifier hs-var hs-var">getWindowsDirectory</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; (LPTSTR -&gt; DWORD -&gt; IO DWORD) -&gt; DWORD -&gt; IO String
-</span><a href="System.Win32.Types.html#try"><span class="hs-identifier hs-var">try</span></a></span><span> </span><span class="annot"><span class="annottext">String
-</span><span class="hs-string">&quot;GetWindowsDirectory&quot;</span></span><span> </span><span class="annot"><span class="annottext">LPTSTR -&gt; DWORD -&gt; IO DWORD
-</span><a href="System.Win32.Info.Internal.html#c_getWindowsDirectory"><span class="hs-identifier hs-var">c_getWindowsDirectory</span></a></span><span> </span><span class="annot"><span class="annottext">DWORD
-</span><span class="hs-number">512</span></span><span>
-</span><span id="line-186"></span><span>
-</span><span id="line-187"></span><span class="annot"><a href="System.Win32.Info.html#getCurrentDirectory"><span class="hs-identifier hs-type">getCurrentDirectory</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
-</span><span id="line-188"></span><span id="getCurrentDirectory"><span class="annot"><span class="annottext">getCurrentDirectory :: IO String
-</span><a href="System.Win32.Info.html#getCurrentDirectory"><span class="hs-identifier hs-var hs-var">getCurrentDirectory</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; (LPTSTR -&gt; DWORD -&gt; IO DWORD) -&gt; DWORD -&gt; IO String
-</span><a href="System.Win32.Types.html#try"><span class="hs-identifier hs-var">try</span></a></span><span> </span><span class="annot"><span class="annottext">String
-</span><span class="hs-string">&quot;GetCurrentDirectory&quot;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(DWORD -&gt; LPTSTR -&gt; IO DWORD) -&gt; LPTSTR -&gt; DWORD -&gt; IO DWORD
-forall a b c. (a -&gt; b -&gt; c) -&gt; b -&gt; a -&gt; c
-</span><span class="hs-identifier hs-var">flip</span></span><span> </span><span class="annot"><span class="annottext">DWORD -&gt; LPTSTR -&gt; IO DWORD
-</span><a href="System.Win32.Info.Internal.html#c_getCurrentDirectory"><span class="hs-identifier hs-var">c_getCurrentDirectory</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">DWORD
-</span><span class="hs-number">512</span></span><span>
-</span><span id="line-189"></span><span>
-</span><span id="line-190"></span><span class="annot"><a href="System.Win32.Info.html#getTemporaryDirectory"><span class="hs-identifier hs-type">getTemporaryDirectory</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
-</span><span id="line-191"></span><span id="getTemporaryDirectory"><span class="annot"><span class="annottext">getTemporaryDirectory :: IO String
-</span><a href="System.Win32.Info.html#getTemporaryDirectory"><span class="hs-identifier hs-var hs-var">getTemporaryDirectory</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; (LPTSTR -&gt; DWORD -&gt; IO DWORD) -&gt; DWORD -&gt; IO String
-</span><a href="System.Win32.Types.html#try"><span class="hs-identifier hs-var">try</span></a></span><span> </span><span class="annot"><span class="annottext">String
-</span><span class="hs-string">&quot;GetTempPath&quot;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(DWORD -&gt; LPTSTR -&gt; IO DWORD) -&gt; LPTSTR -&gt; DWORD -&gt; IO DWORD
-forall a b c. (a -&gt; b -&gt; c) -&gt; b -&gt; a -&gt; c
-</span><span class="hs-identifier hs-var">flip</span></span><span> </span><span class="annot"><span class="annottext">DWORD -&gt; LPTSTR -&gt; IO DWORD
-</span><a href="System.Win32.Info.Internal.html#c_getTempPath"><span class="hs-identifier hs-var">c_getTempPath</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">DWORD
-</span><span class="hs-number">512</span></span><span>
-</span><span id="line-192"></span><span>
-</span><span id="line-193"></span><span class="annot"><a href="System.Win32.Info.html#getFullPathName"><span class="hs-identifier hs-type">getFullPathName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span>
-</span><span id="line-194"></span><span id="getFullPathName"><span class="annot"><span class="annottext">getFullPathName :: String -&gt; IO String
-</span><a href="System.Win32.Info.html#getFullPathName"><span class="hs-identifier hs-var hs-var">getFullPathName</span></a></span></span><span> </span><span id="local-6989586621679149841"><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679149841"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-195"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; (LPTSTR -&gt; IO String) -&gt; IO String
-forall a. String -&gt; (LPTSTR -&gt; IO a) -&gt; IO a
-</span><a href="System.Win32.Types.html#withTString"><span class="hs-identifier hs-var">withTString</span></a></span><span> </span><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679149841"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">((LPTSTR -&gt; IO String) -&gt; IO String)
--&gt; (LPTSTR -&gt; IO String) -&gt; IO String
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679149843"><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149843"><span class="hs-identifier hs-var">c_name</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
-</span><span id="line-196"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; (LPTSTR -&gt; DWORD -&gt; IO DWORD) -&gt; DWORD -&gt; IO String
-</span><a href="System.Win32.Types.html#try"><span class="hs-identifier hs-var">try</span></a></span><span> </span><span class="annot"><span class="annottext">String
-</span><span class="hs-string">&quot;getFullPathName&quot;</span></span><span>
-</span><span id="line-197"></span><span>      </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679149844"><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149844"><span class="hs-identifier hs-var">buf</span></a></span></span><span> </span><span id="local-6989586621679149845"><span class="annot"><span class="annottext">DWORD
-</span><a href="#local-6989586621679149845"><span class="hs-identifier hs-var">len</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">LPTSTR -&gt; DWORD -&gt; LPTSTR -&gt; Ptr LPTSTR -&gt; IO DWORD
-</span><a href="System.Win32.Info.Internal.html#c_GetFullPathName"><span class="hs-identifier hs-var">c_GetFullPathName</span></a></span><span> </span><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149843"><span class="hs-identifier hs-var">c_name</span></a></span><span> </span><span class="annot"><span class="annottext">DWORD
-</span><a href="#local-6989586621679149845"><span class="hs-identifier hs-var">len</span></a></span><span> </span><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149844"><span class="hs-identifier hs-var">buf</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr LPTSTR
-forall a. Ptr a
-</span><span class="hs-identifier hs-var">nullPtr</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">DWORD
-</span><span class="hs-number">512</span></span><span>
-</span><span id="line-198"></span><span>
-</span><span id="line-199"></span><span class="annot"><a href="System.Win32.Info.html#getLongPathName"><span class="hs-identifier hs-type">getLongPathName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span>
-</span><span id="line-200"></span><span id="getLongPathName"><span class="annot"><span class="annottext">getLongPathName :: String -&gt; IO String
-</span><a href="System.Win32.Info.html#getLongPathName"><span class="hs-identifier hs-var hs-var">getLongPathName</span></a></span></span><span> </span><span id="local-6989586621679149849"><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679149849"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-201"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; (LPTSTR -&gt; IO String) -&gt; IO String
-forall a. String -&gt; (LPTSTR -&gt; IO a) -&gt; IO a
-</span><a href="System.Win32.Types.html#withTString"><span class="hs-identifier hs-var">withTString</span></a></span><span> </span><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679149849"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">((LPTSTR -&gt; IO String) -&gt; IO String)
--&gt; (LPTSTR -&gt; IO String) -&gt; IO String
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679149850"><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149850"><span class="hs-identifier hs-var">c_name</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
-</span><span id="line-202"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; (LPTSTR -&gt; DWORD -&gt; IO DWORD) -&gt; DWORD -&gt; IO String
-</span><a href="System.Win32.Types.html#try"><span class="hs-identifier hs-var">try</span></a></span><span> </span><span class="annot"><span class="annottext">String
-</span><span class="hs-string">&quot;getLongPathName&quot;</span></span><span>
-</span><span id="line-203"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">LPTSTR -&gt; LPTSTR -&gt; DWORD -&gt; IO DWORD
-</span><a href="System.Win32.Info.Internal.html#c_GetLongPathName"><span class="hs-identifier hs-var">c_GetLongPathName</span></a></span><span> </span><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149850"><span class="hs-identifier hs-var">c_name</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">DWORD
-</span><span class="hs-number">512</span></span><span>
-</span><span id="line-204"></span><span>
-</span><span id="line-205"></span><span class="annot"><a href="System.Win32.Info.html#getShortPathName"><span class="hs-identifier hs-type">getShortPathName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span>
-</span><span id="line-206"></span><span id="getShortPathName"><span class="annot"><span class="annottext">getShortPathName :: String -&gt; IO String
-</span><a href="System.Win32.Info.html#getShortPathName"><span class="hs-identifier hs-var hs-var">getShortPathName</span></a></span></span><span> </span><span id="local-6989586621679149853"><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679149853"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-207"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; (LPTSTR -&gt; IO String) -&gt; IO String
-forall a. String -&gt; (LPTSTR -&gt; IO a) -&gt; IO a
-</span><a href="System.Win32.Types.html#withTString"><span class="hs-identifier hs-var">withTString</span></a></span><span> </span><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679149853"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">((LPTSTR -&gt; IO String) -&gt; IO String)
--&gt; (LPTSTR -&gt; IO String) -&gt; IO String
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679149854"><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149854"><span class="hs-identifier hs-var">c_name</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
-</span><span id="line-208"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; (LPTSTR -&gt; DWORD -&gt; IO DWORD) -&gt; DWORD -&gt; IO String
-</span><a href="System.Win32.Types.html#try"><span class="hs-identifier hs-var">try</span></a></span><span> </span><span class="annot"><span class="annottext">String
-</span><span class="hs-string">&quot;getShortPathName&quot;</span></span><span>
-</span><span id="line-209"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">LPTSTR -&gt; LPTSTR -&gt; DWORD -&gt; IO DWORD
-</span><a href="System.Win32.Info.Internal.html#c_GetShortPathName"><span class="hs-identifier hs-var">c_GetShortPathName</span></a></span><span> </span><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149854"><span class="hs-identifier hs-var">c_name</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">DWORD
-</span><span class="hs-number">512</span></span><span>
-</span><span id="line-210"></span><span>
-</span><span id="line-211"></span><span class="annot"><a href="System.Win32.Info.html#searchPath"><span class="hs-identifier hs-type">searchPath</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span class="hs-special">)</span><span>
-</span><span id="line-212"></span><span id="searchPath"><span class="annot"><span class="annottext">searchPath :: Maybe String -&gt; String -&gt; Maybe String -&gt; IO (Maybe String)
-</span><a href="System.Win32.Info.html#searchPath"><span class="hs-identifier hs-var hs-var">searchPath</span></a></span></span><span> </span><span id="local-6989586621679149857"><span class="annot"><span class="annottext">Maybe String
-</span><a href="#local-6989586621679149857"><span class="hs-identifier hs-var">path</span></a></span></span><span> </span><span id="local-6989586621679149858"><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679149858"><span class="hs-identifier hs-var">filename</span></a></span></span><span> </span><span id="local-6989586621679149859"><span class="annot"><span class="annottext">Maybe String
-</span><a href="#local-6989586621679149859"><span class="hs-identifier hs-var">ext</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-213"></span><span>  </span><span class="annot"><span class="annottext">((LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String))
--&gt; (String -&gt; (LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String))
--&gt; Maybe String
--&gt; (LPTSTR -&gt; IO (Maybe String))
--&gt; IO (Maybe String)
-forall b a. b -&gt; (a -&gt; b) -&gt; Maybe a -&gt; b
-</span><span class="hs-identifier hs-var">maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(LPTSTR -&gt; IO (Maybe String)) -&gt; LPTSTR -&gt; IO (Maybe String)
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">LPTSTR
-forall a. Ptr a
-</span><span class="hs-identifier hs-var">nullPtr</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">String -&gt; (LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String)
-forall a. String -&gt; (LPTSTR -&gt; IO a) -&gt; IO a
-</span><a href="System.Win32.Types.html#withTString"><span class="hs-identifier hs-var">withTString</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe String
-</span><a href="#local-6989586621679149857"><span class="hs-identifier hs-var">path</span></a></span><span> </span><span class="annot"><span class="annottext">((LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String))
--&gt; (LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String)
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679149861"><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149861"><span class="hs-identifier hs-var">p_path</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
-</span><span id="line-214"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; (LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String)
-forall a. String -&gt; (LPTSTR -&gt; IO a) -&gt; IO a
-</span><a href="System.Win32.Types.html#withTString"><span class="hs-identifier hs-var">withTString</span></a></span><span> </span><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679149858"><span class="hs-identifier hs-var">filename</span></a></span><span> </span><span class="annot"><span class="annottext">((LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String))
--&gt; (LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String)
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679149862"><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149862"><span class="hs-identifier hs-var">p_filename</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
-</span><span id="line-215"></span><span>  </span><span class="annot"><span class="annottext">(String -&gt; (LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String))
--&gt; Maybe String
--&gt; (LPTSTR -&gt; IO (Maybe String))
--&gt; IO (Maybe String)
-forall a b c.
-(a -&gt; (Ptr b -&gt; IO c) -&gt; IO c)
--&gt; Maybe a -&gt; (Ptr b -&gt; IO c) -&gt; IO c
-</span><span class="hs-identifier hs-var">maybeWith</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; (LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String)
-forall a. String -&gt; (LPTSTR -&gt; IO a) -&gt; IO a
-</span><a href="System.Win32.Types.html#withTString"><span class="hs-identifier hs-var">withTString</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe String
-</span><a href="#local-6989586621679149859"><span class="hs-identifier hs-var">ext</span></a></span><span>      </span><span class="annot"><span class="annottext">((LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String))
--&gt; (LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String)
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679149864"><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149864"><span class="hs-identifier hs-var">p_ext</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
-</span><span id="line-216"></span><span>  </span><span class="annot"><span class="annottext">(Ptr LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String)
-forall a b. Storable a =&gt; (Ptr a -&gt; IO b) -&gt; IO b
-</span><span class="hs-identifier hs-var">alloca</span></span><span> </span><span class="annot"><span class="annottext">((Ptr LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String))
--&gt; (Ptr LPTSTR -&gt; IO (Maybe String)) -&gt; IO (Maybe String)
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679149866"><span class="annot"><span class="annottext">Ptr LPTSTR
-</span><a href="#local-6989586621679149866"><span class="hs-identifier hs-var">ppFilePart</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-keyword">do</span><span>
-</span><span id="line-217"></span><span>    </span><span id="local-6989586621679149867"><span class="annot"><a href="#local-6989586621679149867"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; (LPTSTR -&gt; DWORD -&gt; IO DWORD) -&gt; DWORD -&gt; IO String
-</span><a href="System.Win32.Types.html#try"><span class="hs-identifier hs-var">try</span></a></span><span> </span><span class="annot"><span class="annottext">String
-</span><span class="hs-string">&quot;searchPath&quot;</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679149868"><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149868"><span class="hs-identifier hs-var">buf</span></a></span></span><span> </span><span id="local-6989586621679149869"><span class="annot"><span class="annottext">DWORD
-</span><a href="#local-6989586621679149869"><span class="hs-identifier hs-var">len</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">LPTSTR
--&gt; LPTSTR -&gt; LPTSTR -&gt; DWORD -&gt; LPTSTR -&gt; Ptr LPTSTR -&gt; IO DWORD
-</span><a href="System.Win32.Info.Internal.html#c_SearchPath"><span class="hs-identifier hs-var">c_SearchPath</span></a></span><span> </span><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149861"><span class="hs-identifier hs-var">p_path</span></a></span><span> </span><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149862"><span class="hs-identifier hs-var">p_filename</span></a></span><span> </span><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149864"><span class="hs-identifier hs-var">p_ext</span></a></span><span>
-</span><span id="line-218"></span><span>                          </span><span class="annot"><span class="annottext">DWORD
-</span><a href="#local-6989586621679149869"><span class="hs-identifier hs-var">len</span></a></span><span> </span><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149868"><span class="hs-identifier hs-var">buf</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr LPTSTR
-</span><a href="#local-6989586621679149866"><span class="hs-identifier hs-var">ppFilePart</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">DWORD
-</span><span class="hs-number">512</span></span><span>
-</span><span id="line-219"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><a href="#local-6989586621679149867"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
-</span><span id="line-220"></span><span>     </span><span class="annot"><span class="annottext">IO (Maybe String)
--&gt; (IOError -&gt; IO (Maybe String)) -&gt; IO (Maybe String)
-forall e a. Exception e =&gt; IO a -&gt; (e -&gt; IO a) -&gt; IO a
-</span><span class="hs-operator hs-var">`catch`</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679149872"><span class="annot"><span class="annottext">IOError
-</span><a href="#local-6989586621679149872"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">IOError -&gt; Bool
-</span><span class="hs-identifier hs-var">isDoesNotExistError</span></span><span> </span><span class="annot"><span class="annottext">IOError
-</span><a href="#local-6989586621679149872"><span class="hs-identifier hs-var">e</span></a></span><span>
-</span><span id="line-221"></span><span>                       </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Maybe String -&gt; IO (Maybe String)
-forall a. a -&gt; IO a
-forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
-</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">Maybe String
-forall a. Maybe a
-</span><span class="hs-identifier hs-var">Nothing</span></span><span>
-</span><span id="line-222"></span><span>                       </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">IOError -&gt; IO (Maybe String)
-forall a. IOError -&gt; IO a
-</span><span class="hs-identifier hs-var">ioError</span></span><span> </span><span class="annot"><span class="annottext">IOError
-</span><a href="#local-6989586621679149872"><span class="hs-identifier hs-var">e</span></a></span><span>
-</span><span id="line-223"></span><span>
-</span><span id="line-224"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-225"></span><span class="hs-comment">-- System Info (Info about processor and memory subsystem)</span><span>
-</span><span id="line-226"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-227"></span><span>
-</span><span id="line-228"></span><span class="annot"><a href="System.Win32.Info.html#getSystemInfo"><span class="hs-identifier hs-type">getSystemInfo</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="System.Win32.Info.Internal.html#SYSTEM_INFO"><span class="hs-identifier hs-type">SYSTEM_INFO</span></a></span><span>
-</span><span id="line-229"></span><span id="getSystemInfo"><span class="annot"><span class="annottext">getSystemInfo :: IO SYSTEM_INFO
-</span><a href="System.Win32.Info.html#getSystemInfo"><span class="hs-identifier hs-var hs-var">getSystemInfo</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Ptr SYSTEM_INFO -&gt; IO SYSTEM_INFO) -&gt; IO SYSTEM_INFO
-forall a b. Storable a =&gt; (Ptr a -&gt; IO b) -&gt; IO b
-</span><span class="hs-identifier hs-var">alloca</span></span><span> </span><span class="annot"><span class="annottext">((Ptr SYSTEM_INFO -&gt; IO SYSTEM_INFO) -&gt; IO SYSTEM_INFO)
--&gt; (Ptr SYSTEM_INFO -&gt; IO SYSTEM_INFO) -&gt; IO SYSTEM_INFO
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679149876"><span class="annot"><span class="annottext">Ptr SYSTEM_INFO
-</span><a href="#local-6989586621679149876"><span class="hs-identifier hs-var">ret</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-230"></span><span>    </span><span class="annot"><span class="annottext">Ptr SYSTEM_INFO -&gt; IO ()
-</span><a href="System.Win32.Info.Internal.html#c_GetSystemInfo"><span class="hs-identifier hs-var">c_GetSystemInfo</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr SYSTEM_INFO
-</span><a href="#local-6989586621679149876"><span class="hs-identifier hs-var">ret</span></a></span><span>
-</span><span id="line-231"></span><span>    </span><span class="annot"><span class="annottext">Ptr SYSTEM_INFO -&gt; IO SYSTEM_INFO
-forall a. Storable a =&gt; Ptr a -&gt; IO a
-</span><span class="hs-identifier hs-var">peek</span></span><span> </span><span class="annot"><span class="annottext">Ptr SYSTEM_INFO
-</span><a href="#local-6989586621679149876"><span class="hs-identifier hs-var">ret</span></a></span><span>
-</span><span id="line-232"></span><span>
-</span><span id="line-233"></span><span class="hs-comment">-- %fun GetSystemMetrics :: SMSetting -&gt; IO Int</span><span>
-</span><span id="line-234"></span><span>
-</span><span id="line-235"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-236"></span><span class="hs-comment">-- Thread Desktops</span><span>
-</span><span id="line-237"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-238"></span><span>
-</span><span id="line-239"></span><span class="hs-comment">-- %fun GetThreadDesktop :: ThreadId -&gt; IO HDESK</span><span>
-</span><span id="line-240"></span><span class="hs-comment">-- %fun SetThreadDesktop :: ThreadId -&gt; HDESK -&gt; IO ()</span><span>
-</span><span id="line-241"></span><span>
-</span><span id="line-242"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-243"></span><span class="hs-comment">-- User name</span><span>
-</span><span id="line-244"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-245"></span><span>
-</span><span id="line-246"></span><span class="hs-comment">-- %fun GetUserName :: IO String</span><span>
-</span><span id="line-247"></span><span>
-</span><span id="line-248"></span><span class="annot"><a href="System.Win32.Info.html#getUserName"><span class="hs-identifier hs-type">getUserName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
-</span><span id="line-249"></span><span id="getUserName"><span class="annot"><span class="annottext">getUserName :: IO String
-</span><a href="System.Win32.Info.html#getUserName"><span class="hs-identifier hs-var hs-var">getUserName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-250"></span><span>  </span><span class="annot"><span class="annottext">Int -&gt; (LPTSTR -&gt; IO String) -&gt; IO String
-forall a b. Storable a =&gt; Int -&gt; (Ptr a -&gt; IO b) -&gt; IO b
-</span><span class="hs-identifier hs-var">allocaArray</span></span><span> </span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">512</span></span><span> </span><span class="annot"><span class="annottext">((LPTSTR -&gt; IO String) -&gt; IO String)
--&gt; (LPTSTR -&gt; IO String) -&gt; IO String
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679149881"><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149881"><span class="hs-identifier hs-var">c_str</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
-</span><span id="line-251"></span><span>    </span><span class="annot"><span class="annottext">DWORD -&gt; (Ptr DWORD -&gt; IO String) -&gt; IO String
-forall a b. Storable a =&gt; a -&gt; (Ptr a -&gt; IO b) -&gt; IO b
-</span><span class="hs-identifier hs-var">with</span></span><span> </span><span class="annot"><span class="annottext">DWORD
-</span><span class="hs-number">512</span></span><span> </span><span class="annot"><span class="annottext">((Ptr DWORD -&gt; IO String) -&gt; IO String)
--&gt; (Ptr DWORD -&gt; IO String) -&gt; IO String
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span> </span><span id="local-6989586621679149883"><span class="annot"><span class="annottext">Ptr DWORD
-</span><a href="#local-6989586621679149883"><span class="hs-identifier hs-var">c_len</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-252"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; IO Bool -&gt; IO ()
-</span><a href="System.Win32.Types.html#failIfFalse_"><span class="hs-identifier hs-var">failIfFalse_</span></a></span><span> </span><span class="annot"><span class="annottext">String
-</span><span class="hs-string">&quot;GetUserName&quot;</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; IO Bool -&gt; IO ()
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">LPTSTR -&gt; Ptr DWORD -&gt; IO Bool
-</span><a href="System.Win32.Info.Internal.html#c_GetUserName"><span class="hs-identifier hs-var">c_GetUserName</span></a></span><span> </span><span class="annot"><span class="annottext">LPTSTR
-</span><a href="#local-6989586621679149881"><span class="hs-identifier hs-var">c_str</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr DWORD
-</span><a href="#local-6989586621679149883"><span class="hs-identifier hs-var">c_len</span></a></span><span>
-</span><span id="line-253"></span><span>        </span><span id="local-6989586621679149886"><span class="annot"><a href="#local-6989586621679149886"><span class="hs-identifier hs-var">len</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Ptr DWORD -&gt; IO DWORD
-forall a. Storable a =&gt; Ptr a -&gt; IO a
-</span><span class="hs-identifier hs-var">peek</span></span><span> </span><span class="annot"><span class="annottext">Ptr DWORD
-</span><a href="#local-6989586621679149883"><span class="hs-identifier hs-var">c_len</span></a></span><span>
-</span><span id="line-254"></span><span>        </span><span class="annot"><a href="System.Win32.Types.html#peekTStringLen"><span class="hs-identifier hs-type">peekTStringLen</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679149881"><span class="hs-identifier hs-type">c_str</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">fromIntegral</span></span><span> </span><span class="annot"><a href="#local-6989586621679149886"><span class="hs-identifier hs-type">len</span></a></span><span> </span><span class="annot"><span class="hs-glyph hs-type">-</span></span><span> </span><span class="annot"><span class="hs-number">1</span></span><span class="hs-special">)</span><span>
-</span><span id="line-255"></span><span>
-</span><span id="line-256"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-257"></span><span class="hs-comment">-- End</span><span>
-</span><span id="line-258"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-259"></span></pre></body></html>

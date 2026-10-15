@@ -1,63 +1,0 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# OPTIONS_GHC -optc-D_WIN32_IE=0x500 #-}</span><span>
-</span><span id="line-2"></span><span class="hs-pragma">{-# LINE 1 &quot;libraries\\Win32\\System\\Win32\\WindowsString\\Shell.hsc&quot; #-}</span><span>
-</span><span id="line-1"></span><span class="hs-pragma">{-# LANGUAGE Trustworthy #-}</span><span>
-</span><span id="line-2"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
-</span><span id="line-3"></span><span class="hs-comment">-- |</span><span>
-</span><span id="line-4"></span><span class="hs-comment">-- Module      :  System.Win32.WindowsString.Shell</span><span>
-</span><span id="line-5"></span><span class="hs-comment">-- Copyright   :  (c) The University of Glasgow 2009</span><span>
-</span><span id="line-6"></span><span class="hs-comment">-- License     :  BSD-style (see the file libraries/base/LICENSE)</span><span>
-</span><span id="line-7"></span><span class="hs-comment">--</span><span>
-</span><span id="line-8"></span><span class="hs-comment">-- Maintainer  :  Esa Ilari Vuokko &lt;ei@vuokko.info&gt;</span><span>
-</span><span id="line-9"></span><span class="hs-comment">-- Stability   :  provisional</span><span>
-</span><span id="line-10"></span><span class="hs-comment">-- Portability :  portable</span><span>
-</span><span id="line-11"></span><span class="hs-comment">--</span><span>
-</span><span id="line-12"></span><span class="hs-comment">-- Win32 stuff from shell32.dll</span><span>
-</span><span id="line-13"></span><span class="hs-comment">--</span><span>
-</span><span id="line-14"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
-</span><span id="line-15"></span><span>
-</span><span id="line-16"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">System.Win32.WindowsString.Shell</span><span> </span><span class="hs-special">(</span><span>
-</span><span id="line-17"></span><span>  </span><span class="hs-identifier">sHGetFolderPath</span><span class="hs-special">,</span><span>
-</span><span id="line-18"></span><span>  </span><span class="hs-identifier">CSIDL</span><span class="hs-special">,</span><span>
-</span><span id="line-19"></span><span>  </span><span class="hs-identifier">cSIDL_PROFILE</span><span class="hs-special">,</span><span>
-</span><span id="line-20"></span><span>  </span><span class="hs-identifier">cSIDL_APPDATA</span><span class="hs-special">,</span><span>
-</span><span id="line-21"></span><span>  </span><span class="hs-identifier">cSIDL_WINDOWS</span><span class="hs-special">,</span><span>
-</span><span id="line-22"></span><span>  </span><span class="hs-identifier">cSIDL_PERSONAL</span><span class="hs-special">,</span><span>
-</span><span id="line-23"></span><span>  </span><span class="hs-identifier">cSIDL_LOCAL_APPDATA</span><span class="hs-special">,</span><span>
-</span><span id="line-24"></span><span>  </span><span class="hs-identifier">cSIDL_DESKTOPDIRECTORY</span><span class="hs-special">,</span><span>
-</span><span id="line-25"></span><span>  </span><span class="hs-identifier">cSIDL_PROGRAM_FILES</span><span class="hs-special">,</span><span>
-</span><span id="line-26"></span><span>  </span><span class="hs-identifier">SHGetFolderPathFlags</span><span class="hs-special">,</span><span>
-</span><span id="line-27"></span><span>  </span><span class="hs-identifier">sHGFP_TYPE_CURRENT</span><span class="hs-special">,</span><span>
-</span><span id="line-28"></span><span>  </span><span class="hs-identifier">sHGFP_TYPE_DEFAULT</span><span>
-</span><span id="line-29"></span><span> </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-30"></span><span>
-</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.OsString.Windows</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">WindowsString</span><span class="hs-special">)</span><span>
-</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.Win32.Shell.Internal</span><span>
-</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.Win32.Shell</span><span> </span><span class="hs-keyword">hiding</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">sHGetFolderPath</span><span class="hs-special">)</span><span>
-</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.Win32.WindowsString.Types</span><span>
-</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Graphics.Win32.GDI.Types</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">HWND</span><span class="hs-special">)</span><span>
-</span><span id="line-36"></span><span>
-</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Foreign</span><span>
-</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Control.Monad</span><span class="hs-cpp">
-
-#include &quot;windows_cconv.h&quot;
-</span><span>
-</span><span id="line-42"></span><span class="hs-comment">-- for SHGetFolderPath stuff</span><span>
-</span><span id="line-43"></span><span>
-</span><span id="line-44"></span><span>
-</span><span id="line-45"></span><span>
-</span><span id="line-46"></span><span>
-</span><span id="line-47"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-48"></span><span class="hs-comment">-- SHGetFolderPath</span><span>
-</span><span id="line-49"></span><span class="hs-comment">--</span><span>
-</span><span id="line-50"></span><span class="hs-comment">-- XXX: this is deprecated in Vista and later</span><span>
-</span><span id="line-51"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-52"></span><span>
-</span><span id="line-53"></span><span>
-</span><span id="line-54"></span><span class="hs-identifier">sHGetFolderPath</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">HWND</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">CSIDL</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">HANDLE</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">SHGetFolderPathFlags</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">WindowsString</span><span>
-</span><span id="line-55"></span><span class="hs-identifier">sHGetFolderPath</span><span> </span><span class="hs-identifier">hwnd</span><span> </span><span class="hs-identifier">csidl</span><span> </span><span class="hs-identifier">hdl</span><span> </span><span class="hs-identifier">flags</span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-56"></span><span>  </span><span class="hs-identifier">allocaBytes</span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="hs-number">260</span><span class="hs-special">)</span><span> </span><span class="hs-operator">*</span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="hs-number">1</span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-operator">$</span><span> </span><span class="hs-glyph">\</span><span class="hs-identifier">pstr</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-57"></span><span id="sHGetFolderPath"><span class="hs-pragma">{-# LINE 57 &quot;libraries\\Win32\\System\\Win32\\WindowsString\\Shell.hsc&quot; #-}</span></span><span>
-</span><span id="line-57"></span><span>    </span><span class="hs-identifier">r</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-identifier">c_SHGetFolderPath</span><span> </span><span class="hs-identifier">hwnd</span><span> </span><span class="hs-identifier">csidl</span><span> </span><span class="hs-identifier">hdl</span><span> </span><span class="hs-identifier">flags</span><span> </span><span class="hs-identifier">pstr</span><span>
-</span><span id="line-58"></span><span>    </span><span class="hs-identifier">when</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">r</span><span> </span><span class="hs-operator">&lt;</span><span> </span><span class="hs-number">0</span><span class="hs-special">)</span><span> </span><span class="hs-operator">$</span><span> </span><span id="local-6989586621679158890"></span><span class="hs-identifier">raiseUnsupported</span><span> </span><span class="hs-string">&quot;sHGetFolderPath&quot;</span><span>
-</span><span id="line-59"></span><span>    </span><span class="hs-identifier">peekTString</span><span> </span><span class="hs-identifier">pstr</span><span>
-</span><span id="line-60"></span></pre></body></html>

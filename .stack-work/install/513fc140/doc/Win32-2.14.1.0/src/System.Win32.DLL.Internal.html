@@ -1,61 +1,0 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LINE 1 &quot;libraries\\Win32\\System\\Win32\\DLL\\Internal.hsc&quot; #-}</span><span>
-</span><span id="line-1"></span><span>
-</span><span id="line-2"></span><span class="hs-pragma">{-# LINE 2 &quot;libraries\\Win32\\System\\Win32\\DLL\\Internal.hsc&quot; #-}</span><span>
-</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE Safe #-}</span><span>
-</span><span id="line-3"></span><span>
-</span><span id="line-4"></span><span class="hs-pragma">{-# LINE 6 &quot;libraries\\Win32\\System\\Win32\\DLL\\Internal.hsc&quot; #-}</span><span>
-</span><span id="line-6"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
-</span><span id="line-7"></span><span class="hs-comment">-- |</span><span>
-</span><span id="line-8"></span><span class="hs-comment">-- Module      :  System.Win32.DLL.Internal</span><span>
-</span><span id="line-9"></span><span class="hs-comment">-- Copyright   :  (c) Alastair Reid, 1997-2003</span><span>
-</span><span id="line-10"></span><span class="hs-comment">-- License     :  BSD-style (see the file libraries/base/LICENSE)</span><span>
-</span><span id="line-11"></span><span class="hs-comment">--</span><span>
-</span><span id="line-12"></span><span class="hs-comment">-- Maintainer  :  Esa Ilari Vuokko &lt;ei@vuokko.info&gt;</span><span>
-</span><span id="line-13"></span><span class="hs-comment">-- Stability   :  provisional</span><span>
-</span><span id="line-14"></span><span class="hs-comment">-- Portability :  portable</span><span>
-</span><span id="line-15"></span><span class="hs-comment">--</span><span>
-</span><span id="line-16"></span><span class="hs-comment">-- A collection of FFI declarations for interfacing with Win32.</span><span>
-</span><span id="line-17"></span><span class="hs-comment">--</span><span>
-</span><span id="line-18"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
-</span><span id="line-19"></span><span>
-</span><span id="line-20"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">System.Win32.DLL.Internal</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-21"></span><span>
-</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.Win32.Types</span><span class="hs-cpp">
-
-#include &quot;windows_cconv.h&quot;
-</span><span>
-</span><span id="line-26"></span><span>
-</span><span id="line-27"></span><span>
-</span><span id="line-28"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h DisableThreadLibraryCalls&quot;</span><span>
-</span><span id="line-29"></span><span>  </span><span class="hs-identifier">c_DisableThreadLibraryCalls</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">HMODULE</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">Bool</span><span>
-</span><span id="line-30"></span><span>
-</span><span id="line-31"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h FreeLibrary&quot;</span><span>
-</span><span id="line-32"></span><span>  </span><span class="hs-identifier">c_FreeLibrary</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">HMODULE</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">Bool</span><span>
-</span><span id="line-33"></span><span>
-</span><span id="line-34"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h GetModuleFileNameW&quot;</span><span>
-</span><span id="line-35"></span><span>  </span><span class="hs-identifier">c_GetModuleFileName</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">HMODULE</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">LPTSTR</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Int</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">Bool</span><span>
-</span><span id="line-36"></span><span>
-</span><span id="line-37"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h GetModuleHandleW&quot;</span><span>
-</span><span id="line-38"></span><span>  </span><span class="hs-identifier">c_GetModuleHandle</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">LPCTSTR</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">HMODULE</span><span>
-</span><span id="line-39"></span><span>
-</span><span id="line-40"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h GetProcAddress&quot;</span><span>
-</span><span id="line-41"></span><span>  </span><span class="hs-identifier">c_GetProcAddress</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">HMODULE</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">LPCSTR</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">Addr</span><span>
-</span><span id="line-42"></span><span>
-</span><span id="line-43"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h LoadLibraryW&quot;</span><span>
-</span><span id="line-44"></span><span>  </span><span class="hs-identifier">c_LoadLibrary</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">LPCTSTR</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">HMODULE</span><span>
-</span><span id="line-45"></span><span>
-</span><span id="line-46"></span><span class="hs-keyword">type</span><span> </span><span class="hs-identifier">LoadLibraryFlags</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">DWORD</span><span>
-</span><span id="line-47"></span><span>
-</span><span id="line-48"></span><span class="hs-identifier">lOAD_LIBRARY_AS_DATAFILE</span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">LoadLibraryFlags</span><span>
-</span><span id="line-49"></span><span class="annot"><a href="System.Win32.DLL.Internal.html#lOAD_LIBRARY_AS_DATAFILE"><span class="hs-identifier hs-type">lOAD_LIBRARY_AS_DATAFILE</span></a></span><span>       </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">2</span><span>
-</span><span id="line-50"></span><span id="lOAD_LIBRARY_AS_DATAFILE"></span><span class="hs-identifier">lOAD_WITH_ALTERED_SEARCH_PATH</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">LoadLibraryFlags</span><span>
-</span><span id="line-51"></span><span class="annot"><a href="System.Win32.DLL.Internal.html#lOAD_WITH_ALTERED_SEARCH_PATH"><span class="hs-identifier hs-type">lOAD_WITH_ALTERED_SEARCH_PATH</span></a></span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">8</span><span>
-</span><span id="line-52"></span><span>
-</span><span id="line-53"></span><span class="hs-pragma">{-# LINE 52 &quot;libraries\\Win32\\System\\Win32\\DLL\\Internal.hsc&quot; #-}</span><span>
-</span><span id="line-52"></span><span>
-</span><span id="line-53"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h LoadLibraryExW&quot;</span><span>
-</span><span id="line-54"></span><span>  </span><span class="hs-identifier">c_LoadLibraryEx</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">LPCTSTR</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">HANDLE</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">LoadLibraryFlags</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">HMODULE</span><span>
-</span><span id="line-55"></span><span>
-</span><span id="line-56"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h SetDllDirectoryW&quot;</span><span>
-</span><span id="line-57"></span><span>  </span><span class="hs-identifier">c_SetDllDirectory</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">LPTSTR</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">BOOL</span><span>
-</span><span id="line-58"></span></pre></body></html>

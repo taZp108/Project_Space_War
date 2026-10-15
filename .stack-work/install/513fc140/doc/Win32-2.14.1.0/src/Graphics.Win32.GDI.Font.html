@@ -1,266 +1,0 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LINE 1 &quot;libraries\\Win32\\Graphics\\Win32\\GDI\\Font.hsc&quot; #-}</span><span>
-</span><span id="line-1"></span><span>
-</span><span id="line-2"></span><span class="hs-pragma">{-# LINE 2 &quot;libraries\\Win32\\Graphics\\Win32\\GDI\\Font.hsc&quot; #-}</span><span>
-</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE Safe #-}</span><span>
-</span><span id="line-3"></span><span>
-</span><span id="line-4"></span><span class="hs-pragma">{-# LINE 6 &quot;libraries\\Win32\\Graphics\\Win32\\GDI\\Font.hsc&quot; #-}</span><span>
-</span><span id="line-6"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
-</span><span id="line-7"></span><span class="hs-comment">-- |</span><span>
-</span><span id="line-8"></span><span class="hs-comment">-- Module      :  Graphics.Win32.GDI.Font</span><span>
-</span><span id="line-9"></span><span class="hs-comment">-- Copyright   :  (c) Alastair Reid, 1997-2003</span><span>
-</span><span id="line-10"></span><span class="hs-comment">-- License     :  BSD-style (see the file libraries/base/LICENSE)</span><span>
-</span><span id="line-11"></span><span class="hs-comment">--</span><span>
-</span><span id="line-12"></span><span class="hs-comment">-- Maintainer  :  Esa Ilari Vuokko &lt;ei@vuokko.info&gt;</span><span>
-</span><span id="line-13"></span><span class="hs-comment">-- Stability   :  provisional</span><span>
-</span><span id="line-14"></span><span class="hs-comment">-- Portability :  portable</span><span>
-</span><span id="line-15"></span><span class="hs-comment">--</span><span>
-</span><span id="line-16"></span><span class="hs-comment">-- A collection of FFI declarations for interfacing with Win32.</span><span>
-</span><span id="line-17"></span><span class="hs-comment">--</span><span>
-</span><span id="line-18"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
-</span><span id="line-19"></span><span>
-</span><span id="line-20"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Win32.GDI.Font</span><span>
-</span><span id="line-21"></span><span class="hs-comment">{-
-        ( CharSet
-        , PitchAndFamily
-        , OutPrecision
-        , ClipPrecision
-        , FontQuality
-        , FontWeight
-
-        , createFont, deleteFont
-
-        , StockFont, getStockFont
-        , oEM_FIXED_FONT, aNSI_FIXED_FONT, aNSI_VAR_FONT, sYSTEM_FONT
-        , dEVICE_DEFAULT_FONT, sYSTEM_FIXED_FONT
-        ) where
--}</span><span>
-</span><span id="line-36"></span><span>        </span><span class="hs-keyword">where</span><span>
-</span><span id="line-37"></span><span>
-</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.Win32.Types</span><span>
-</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Graphics.Win32.GDI.Types</span><span>
-</span><span id="line-40"></span><span>
-</span><span id="line-41"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Foreign</span><span class="hs-cpp">
-
-#include &quot;windows_cconv.h&quot;
-</span><span>
-</span><span id="line-45"></span><span>
-</span><span id="line-46"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-47"></span><span class="hs-comment">-- Types</span><span>
-</span><span id="line-48"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-49"></span><span>
-</span><span id="line-50"></span><span class="hs-keyword">type</span><span> </span><span class="hs-identifier">CharSet</span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">UINT</span><span>
-</span><span id="line-51"></span><span class="hs-keyword">type</span><span> </span><span id="CharSet"></span><span class="hs-identifier">PitchAndFamily</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="System.Win32.Types.html#UINT"><span class="hs-identifier hs-type">UINT</span></a></span><span>
-</span><span id="line-52"></span><span class="hs-keyword">type</span><span> </span><span id="PitchAndFamily"><span class="hs-identifier">OutPrecision</span></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="System.Win32.Types.html#UINT"><span class="hs-identifier hs-type">UINT</span></a></span><span>
-</span><span id="line-53"></span><span class="hs-keyword">type</span><span> </span><span id="OutPrecision"></span><span class="hs-identifier">ClipPrecision</span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="System.Win32.Types.html#UINT"><span class="hs-identifier hs-type">UINT</span></a></span><span>
-</span><span id="line-54"></span><span class="hs-keyword">type</span><span> </span><span id="ClipPrecision"><span class="hs-identifier">FontQuality</span></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="System.Win32.Types.html#UINT"><span class="hs-identifier hs-type">UINT</span></a></span><span>
-</span><span id="line-55"></span><span class="hs-keyword">type</span><span> </span><span id="FontQuality"><span class="hs-identifier">FontWeight</span></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">Word32</span><span>
-</span><span id="line-56"></span><span class="hs-keyword">type</span><span> </span><span id="FontWeight"><span class="hs-identifier">FaceName</span></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
-</span><span id="line-57"></span><span>
-</span><span id="line-58"></span><span class="hs-comment">-- A FaceName is a string no more that LF_FACESIZE in length</span><span>
-</span><span id="line-59"></span><span class="hs-comment">-- (including null terminator).</span><span>
-</span><span id="line-60"></span><span class="hs-comment">-- %const Int LF_FACESIZE         # == 32</span><span>
-</span><span id="line-61"></span><span class="hs-comment">-- %sentinel_array : FaceName : CHAR : char : $0 = '\0' : ('\0' == $0) : LF_FACESIZE</span><span>
-</span><span id="line-62"></span><span>
-</span><span id="line-63"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-64"></span><span class="hs-comment">-- Constants</span><span>
-</span><span id="line-65"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-66"></span><span>
-</span><span id="line-67"></span><span class="hs-identifier">aNSI_CHARSET</span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">CharSet</span><span>
-</span><span id="line-68"></span><span class="annot"><a href="Graphics.Win32.GDI.Font.html#aNSI_CHARSET"><span class="hs-identifier hs-type">aNSI_CHARSET</span></a></span><span>         </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">0</span><span>
-</span><span id="line-69"></span><span id="aNSI_CHARSET"></span><span class="hs-identifier">dEFAULT_CHARSET</span><span>      </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">CharSet</span><span>
-</span><span id="line-70"></span><span class="annot"><a href="Graphics.Win32.GDI.Font.html#dEFAULT_CHARSET"><span class="hs-identifier hs-type">dEFAULT_CHARSET</span></a></span><span>      </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">1</span><span>
-</span><span id="line-71"></span><span id="dEFAULT_CHARSET"><span class="hs-identifier">sYMBOL_CHARSET</span></span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">CharSet</span><span>
-</span><span id="line-72"></span><span class="annot"><a href="Graphics.Win32.GDI.Font.html#sYMBOL_CHARSET"><span class="hs-identifier hs-type">sYMBOL_CHARSET</span></a></span><span>       </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">2</span><span>
-</span><span id="line-73"></span><span id="sYMBOL_CHARSET"></span><span class="hs-identifier">sHIFTJIS_CHARSET</span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">CharSet</span><span>
-</span><span id="line-74"></span><span class="annot"><a href="Graphics.Win32.GDI.Font.html#sHIFTJIS_CHARSET"><span class="hs-identifier hs-type">sHIFTJIS_CHARSET</span></a></span><span>     </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">128</span><span>
-</span><span id="line-75"></span><span id="sHIFTJIS_CHARSET"><span class="hs-identifier">hANGEUL_CHARSET</span></span><span>      </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">CharSet</span><span>
-</span><span id="line-76"></span><span class="annot"><a href="Graphics.Win32.GDI.Font.html#hANGEUL_CHARSET"><span class="hs-identifier hs-type">hANGEUL_CHARSET</span></a></span><span>      </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">129</span><span>
-</span><span id="line-77"></span><span id="hANGEUL_CHARSET"></span><span class="hs-identifier">cHINESEBIG5_CHARSET</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">CharSet</span><span>
-</span><span id="line-78"></span><span class="annot"><a href="Graphics.Win32.GDI.Font.html#cHINESEBIG5_CHARSET"><span class="hs-identifier hs-type">cHINESEBIG5_CHARSET</span></a></span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">136</span><span>
-</span><span id="line-79"></span><span id="cHINESEBIG5_CHARSET"><span class="hs-identifier">oEM_CHARSET</span></span><span>          </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">CharSet</span><span>
-</span><span id="line-80"></span><span class="annot"><a href="Graphics.Win32.GDI.Font.html#oEM_CHARSET"><span class="hs-identifier hs-type">oEM_CHARSET</span></a></span><span>          </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">255</span><span>
-</span><span id="line-81"></span><span>
-</span><span id="line-82"></span><span class="hs-pragma">{-# LINE 76 &quot;libraries\\Win32\\Graphics\\Win32\\GDI\\Font.hsc&quot; #-}</span><span>
-</span><span id="line-76"></span><span>
-</span><span id="line-77"></span><span class="hs-identifier">dEFAULT_PITCH</span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PitchAndFamily</span><span>
-</span><span id="line-78"></span><span class="hs-identifier">dEFAULT_PITCH</span><span>   </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">0</span><span>
-</span><span id="line-79"></span><span class="hs-identifier">fIXED_PITCH</span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PitchAndFamily</span><span>
-</span><span id="line-80"></span><span class="hs-identifier">fIXED_PITCH</span><span>     </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">1</span><span>
-</span><span id="line-81"></span><span class="hs-identifier">vARIABLE_PITCH</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PitchAndFamily</span><span>
-</span><span id="line-82"></span><span class="hs-identifier">vARIABLE_PITCH</span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">2</span><span>
-</span><span id="line-83"></span><span class="hs-identifier">fF_DONTCARE</span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PitchAndFamily</span><span>
-</span><span id="line-84"></span><span class="hs-identifier">fF_DONTCARE</span><span>     </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">0</span><span>
-</span><span id="line-85"></span><span class="hs-identifier">fF_ROMAN</span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PitchAndFamily</span><span>
-</span><span id="line-86"></span><span class="hs-identifier">fF_ROMAN</span><span>        </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">16</span><span>
-</span><span id="line-87"></span><span class="hs-identifier">fF_SWISS</span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PitchAndFamily</span><span>
-</span><span id="line-88"></span><span class="hs-identifier">fF_SWISS</span><span>        </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">32</span><span>
-</span><span id="line-89"></span><span class="hs-identifier">fF_MODERN</span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PitchAndFamily</span><span>
-</span><span id="line-90"></span><span class="hs-identifier">fF_MODERN</span><span>       </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">48</span><span>
-</span><span id="line-91"></span><span class="hs-identifier">fF_SCRIPT</span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PitchAndFamily</span><span>
-</span><span id="line-92"></span><span class="hs-identifier">fF_SCRIPT</span><span>       </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">64</span><span>
-</span><span id="line-93"></span><span class="hs-identifier">fF_DECORATIVE</span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PitchAndFamily</span><span>
-</span><span id="line-94"></span><span class="hs-identifier">fF_DECORATIVE</span><span>   </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">80</span><span>
-</span><span id="line-95"></span><span>
-</span><span id="line-96"></span><span class="hs-pragma">{-# LINE 88 &quot;libraries\\Win32\\Graphics\\Win32\\GDI\\Font.hsc&quot; #-}</span><span>
-</span><span id="line-88"></span><span>
-</span><span id="line-89"></span><span class="hs-identifier">familyMask</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">pitchMask</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PitchAndFamily</span><span>
-</span><span id="line-90"></span><span class="hs-identifier">familyMask</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">0xF0</span><span>
-</span><span id="line-91"></span><span class="hs-identifier">pitchMask</span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">0x0F</span><span>
-</span><span id="line-92"></span><span>
-</span><span id="line-93"></span><span class="hs-identifier">oUT_DEFAULT_PRECIS</span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">OutPrecision</span><span>
-</span><span id="line-94"></span><span class="hs-identifier">oUT_DEFAULT_PRECIS</span><span>    </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">0</span><span>
-</span><span id="line-95"></span><span class="hs-identifier">oUT_STRING_PRECIS</span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">OutPrecision</span><span>
-</span><span id="line-96"></span><span class="hs-identifier">oUT_STRING_PRECIS</span><span>     </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">1</span><span>
-</span><span id="line-97"></span><span class="hs-identifier">oUT_CHARACTER_PRECIS</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">OutPrecision</span><span>
-</span><span id="line-98"></span><span class="hs-identifier">oUT_CHARACTER_PRECIS</span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">2</span><span>
-</span><span id="line-99"></span><span class="hs-identifier">oUT_STROKE_PRECIS</span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">OutPrecision</span><span>
-</span><span id="line-100"></span><span class="hs-identifier">oUT_STROKE_PRECIS</span><span>     </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">3</span><span>
-</span><span id="line-101"></span><span class="hs-identifier">oUT_TT_PRECIS</span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">OutPrecision</span><span>
-</span><span id="line-102"></span><span class="hs-identifier">oUT_TT_PRECIS</span><span>         </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">4</span><span>
-</span><span id="line-103"></span><span class="hs-identifier">oUT_DEVICE_PRECIS</span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">OutPrecision</span><span>
-</span><span id="line-104"></span><span class="hs-identifier">oUT_DEVICE_PRECIS</span><span>     </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">5</span><span>
-</span><span id="line-105"></span><span class="hs-identifier">oUT_RASTER_PRECIS</span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">OutPrecision</span><span>
-</span><span id="line-106"></span><span class="hs-identifier">oUT_RASTER_PRECIS</span><span>     </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">6</span><span>
-</span><span id="line-107"></span><span class="hs-identifier">oUT_TT_ONLY_PRECIS</span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">OutPrecision</span><span>
-</span><span id="line-108"></span><span class="hs-identifier">oUT_TT_ONLY_PRECIS</span><span>    </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">7</span><span>
-</span><span id="line-109"></span><span>
-</span><span id="line-110"></span><span class="hs-pragma">{-# LINE 103 &quot;libraries\\Win32\\Graphics\\Win32\\GDI\\Font.hsc&quot; #-}</span><span>
-</span><span id="line-103"></span><span>
-</span><span id="line-104"></span><span class="hs-identifier">cLIP_DEFAULT_PRECIS</span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">ClipPrecision</span><span>
-</span><span id="line-105"></span><span class="hs-identifier">cLIP_DEFAULT_PRECIS</span><span>    </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">0</span><span>
-</span><span id="line-106"></span><span class="hs-identifier">cLIP_CHARACTER_PRECIS</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">ClipPrecision</span><span>
-</span><span id="line-107"></span><span class="hs-identifier">cLIP_CHARACTER_PRECIS</span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">1</span><span>
-</span><span id="line-108"></span><span class="hs-identifier">cLIP_STROKE_PRECIS</span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">ClipPrecision</span><span>
-</span><span id="line-109"></span><span class="hs-identifier">cLIP_STROKE_PRECIS</span><span>     </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">2</span><span>
-</span><span id="line-110"></span><span class="hs-identifier">cLIP_MASK</span><span>              </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">ClipPrecision</span><span>
-</span><span id="line-111"></span><span class="hs-identifier">cLIP_MASK</span><span>              </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">15</span><span>
-</span><span id="line-112"></span><span class="hs-identifier">cLIP_LH_ANGLES</span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">ClipPrecision</span><span>
-</span><span id="line-113"></span><span class="hs-identifier">cLIP_LH_ANGLES</span><span>         </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">16</span><span>
-</span><span id="line-114"></span><span class="hs-identifier">cLIP_TT_ALWAYS</span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">ClipPrecision</span><span>
-</span><span id="line-115"></span><span class="hs-identifier">cLIP_TT_ALWAYS</span><span>         </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">32</span><span>
-</span><span id="line-116"></span><span class="hs-identifier">cLIP_EMBEDDED</span><span>          </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">ClipPrecision</span><span>
-</span><span id="line-117"></span><span class="hs-identifier">cLIP_EMBEDDED</span><span>          </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">128</span><span>
-</span><span id="line-118"></span><span>
-</span><span id="line-119"></span><span class="hs-pragma">{-# LINE 113 &quot;libraries\\Win32\\Graphics\\Win32\\GDI\\Font.hsc&quot; #-}</span><span>
-</span><span id="line-113"></span><span>
-</span><span id="line-114"></span><span class="hs-identifier">dEFAULT_QUALITY</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontQuality</span><span>
-</span><span id="line-115"></span><span class="hs-identifier">dEFAULT_QUALITY</span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">0</span><span>
-</span><span id="line-116"></span><span class="hs-identifier">dRAFT_QUALITY</span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontQuality</span><span>
-</span><span id="line-117"></span><span class="hs-identifier">dRAFT_QUALITY</span><span>    </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">1</span><span>
-</span><span id="line-118"></span><span class="hs-identifier">pROOF_QUALITY</span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontQuality</span><span>
-</span><span id="line-119"></span><span class="hs-identifier">pROOF_QUALITY</span><span>    </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">2</span><span>
-</span><span id="line-120"></span><span>
-</span><span id="line-121"></span><span class="hs-pragma">{-# LINE 119 &quot;libraries\\Win32\\Graphics\\Win32\\GDI\\Font.hsc&quot; #-}</span><span>
-</span><span id="line-119"></span><span>
-</span><span id="line-120"></span><span class="hs-identifier">fW_DONTCARE</span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-121"></span><span class="hs-identifier">fW_DONTCARE</span><span>    </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">0</span><span>
-</span><span id="line-122"></span><span class="hs-identifier">fW_THIN</span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-123"></span><span class="hs-identifier">fW_THIN</span><span>        </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">100</span><span>
-</span><span id="line-124"></span><span class="hs-identifier">fW_EXTRALIGHT</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-125"></span><span class="hs-identifier">fW_EXTRALIGHT</span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">200</span><span>
-</span><span id="line-126"></span><span class="hs-identifier">fW_LIGHT</span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-127"></span><span class="hs-identifier">fW_LIGHT</span><span>       </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">300</span><span>
-</span><span id="line-128"></span><span class="hs-identifier">fW_NORMAL</span><span>      </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-129"></span><span class="hs-identifier">fW_NORMAL</span><span>      </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">400</span><span>
-</span><span id="line-130"></span><span class="hs-identifier">fW_MEDIUM</span><span>      </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-131"></span><span class="hs-identifier">fW_MEDIUM</span><span>      </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">500</span><span>
-</span><span id="line-132"></span><span class="hs-identifier">fW_SEMIBOLD</span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-133"></span><span class="hs-identifier">fW_SEMIBOLD</span><span>    </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">600</span><span>
-</span><span id="line-134"></span><span class="hs-identifier">fW_BOLD</span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-135"></span><span class="hs-identifier">fW_BOLD</span><span>        </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">700</span><span>
-</span><span id="line-136"></span><span class="hs-identifier">fW_EXTRABOLD</span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-137"></span><span class="hs-identifier">fW_EXTRABOLD</span><span>   </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">800</span><span>
-</span><span id="line-138"></span><span class="hs-identifier">fW_HEAVY</span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-139"></span><span class="hs-identifier">fW_HEAVY</span><span>       </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">900</span><span>
-</span><span id="line-140"></span><span class="hs-identifier">fW_REGULAR</span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-141"></span><span class="hs-identifier">fW_REGULAR</span><span>     </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">400</span><span>
-</span><span id="line-142"></span><span class="hs-identifier">fW_ULTRALIGHT</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-143"></span><span class="hs-identifier">fW_ULTRALIGHT</span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">200</span><span>
-</span><span id="line-144"></span><span class="hs-identifier">fW_DEMIBOLD</span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-145"></span><span class="hs-identifier">fW_DEMIBOLD</span><span>    </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">600</span><span>
-</span><span id="line-146"></span><span class="hs-identifier">fW_ULTRABOLD</span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-147"></span><span class="hs-identifier">fW_ULTRABOLD</span><span>   </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">800</span><span>
-</span><span id="line-148"></span><span class="hs-identifier">fW_BLACK</span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">FontWeight</span><span>
-</span><span id="line-149"></span><span class="hs-identifier">fW_BLACK</span><span>       </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">900</span><span>
-</span><span id="line-150"></span><span>
-</span><span id="line-151"></span><span class="hs-pragma">{-# LINE 137 &quot;libraries\\Win32\\Graphics\\Win32\\GDI\\Font.hsc&quot; #-}</span><span>
-</span><span id="line-137"></span><span>
-</span><span id="line-138"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-139"></span><span class="hs-comment">-- Functions</span><span>
-</span><span id="line-140"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-141"></span><span>
-</span><span id="line-142"></span><span class="hs-comment">-- was: ErrorMsg(&quot;CreateFont&quot;,&quot;NullHandle&quot;)</span><span>
-</span><span id="line-143"></span><span>
-</span><span id="line-144"></span><span class="hs-identifier">createFont</span><span>
-</span><span id="line-145"></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">INT</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">INT</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">INT</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">INT</span><span>
-</span><span id="line-146"></span><span>     </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">FontWeight</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Bool</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Bool</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Bool</span><span>
-</span><span id="line-147"></span><span>     </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">CharSet</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">OutPrecision</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">ClipPrecision</span><span>
-</span><span id="line-148"></span><span>     </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">FontQuality</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">PitchAndFamily</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">FaceName</span><span>
-</span><span id="line-149"></span><span>     </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">HFONT</span><span>
-</span><span id="line-150"></span><span class="hs-identifier">createFont</span><span> </span><span class="hs-identifier">h</span><span> </span><span class="hs-identifier">w</span><span> </span><span class="hs-identifier">esc</span><span> </span><span class="hs-identifier">orient</span><span> </span><span class="hs-identifier">wt</span><span> </span><span class="hs-identifier">ital</span><span> </span><span class="hs-identifier">under</span><span> </span><span class="hs-identifier">strike</span><span> </span><span class="hs-identifier">cset</span><span> </span><span class="hs-identifier">out</span><span> </span><span class="hs-identifier">clip</span><span> </span><span class="hs-identifier">q</span><span> </span><span class="hs-identifier">pf</span><span> </span><span class="hs-identifier">face</span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-151"></span><span>  </span><span class="hs-identifier">withTString</span><span> </span><span class="hs-identifier">face</span><span> </span><span class="hs-operator">$</span><span> </span><span class="hs-glyph">\</span><span> </span><span class="hs-identifier">c_face</span><span> </span><span class="hs-glyph">-&gt;</span><span>
-</span><span id="line-152"></span><span>  </span><span class="hs-identifier">failIfNull</span><span> </span><span class="hs-string">&quot;CreateFont&quot;</span><span> </span><span class="hs-operator">$</span><span>
-</span><span id="line-153"></span><span>    </span><span class="hs-identifier">c_CreateFont</span><span> </span><span class="hs-identifier">h</span><span> </span><span class="hs-identifier">w</span><span> </span><span class="hs-identifier">esc</span><span> </span><span class="hs-identifier">orient</span><span> </span><span class="hs-identifier">wt</span><span> </span><span class="hs-identifier">ital</span><span> </span><span class="hs-identifier">under</span><span> </span><span class="hs-identifier">strike</span><span> </span><span class="hs-identifier">cset</span><span> </span><span class="hs-identifier">out</span><span> </span><span class="hs-identifier">clip</span><span> </span><span class="hs-identifier">q</span><span> </span><span class="hs-identifier">pf</span><span> </span><span class="hs-identifier">c_face</span><span>
-</span><span id="line-154"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h CreateFontW&quot;</span><span>
-</span><span id="line-155"></span><span>  </span><span class="hs-identifier">c_CreateFont</span><span>
-</span><span id="line-156"></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">INT</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">INT</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">INT</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">INT</span><span>
-</span><span id="line-157"></span><span>     </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">FontWeight</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Bool</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Bool</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Bool</span><span>
-</span><span id="line-158"></span><span>     </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">CharSet</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">OutPrecision</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">ClipPrecision</span><span>
-</span><span id="line-159"></span><span>     </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">FontQuality</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">PitchAndFamily</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">LPCTSTR</span><span>
-</span><span id="line-160"></span><span>     </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">HFONT</span><span>
-</span><span id="line-161"></span><span>
-</span><span id="line-162"></span><span class="hs-comment">-- test :: IO ()</span><span>
-</span><span id="line-163"></span><span class="hs-comment">-- test = do</span><span>
-</span><span id="line-164"></span><span class="hs-comment">--   f &lt;- createFont_adr (100,100) 0 False False &quot;Arial&quot;</span><span>
-</span><span id="line-165"></span><span class="hs-comment">--   putStrLn &quot;Created first font&quot;</span><span>
-</span><span id="line-166"></span><span class="hs-comment">--   f &lt;- createFont_adr (100,100) (-90) False False &quot;Bogus&quot;</span><span>
-</span><span id="line-167"></span><span class="hs-comment">--   putStrLn &quot;Created second font&quot;</span><span>
-</span><span id="line-168"></span><span class="hs-comment">--</span><span>
-</span><span id="line-169"></span><span class="hs-comment">-- createFont_adr (width, height) escapement bold italic family =</span><span>
-</span><span id="line-170"></span><span class="hs-comment">--  createFont height width</span><span>
-</span><span id="line-171"></span><span class="hs-comment">--                   (round (escapement * 1800/pi))</span><span>
-</span><span id="line-172"></span><span class="hs-comment">--                   0                     -- orientation</span><span>
-</span><span id="line-173"></span><span class="hs-comment">--                   weight</span><span>
-</span><span id="line-174"></span><span class="hs-comment">--                   italic False False    -- italic, underline, strikeout</span><span>
-</span><span id="line-175"></span><span class="hs-comment">--                   aNSI_CHARSET</span><span>
-</span><span id="line-176"></span><span class="hs-comment">--                   oUT_DEFAULT_PRECIS</span><span>
-</span><span id="line-177"></span><span class="hs-comment">--                   cLIP_DEFAULT_PRECIS</span><span>
-</span><span id="line-178"></span><span class="hs-comment">--                   dEFAULT_QUALITY</span><span>
-</span><span id="line-179"></span><span class="hs-comment">--                   dEFAULT_PITCH</span><span>
-</span><span id="line-180"></span><span class="hs-comment">--                   family</span><span>
-</span><span id="line-181"></span><span class="hs-comment">--  where</span><span>
-</span><span id="line-182"></span><span class="hs-comment">--   weight | bold      = fW_BOLD</span><span>
-</span><span id="line-183"></span><span class="hs-comment">--          | otherwise = fW_NORMAL</span><span>
-</span><span id="line-184"></span><span>
-</span><span id="line-185"></span><span>
-</span><span id="line-186"></span><span class="hs-comment">-- missing CreateFontIndirect from WinFonts.ss; GSL ???</span><span>
-</span><span id="line-187"></span><span>
-</span><span id="line-188"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h DeleteObject&quot;</span><span>
-</span><span id="line-189"></span><span>  </span><span class="hs-identifier">deleteFont</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">HFONT</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
-</span><span id="line-190"></span><span>
-</span><span id="line-191"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-192"></span><span>
-</span><span id="line-193"></span><span class="hs-keyword">type</span><span> </span><span class="hs-identifier">StockFont</span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">WORD</span><span>
-</span><span id="line-194"></span><span>
-</span><span id="line-195"></span><span class="hs-identifier">oEM_FIXED_FONT</span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">StockFont</span><span>
-</span><span id="line-196"></span><span class="hs-identifier">oEM_FIXED_FONT</span><span>       </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">10</span><span>
-</span><span id="line-197"></span><span class="hs-identifier">aNSI_FIXED_FONT</span><span>      </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">StockFont</span><span>
-</span><span id="line-198"></span><span class="hs-identifier">aNSI_FIXED_FONT</span><span>      </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">11</span><span>
-</span><span id="line-199"></span><span class="hs-identifier">aNSI_VAR_FONT</span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">StockFont</span><span>
-</span><span id="line-200"></span><span class="hs-identifier">aNSI_VAR_FONT</span><span>        </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">12</span><span>
-</span><span id="line-201"></span><span class="hs-identifier">sYSTEM_FONT</span><span>          </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">StockFont</span><span>
-</span><span id="line-202"></span><span class="hs-identifier">sYSTEM_FONT</span><span>          </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">13</span><span>
-</span><span id="line-203"></span><span class="hs-identifier">dEVICE_DEFAULT_FONT</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">StockFont</span><span>
-</span><span id="line-204"></span><span class="hs-identifier">dEVICE_DEFAULT_FONT</span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">14</span><span>
-</span><span id="line-205"></span><span class="hs-identifier">sYSTEM_FIXED_FONT</span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">StockFont</span><span>
-</span><span id="line-206"></span><span class="hs-identifier">sYSTEM_FIXED_FONT</span><span>    </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">16</span><span>
-</span><span id="line-207"></span><span>
-</span><span id="line-208"></span><span class="hs-pragma">{-# LINE 203 &quot;libraries\\Win32\\Graphics\\Win32\\GDI\\Font.hsc&quot; #-}</span><span>
-</span><span id="line-203"></span><span>
-</span><span id="line-204"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h GetStockObject&quot;</span><span>
-</span><span id="line-205"></span><span>  </span><span class="hs-identifier">getStockFont</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">StockFont</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">HFONT</span><span>
-</span><span id="line-206"></span><span>
-</span><span id="line-207"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-208"></span><span class="hs-comment">-- End</span><span>
-</span><span id="line-209"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-210"></span></pre></body></html>

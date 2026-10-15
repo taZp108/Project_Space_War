@@ -1,56 +1,0 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE CPP #-}</span><span>
-</span><span id="line-2"></span><span class="annot"><span class="hs-comment">{- |
-   Module      :  Graphics.Win32.Window.ForegroundWindow
-   Copyright   :  2012 shelarcy
-   License     :  BSD-style
-
-   Maintainer  :  shelarcy@gmail.com
-   Stability   :  Provisional
-   Portability :  Non-portable (Win32 API)
-
-   Get/Set Foreground Window.
--}</span></span><span>
-</span><span id="line-13"></span><span>
-</span><span id="line-14"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Graphics.Win32.Window.ForegroundWindow.html"><span class="hs-identifier">Graphics.Win32.Window.ForegroundWindow</span></a></span><span>
-</span><span id="line-15"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Graphics.Win32.Window.html#getForegroundWindow"><span class="hs-identifier">getForegroundWindow</span></a></span><span>
-</span><span id="line-16"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Win32.Window.ForegroundWindow.html#setForegroundWindow"><span class="hs-identifier">setForegroundWindow</span></a></span><span>
-</span><span id="line-17"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Win32.Window.ForegroundWindow.html#c_SetForegroundWindow"><span class="hs-identifier">c_SetForegroundWindow</span></a></span><span>
-</span><span id="line-18"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Win32.Window.ForegroundWindow.html#allowSetForegroundWindow"><span class="hs-identifier">allowSetForegroundWindow</span></a></span><span>
-</span><span id="line-19"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Win32.Window.ForegroundWindow.html#c_AllowSetForegroundWindow"><span class="hs-identifier">c_AllowSetForegroundWindow</span></a></span><span>
-</span><span id="line-20"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-21"></span><span>
-</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../../base-4.20.2.0-39f9/src/Control.Monad.html"><span class="hs-identifier">Control.Monad</span></a></span><span>            </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">void</span></span><span> </span><span class="hs-special">)</span><span>
-</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html"><span class="hs-identifier">Graphics.Win32.GDI.Types</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HWND"><span class="hs-identifier">HWND</span></a></span><span> </span><span class="hs-special">)</span><span>
-</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Win32.Window.html"><span class="hs-identifier">Graphics.Win32.Window</span></a></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Graphics.Win32.Window.html#getForegroundWindow"><span class="hs-identifier">getForegroundWindow</span></a></span><span> </span><span class="hs-special">)</span><span>
-</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="System.Win32.Process.html"><span class="hs-identifier">System.Win32.Process</span></a></span><span>     </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="System.Win32.Process.html#ProcessId"><span class="hs-identifier">ProcessId</span></a></span><span> </span><span class="hs-special">)</span><span class="hs-cpp">
-
-#include &quot;windows_cconv.h&quot;
-</span><span>
-</span><span id="line-29"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-30"></span><span class="hs-comment">-- | Setting Window to Foreground.</span><span>
-</span><span id="line-31"></span><span class="hs-comment">-- See: &lt;https://github.com/haskell/win32/pull/9&gt;,</span><span>
-</span><span id="line-32"></span><span class="hs-comment">-- &lt;http://stackoverflow.com/questions/14297146/win32-setforegroundwindow-in-haskell&gt;.</span><span>
-</span><span id="line-33"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-34"></span><span class="annot"><a href="Graphics.Win32.Window.ForegroundWindow.html#setForegroundWindow"><span class="hs-identifier hs-type">setForegroundWindow</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HWND"><span class="hs-identifier hs-type">HWND</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
-</span><span id="line-35"></span><span id="setForegroundWindow"><span class="annot"><span class="annottext">setForegroundWindow :: HWND -&gt; IO Bool
-</span><a href="Graphics.Win32.Window.ForegroundWindow.html#setForegroundWindow"><span class="hs-identifier hs-var hs-var">setForegroundWindow</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">HWND -&gt; IO Bool
-</span><a href="Graphics.Win32.Window.ForegroundWindow.html#c_SetForegroundWindow"><span class="hs-identifier hs-var">c_SetForegroundWindow</span></a></span><span>
-</span><span id="line-36"></span><span>
-</span><span id="line-37"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">safe</span><span> </span><span class="hs-string">&quot;windows.h SetForegroundWindow&quot;</span><span>
-</span><span id="line-38"></span><span>    </span><span id="c_SetForegroundWindow"><span class="annot"><a href="Graphics.Win32.Window.ForegroundWindow.html#c_SetForegroundWindow"><span class="hs-identifier hs-var">c_SetForegroundWindow</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Win32.GDI.Types.html#HWND"><span class="hs-identifier hs-type">HWND</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
-</span><span id="line-39"></span><span>
-</span><span id="line-40"></span><span class="hs-comment">----------------------------------------------------------------</span><span>
-</span><span id="line-41"></span><span class="hs-comment">-- | Allow other process to set Window to Foreground</span><span>
-</span><span id="line-42"></span><span class="hs-comment">-- by using 'setForegroundWindow' function.</span><span>
-</span><span id="line-43"></span><span class="annot"><a href="Graphics.Win32.Window.ForegroundWindow.html#allowSetForegroundWindow"><span class="hs-identifier hs-type">allowSetForegroundWindow</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="System.Win32.Process.html#ProcessId"><span class="hs-identifier hs-type">ProcessId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
-</span><span id="line-44"></span><span id="allowSetForegroundWindow"><span class="annot"><span class="annottext">allowSetForegroundWindow :: ProcessId -&gt; IO ()
-</span><a href="Graphics.Win32.Window.ForegroundWindow.html#allowSetForegroundWindow"><span class="hs-identifier hs-var hs-var">allowSetForegroundWindow</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO Bool -&gt; IO ()
-forall (f :: * -&gt; *) a. Functor f =&gt; f a -&gt; f ()
-</span><span class="hs-identifier hs-var">void</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO ()) -&gt; (ProcessId -&gt; IO Bool) -&gt; ProcessId -&gt; IO ()
-forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
-</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">ProcessId -&gt; IO Bool
-</span><a href="Graphics.Win32.Window.ForegroundWindow.html#c_AllowSetForegroundWindow"><span class="hs-identifier hs-var">c_AllowSetForegroundWindow</span></a></span><span>
-</span><span id="line-45"></span><span>
-</span><span id="line-46"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">safe</span><span> </span><span class="hs-string">&quot;windows.h AllowSetForegroundWindow&quot;</span><span>
-</span><span id="line-47"></span><span>    </span><span id="c_AllowSetForegroundWindow"><span class="annot"><a href="Graphics.Win32.Window.ForegroundWindow.html#c_AllowSetForegroundWindow"><span class="hs-identifier hs-var">c_AllowSetForegroundWindow</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="System.Win32.Process.html#ProcessId"><span class="hs-identifier hs-type">ProcessId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
-</span><span id="line-48"></span></pre></body></html>
