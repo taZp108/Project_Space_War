@@ -5,6 +5,7 @@ import Lib (projectName)
 import qualified Game.GenerateSpec
 import qualified Game.WorldSpec
 import qualified Game.StateSpec
+import qualified Game.OutcomeSpec
 
 main :: IO ()
 main = hspec $ do
@@ -17,3 +18,4 @@ main = hspec $ do
   describe "Game.World" Game.WorldSpec.spec
   describe "Game.Generate" Game.GenerateSpec.spec
   describe "Game.State" Game.StateSpec.spec
+  describe "Game.Outcome" Game.OutcomeSpec.spec

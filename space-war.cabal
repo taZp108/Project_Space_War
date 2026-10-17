@@ -51,6 +51,7 @@ test-suite space-war-test
   main-is: Spec.hs
   other-modules:
       Game.GenerateSpec
+      Game.OutcomeSpec
       Game.StateSpec
       Game.TestUtil
       Game.WorldSpec
