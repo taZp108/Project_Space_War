@@ -157,5 +157,21 @@
     return copy(authoritativeView);
   }
 
-  window.mockActions = Object.freeze({ submit, simulateOpponentTurn, resetMatch, resourceValues: Object.freeze({ ...resourceValues }) });
+  async function getResultFixture(outcome) {
+    await new Promise((resolve) => window.setTimeout(resolve, 320));
+    const fixtures = {
+      victory: { verified: true, outcome: "Victory", reason: "EARTH_SCORE_TARGET_REACHED", eventCode: "MATCH_WON", playerScore: 500, opponentScore: 438, rounds: 42, totalDeposited: 428 },
+      defeat: { verified: true, outcome: "Defeat", reason: "BATTERY_DEPLETED", eventCode: "MATCH_LOST", playerScore: 210, opponentScore: 500, rounds: 61, totalDeposited: 138 },
+      draw: { verified: true, outcome: "Draw", reason: "ROUND_LIMIT_REACHED", eventCode: "MATCH_DRAW", playerScore: 472, opponentScore: 472, rounds: 100, totalDeposited: 400 },
+      unknown: { verified: false, reason: "RESULT_UNAVAILABLE", eventCode: "MATCH_RESULT_UNVERIFIED" },
+    };
+    return { ok: true, mock: true, result: copy(fixtures[outcome] || fixtures.unknown) };
+  }
+
+  async function checkResultAfterDisconnect() {
+    await new Promise((resolve) => window.setTimeout(resolve, 320));
+    return { ok: false, mock: true, error: { code: "RESULT_UNAVAILABLE", message: "No authoritative match result was returned." } };
+  }
+
+  window.mockActions = Object.freeze({ submit, simulateOpponentTurn, resetMatch, getResultFixture, checkResultAfterDisconnect, resourceValues: Object.freeze({ ...resourceValues }) });
 })();

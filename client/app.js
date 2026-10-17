@@ -28,6 +28,11 @@ let lobbyState = null;
 let joinCodeValue = "";
 let lobbyBusy = false;
 let lobbyError = null;
+let playerView = null;
+let matchResult = null;
+let matchLinkLost = false;
+let matchLinkNotice = "The match result is unconfirmed. A lost local connection does not establish a winner.";
+let summaryNotice = "";
 let selectedCell = null;
 let hoverCell = null;
 let sectorOverviewOpen = false;
@@ -252,10 +257,10 @@ function lobbyHomeScreen() {
 }
 
 function joinRoomScreen(errorResult = null) {
-  const errorMarkup = errorResult ? `
+    const errorMarkup = errorResult ? `
     <div class="room-error" role="alert">
-      <div class="error-heading"><span class="error-symbol" aria-hidden="true">!</span><div><strong>${errorResult.reason}</strong><span>${errorResult.code}</span></div></div>
-      <p>${errorResult.message}</p><p class="error-hint">${errorResult.hint}</p>
+      <div class="error-heading"><span class="error-symbol" aria-hidden="true">!</span><div><strong>${escapeHtml(errorResult.details?.title || errorResult.code)}</strong><span>${escapeHtml(errorResult.code)}</span></div></div>
+      <p>${escapeHtml(errorResult.message)}</p><p class="error-hint">${escapeHtml(errorResult.details?.hint || "Review the room code and retry.")}</p>
     </div>` : "";
   return `
     <section class="content-screen join-screen" aria-labelledby="screen-title">
@@ -295,7 +300,7 @@ function waitingRoomScreen() {
           <div class="player-wait-state"><span class="wait-ring" aria-hidden="true"></span><div><strong>${status}</strong><span>Room remains active until the mock cancel response.</span></div></div>
           <div class="waiting-actions"><button class="utility-button" data-action="cancel-room" ${lobbyBusy ? "disabled" : ""}>${lobbyBusy ? "WAITING FOR RESPONSE…" : "CANCEL ROOM"}</button></div>
         </div>
-        <aside class="demo-controls"><span class="eyebrow">DEMO CONTROLS</span><p>Simulate events normally received from another player or the server.</p><button class="secondary-button" data-action="simulate-join" ${lobbyBusy ? "disabled" : ""}>SIMULATE PLAYER JOIN <span aria-hidden="true">→</span></button><button class="utility-button demo-link-button" data-action="simulate-link-loss" ${lobbyBusy ? "disabled" : ""}>SIMULATE LINK LOST</button><span class="panel-code">MOCK ONLY / NO NETWORK</span></aside>
+        ${window.mockDemoAdapter ? `<aside class="demo-controls"><span class="eyebrow">DEMO CONTROLS</span><p>Simulate events normally received from another player or the server.</p><button class="secondary-button" data-action="simulate-join" ${lobbyBusy ? "disabled" : ""}>SIMULATE PLAYER JOIN <span aria-hidden="true">→</span></button><button class="utility-button demo-link-button" data-action="simulate-link-loss" ${lobbyBusy ? "disabled" : ""}>SIMULATE LINK LOST</button><span class="panel-code">MOCK ONLY / NO NETWORK</span></aside>` : ""}
       </div>
       <p class="screen-footnote">NO READY OR START BUTTON. THE MATCH TRANSITION IS AUTOMATIC AFTER THE MOCK REPORTS BOTH PLAYERS CONNECTED.</p>
     </section>`;
@@ -304,8 +309,35 @@ function waitingRoomScreen() {
 function linkLostScreen() {
   return `
     <section class="content-screen link-lost-screen" aria-labelledby="screen-title">
-      <div class="link-lost-card panel"><span class="eyebrow danger-eyebrow">MULTIPLAYER // LINK LOST</span><span class="link-lost-icon" aria-hidden="true">×</span><h1 id="screen-title">Connection <span>interrupted.</span></h1><p>The mock lobby connection was lost. Room state is unconfirmed; this screen does not claim the room was released.</p><div class="link-lost-actions"><button class="primary-button" data-action="retry-lobby" ${lobbyBusy ? "disabled" : ""}>${lobbyBusy ? "WAITING FOR MOCK RESPONSE…" : "RETRY"}</button><button class="utility-button" data-screen="home" ${lobbyBusy ? "disabled" : ""}>BACK TO MENU</button></div><p class="screen-footnote">MOCK LINK STATE / ROOM RELEASE NOT CONFIRMED</p></div>
+      <div class="link-lost-card panel"><span class="eyebrow danger-eyebrow">MULTIPLAYER // LINK LOST</span><span class="link-lost-icon" aria-hidden="true">×</span><h1 id="screen-title">Connection <span>interrupted.</span></h1><p>${matchLinkLost ? matchLinkNotice : "The mock lobby connection was lost. Room state is unconfirmed; this screen does not claim the room was released."}</p><div class="link-lost-actions">${matchLinkLost ? `<button class="primary-button" data-action="check-match-result" ${lobbyBusy ? "disabled" : ""}>${lobbyBusy ? "CHECKING RESULT…" : "CHECK MATCH RESULT"}</button>` : `<button class="primary-button" data-action="retry-lobby" ${lobbyBusy ? "disabled" : ""}>${lobbyBusy ? "WAITING FOR MOCK RESPONSE…" : "RETRY"}</button>`}<button class="utility-button" data-screen="home" ${lobbyBusy ? "disabled" : ""}>BACK TO MENU</button></div><p class="screen-footnote">MOCK LINK STATE / ${matchLinkLost ? "MATCH RESULT NOT VERIFIED" : "ROOM RELEASE NOT CONFIRMED"}</p></div>
     </section>`;
+}
+
+function matchResultScreen() {
+  const result = matchResult || {};
+  const verified = result.verified === true;
+  const outcome = verified ? (result.outcome || "Outcome unavailable") : "Result unverified";
+  const fields = [
+    ["REASON", result.reason], ["EVENT CODE", result.eventCode],
+    ["YOUR SCORE", result.playerScore], ["OPPONENT SCORE", result.opponentScore],
+    ["ROUNDS", result.rounds], ["TOTAL DEPOSITED", result.totalDeposited],
+  ].filter(([, value]) => value !== undefined && value !== null);
+  const details = fields.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("");
+  return `<section class="content-screen result-screen" aria-labelledby="screen-title"><article class="match-result-card panel ${verified ? "result-verified" : "result-unverified"}"><span class="eyebrow ${verified ? "amber-eyebrow" : "danger-eyebrow"}">MULTIPLAYER // ${verified ? "SERVER RESULT" : "RESULT STATUS"}</span><span class="result-mark" aria-hidden="true">${verified ? "✦" : "?"}</span><h1 id="screen-title">${escapeHtml(outcome)}</h1><p>${verified ? "This mock result was explicitly supplied as verified." : "The available response did not verify an outcome. No winner or score is inferred."}</p>${details ? `<dl class="match-result-details">${details}</dl>` : ""}<div class="link-lost-actions"><button class="primary-button" data-action="copy-match-summary">COPY MATCH SUMMARY</button><button class="utility-button" data-screen="home">BACK TO MENU</button></div><p class="summary-notice" role="status" aria-live="polite">${escapeHtml(summaryNotice || (verified ? "MOCK FIXTURE / VERIFIED RESULT" : "MOCK FIXTURE / OUTCOME UNKNOWN"))}</p></article></section>`;
+}
+
+function matchDemoControls() {
+  if (!window.mockDemoAdapter) return "";
+  return `<aside class="match-demo-controls panel"><span class="eyebrow">RESULT / CONNECTION FIXTURES</span><p>Local mock fixtures for reviewing verified outcomes and disconnect behavior.</p><div class="match-demo-buttons"><button data-action="result-fixture" data-outcome="victory">VICTORY</button><button data-action="result-fixture" data-outcome="defeat">DEFEAT</button><button data-action="result-fixture" data-outcome="draw">DRAW</button><button data-action="result-fixture" data-outcome="unknown">UNVERIFIED</button><button data-action="match-link-loss">SIMULATE LINK LOST</button></div></aside>`;
+}
+
+function matchResultSummary(result) {
+  const lines = [`SPACE WAR MATCH SUMMARY`, `STATUS: ${result.verified === true ? "VERIFIED" : "UNVERIFIED"}`];
+  if (result.outcome !== undefined) lines.push(`RESULT: ${result.outcome}`);
+  for (const [label, key] of [["REASON", "reason"], ["EVENT CODE", "eventCode"], ["YOUR SCORE", "playerScore"], ["OPPONENT SCORE", "opponentScore"], ["ROUNDS", "rounds"], ["TOTAL DEPOSITED", "totalDeposited"]]) {
+    if (result[key] !== undefined && result[key] !== null) lines.push(`${label}: ${result[key]}`);
+  }
+  return lines.join("\n");
 }
 
 function initializingScreen() {
@@ -418,6 +450,10 @@ function enqueueToast(toast) {
 
 function dismissToast() { advanceToast(); }
 
+function showAdapterNotification(notice = {}) {
+  enqueueToast({ level: notice.level || "info", title: notice.title || "SERVER NOTICE", message: notice.message || "", code: notice.code || "SERVER_NOTIFICATION" });
+}
+
 function playFeedbackTone(isSuccess) {
   if (!settings.sound || settings.volume <= 0) return;
   const AudioContextType = window.AudioContext || window.webkitAudioContext;
@@ -464,14 +500,15 @@ function startActionEffects(action, previousView, nextView) {
 
 function formatActionResult(action, response) {
   if (!response.ok) return `${response.error.code} · ${response.error.message}`;
-  const result = response.report?.result || {};
+  const report = response.actionReport || {};
+  const result = report.result || {};
   if (result.kind === "Moved") return `Moved to (${result.position.x}, ${result.position.y}).`;
   if (result.kind === "PlanetsFound") return result.planets.length ? `${result.planets.length} new planet signal${result.planets.length === 1 ? "" : "s"} acquired.` : "Scan complete; no new planets found.";
   if (result.kind === "Mined") return `Recovered ${result.amount} ${result.resource}.`;
   if (result.kind === "Deposited") return `Cargo deposited; +${result.scoreAdded} Earth score.`;
   if (result.kind === "Recharged") return `Battery +${result.batteryAdded}; spent ${result.amount} ${result.resource}.`;
   if (result.kind === "TurnEnded") return "Turn ended; awaiting opponent.";
-  return response.report?.message || `${action.replaceAll("_", " ")} complete.`;
+  return report.message || `${action.replaceAll("_", " ")} complete.`;
 }
 
 function addLocalActionEvent(code, text) {
@@ -486,22 +523,26 @@ function setCommandEcho(action, target, response) {
     ok: response.ok,
     action,
     target,
-    code: response.ok ? response.report.code : response.error.code,
+    code: response.ok ? response.actionReport?.code || "ACTION_CONFIRMED" : response.error.code,
     message: formatActionResult(action, response),
   };
 }
 
 function playActionFeedback(action, response, previousView, nextView) {
-  const found = response.ok && response.report?.result?.kind === "PlanetsFound" ? (response.report.result.planets || []) : [];
+  const report = response.actionReport || {};
+  const found = response.ok && report.result?.kind === "PlanetsFound" ? (report.result.planets || []) : [];
   if (response.ok) {
     startActionEffects(action, previousView, nextView);
     const discovered = found.length > 0;
     enqueueToast({
       level: discovered ? "success" : "info",
       title: discovered ? "PLANETARY SIGNAL ACQUIRED" : `${action.replaceAll("_", " ")} CONFIRMED`,
-      message: discovered ? `${found.length} new planet signal${found.length === 1 ? "" : "s"} added to your view.` : response.report.message,
-      code: discovered ? "PLANET_DISCOVERED" : response.report.code,
+      message: discovered ? `${found.length} new planet signal${found.length === 1 ? "" : "s"} added to your view.` : report.message,
+      code: discovered ? "PLANET_DISCOVERED" : report.code,
     });
+    for (const notice of response.notifications || []) {
+      showAdapterNotification(notice);
+    }
   } else {
     enqueueToast({ level: "warning", title: "ACTION REJECTED", message: `${response.error.code} · ${response.error.message}`, code: response.error.code });
   }
@@ -519,7 +560,7 @@ function commandSummaryMarkup(view) {
   if (selected) {
     const target = selected === "MOVE" && selectedCell ? `(${selectedCell.x}, ${selectedCell.y})` : selected === "MOVE" ? "No cell selected" : selected === "DEPOSIT" ? "All cargo" : selected === "RECHARGE" ? "Earth storage" : "—";
     const moveCost = selected === "DEPOSIT" && distanceBetween(view.player.position, view.earth) > 0 ? "1 AP · 2 BAT" : commandDefinitions.find(([name]) => name === selected)?.[1];
-    const result = actionFlow.result ? `<div class="action-result ${actionFlow.result.ok ? "result-success" : "result-error"}" role="status"><strong>${actionFlow.result.ok ? "MOCK RESPONSE / ACCEPTED" : `MOCK RESPONSE / ${escapeHtml(actionFlow.result.error.code)}`}</strong><span>${escapeHtml(actionFlow.result.ok ? actionFlow.result.report.message : actionFlow.result.error.message)}</span></div>` : "";
+    const result = actionFlow.result ? `<div class="action-result ${actionFlow.result.ok ? "result-success" : "result-error"}" role="status"><strong>${actionFlow.result.ok ? "ACTION ACCEPTED" : escapeHtml(actionFlow.result.error.code)}</strong><span>${escapeHtml(actionFlow.result.ok ? actionFlow.result.actionReport?.message || "Action accepted." : actionFlow.result.error.message)}</span></div>` : "";
     const recharge = selected === "RECHARGE" ? rechargeControlsMarkup(view) : "";
     const confirmLabel = ["DEPOSIT", "RECHARGE", "END_TURN"].includes(selected) ? "REVIEW & CONFIRM" : "SEND MOCK COMMAND";
     const pendingMarkup = actionFlow.status === "pending" ? `<div class="action-pending" role="status" aria-live="polite"><span class="wait-ring" aria-hidden="true"></span><span>WAITING FOR MOCK RESPONSE… Gameplay commands are locked.</span></div>` : "";
@@ -544,8 +585,8 @@ function rechargeControlsMarkup(view) {
   if (!resources.includes(rechargeSelection.resource)) rechargeSelection = { resource: resources[0], amount: 1 };
   const amountAvailable = storage[rechargeSelection.resource] || 0;
   rechargeSelection.amount = Math.max(1, Math.min(amountAvailable, Number(rechargeSelection.amount) || 1));
-  const points = window.mockActions.resourceValues[rechargeSelection.resource] * Number(rechargeSelection.amount) * 2;
-  return `<div class="recharge-controls"><label>RESOURCE<select id="recharge-resource">${resources.map((type) => `<option value="${escapeHtml(type)}" ${type === rechargeSelection.resource ? "selected" : ""}>${escapeHtml(type)} · ${storage[type]} units</option>`).join("")}</select></label><label>UNITS<input id="recharge-amount" type="number" min="1" max="${amountAvailable}" step="1" value="${rechargeSelection.amount}" /></label><span class="recharge-preview">UP TO +${points} BAT · −${Number(rechargeSelection.amount) * window.mockActions.resourceValues[rechargeSelection.resource]} SCORE</span></div>`;
+  const points = window.gameAdapter.resourceValue(rechargeSelection.resource) * Number(rechargeSelection.amount) * 2;
+  return `<div class="recharge-controls"><label>RESOURCE<select id="recharge-resource">${resources.map((type) => `<option value="${escapeHtml(type)}" ${type === rechargeSelection.resource ? "selected" : ""}>${escapeHtml(type)} · ${storage[type]} units</option>`).join("")}</select></label><label>UNITS<input id="recharge-amount" type="number" min="1" max="${amountAvailable}" step="1" value="${rechargeSelection.amount}" /></label><span class="recharge-preview">UP TO +${points} BAT · −${Number(rechargeSelection.amount) * window.gameAdapter.resourceValue(rechargeSelection.resource)} SCORE</span></div>`;
 }
 
 function confirmationDialogMarkup(view) {
@@ -567,7 +608,7 @@ function getActionArgs(action) {
 }
 
 function gameScreen() {
-  const view = window.mockPlayerView;
+  const view = playerView;
   const player = view.player;
   const cargoItems = Object.entries(player.cargo);
   const cargoRows = cargoItems.map(([name, amount]) => `<li><span>${name}</span><b>${amount}</b></li>`).join("");
@@ -619,7 +660,7 @@ function gameScreen() {
         <aside class="target-panel panel" aria-labelledby="target-title">
           <div class="panel-heading"><div><span class="eyebrow">TARGET / INTELLIGENCE</span><h2 id="target-title">Target Panel</h2></div><span class="panel-code">TGT.01</span></div>
           <div class="target-content">${targetPreviewPanel(view)}</div>
-          <section class="opponent-status"><div class="opponent-heading"><span class="eyebrow">OPPONENT STATUS</span><span class="panel-code">PUBLIC</span></div><div class="opponent-connection"><span class="status-indicator"></span><strong>CONNECTED</strong><span>MOCK</span></div><p>Turn status: waiting</p><span class="field-note">No opponent coordinates or private resources shown.</span></section>
+          <section class="opponent-status"><div class="opponent-heading"><span class="eyebrow">OPPONENT STATUS</span><span class="panel-code">PUBLIC</span></div><div class="opponent-connection"><span class="status-indicator" aria-hidden="true"></span><strong>${escapeHtml(String(view.opponent?.connection || "unknown").toUpperCase())}</strong><span>PUBLIC VIEW</span></div><p>Turn status: ${escapeHtml(String(view.opponent?.publicStatus || "unknown"))}</p><span class="field-note">No opponent coordinates or private resources shown.</span></section>
         </aside>
 
         <section class="command-console panel" aria-labelledby="command-title">
@@ -634,7 +675,8 @@ function gameScreen() {
         </section>
       </div>
       <div class="game-statusbar"><span><span class="live-mark"></span> MOCK PLAYER VIEW</span><span>${selectedCell ? `TARGET: (${selectedCell.x}, ${selectedCell.y}) / ${selectedInfo.status}` : "SELECT A CELL / TARGET NONE"}</span><span>${view.turn.isMyTurn ? "MOCK ADAPTER / NO NETWORK" : "WAITING FOR OPPONENT MOCK TURN"}</span></div>
-      ${!view.turn.isMyTurn && !pendingAction ? `<div class="opponent-turn-control"><span>Mock match is waiting for Player 2.</span><button class="utility-button" data-action="simulate-opponent-turn">SIMULATE OPPONENT TURN</button></div>` : ""}
+      ${window.mockDemoAdapter && !view.turn.isMyTurn && !pendingAction ? `<div class="opponent-turn-control"><span>Mock match is waiting for Player 2.</span><button class="utility-button" data-action="simulate-opponent-turn">SIMULATE OPPONENT TURN</button></div>` : ""}
+      ${matchDemoControls()}
     </section>${overviewMarkup}${confirmationDialogMarkup(view)}`;
 }
 
@@ -673,6 +715,7 @@ function drawFeedbackEffects(ctx, width, height, cellSize, screenX, screenY, now
       drawMapGlyph(ctx, "ship", shipX, shipY, cellSize);
     } else if (effect.type === "scan") {
       const centerX = screenX(effect.center.x), centerY = screenY(effect.center.y);
+      // A null radius is a viewport-wide decorative sweep, not scan-range feedback.
       const scanRadius = effect.radius === null ? Math.hypot(width, height) / (2 * cellSize) : effect.radius;
       const radius = Math.max(2, scanRadius * cellSize * progress);
       ctx.save();
@@ -702,7 +745,7 @@ function drawTacticalMap() {
   activeEffects = activeEffects.filter((effect) => now - effect.startedAt < effect.duration);
   const isMoving = activeEffects.some((effect) => effect.type === "move");
   const { context: ctx, width, height } = canvasContext(canvas);
-  const view = window.mockPlayerView;
+  const view = playerView;
   const cellSize = Math.min(width, height) / 9 * camera.zoom;
   const screenX = (x) => width / 2 + (x - camera.x) * cellSize;
   const screenY = (y) => height / 2 + (y - camera.y) * cellSize;
@@ -828,7 +871,7 @@ function drawSectorOverview() {
   const canvas = root.querySelector("#overview-canvas");
   if (!canvas) return;
   const { context: ctx, width, height } = canvasContext(canvas);
-  const view = window.mockPlayerView;
+  const view = playerView;
   const cellSize = Math.min(width, height) / 100;
   const offsetX = (width - cellSize * 100) / 2;
   const offsetY = (height - cellSize * 100) / 2;
@@ -866,7 +909,7 @@ function cellAtPoint(canvas, clientX, clientY) {
 }
 
 function updateTargetDisplay() {
-  const view = window.mockPlayerView;
+  const view = playerView;
   const target = root.querySelector(".target-content");
   const strip = root.querySelector(".cell-status-strip");
   const statusbar = root.querySelector(".game-statusbar");
@@ -920,7 +963,7 @@ function attachTacticalCanvas() {
     hoverCell = cellAtPoint(canvas, event.clientX, event.clientY);
     const hoverStatus = root.querySelector("#hover-status");
     if (hoverStatus) {
-      const info = getCellInfo(window.mockPlayerView, hoverCell);
+      const info = getCellInfo(playerView, hoverCell);
       hoverStatus.textContent = hoverCell ? `HOVER (${hoverCell.x}, ${hoverCell.y}) · ${info.status}` : "OUTSIDE MAP BOUNDS";
     }
     drawTacticalMap();
@@ -979,10 +1022,10 @@ async function beginCreateRoom() {
   if (lobbyBusy) return;
   lobbyBusy = true;
   render("creating-room");
-  const response = await window.mockLobby.createRoom();
+  const response = await window.gameAdapter.createRoom();
   lobbyBusy = false;
   if (!response.ok) return;
-  lobbyState = { roomCode: response.roomCode, role: "host" };
+  lobbyState = { roomCode: response.data.roomCode, role: "host" };
   render("waiting-room");
 }
 
@@ -992,24 +1035,35 @@ async function submitJoinRoom() {
   joinCodeValue = input.value;
   lobbyBusy = true;
   render("join-room");
-  const response = await window.mockLobby.joinRoom(joinCodeValue);
+  const response = await window.gameAdapter.joinRoom(joinCodeValue);
   lobbyBusy = false;
   if (!response.ok) {
     joinCodeValue = joinCodeValue.trim().toUpperCase();
-    lobbyError = response;
+    lobbyError = response.error;
     render("join-room");
     root.querySelector("#room-code").focus();
     root.querySelector("#room-code").setSelectionRange(0, joinCodeValue.length);
     return;
   }
   lobbyError = null;
-  lobbyState = { roomCode: response.roomCode, role: "guest" };
+  lobbyState = { roomCode: response.data.roomCode, role: "guest" };
   beginMatchTransition();
 }
 
-function beginMatchTransition() {
+async function beginMatchTransition() {
   lobbyBusy = false;
-  window.mockPlayerView = window.mockActions.resetMatch();
+  render("initializing");
+  const matchResponse = await window.gameAdapter.startMatch();
+  if (!matchResponse.ok) {
+    matchLinkNotice = `${matchResponse.error.code}: ${matchResponse.error.message}`;
+    render("link-lost");
+    return;
+  }
+  playerView = matchResponse.playerView;
+  matchResult = null;
+  matchLinkLost = false;
+  matchLinkNotice = "The match result is unconfirmed. A lost local connection does not establish a winner.";
+  summaryNotice = "";
   actionFlow = { status: "idle", selected: null, result: null };
   commandEcho = null;
   localActionEvents = [];
@@ -1024,8 +1078,8 @@ function beginMatchTransition() {
   selectedCell = null;
   hoverCell = null;
   sectorOverviewOpen = false;
-  camera.x = window.mockPlayerView.player.position.x;
-  camera.y = window.mockPlayerView.player.position.y;
+  camera.x = playerView.player.position.x;
+  camera.y = playerView.player.position.y;
   camera.zoom = 1;
   render("initializing");
   window.setTimeout(() => {
@@ -1043,6 +1097,7 @@ function render(screen = currentScreen) {
         : screen === "join-room" ? joinRoomScreen(lobbyError)
           : screen === "waiting-room" ? waitingRoomScreen()
             : screen === "link-lost" ? linkLostScreen()
+              : screen === "match-result" ? matchResultScreen()
               : screen === "initializing" ? initializingScreen()
                 : screen === "creating-room" ? creatingRoomScreen()
                   : screen === "game" ? gameScreen()
@@ -1079,7 +1134,7 @@ function render(screen = currentScreen) {
 }
 
 async function sendMockCommand() {
-  if (!actionFlow.selected || actionFlow.status === "pending" || !window.mockPlayerView.turn.isMyTurn) return;
+  if (!actionFlow.selected || actionFlow.status === "pending" || !playerView.turn.isMyTurn) return;
   const action = actionFlow.selected;
   const args = getActionArgs(action);
   if (action === "MOVE" && !args.target) {
@@ -1088,7 +1143,7 @@ async function sendMockCommand() {
     actionFlow.status = "error";
     setCommandEcho(action, "No target", response);
     addLocalActionEvent(response.error.code, response.error.message);
-    playActionFeedback(action, response, window.mockPlayerView, window.mockPlayerView);
+    playActionFeedback(action, response, playerView, playerView);
     render("game");
     return;
   }
@@ -1098,28 +1153,34 @@ async function sendMockCommand() {
     actionFlow.status = "error";
     setCommandEcho(action, `${args.amount} ${args.resource}`, response);
     addLocalActionEvent(response.error.code, response.error.message);
-    playActionFeedback(action, response, window.mockPlayerView, window.mockPlayerView);
+    playActionFeedback(action, response, playerView, playerView);
     render("game");
     return;
   }
   actionFlow.status = "pending";
   actionFlow.result = null;
   render("game");
-  const previousView = window.mockPlayerView;
-  const response = await window.mockActions.submit(action, args);
-  const nextView = response.ok ? response.view : previousView;
+  const previousView = playerView;
+  const response = await window.gameAdapter.submitAction(action, args);
+  const nextView = response.ok ? response.playerView : previousView;
   const targetLabel = action === "MOVE" ? `(${args.target.x}, ${args.target.y})`
     : action === "RECHARGE" ? `${args.amount} ${args.resource}`
       : action === "DEPOSIT" ? "All cargo to Earth" : action === "END_TURN" ? "Next player" : `From (${previousView.player.position.x}, ${previousView.player.position.y})`;
   setCommandEcho(action, targetLabel, response);
   if (!response.ok) addLocalActionEvent(response.error.code, response.error.message);
   playActionFeedback(action, response, previousView, nextView);
-  if (response.ok) window.mockPlayerView = response.view;
+  if (response.ok) playerView = response.playerView;
   actionFlow.result = response;
   actionFlow.status = response.ok ? "success" : "error";
   if (response.ok && action === "MOVE") {
-    camera.x = response.view.player.position.x;
-    camera.y = response.view.player.position.y;
+    camera.x = response.playerView.player.position.x;
+    camera.y = response.playerView.player.position.y;
+  }
+  if (response.matchResult) {
+    matchResult = response.matchResult;
+    summaryNotice = "MATCH RESULT RECEIVED";
+    render("match-result");
+    return;
   }
   render("game");
 }
@@ -1147,7 +1208,7 @@ root.addEventListener("click", (event) => {
     lobbyError = null;
     render(button.dataset.screen);
   } else if (button.dataset.command) {
-    if (pendingAction || !window.mockPlayerView.turn.isMyTurn) return;
+    if (pendingAction || !playerView.turn.isMyTurn) return;
     actionFlow = { status: "selected", selected: button.dataset.command, result: null };
     updateTargetDisplay();
     root.querySelector(`[data-command="${button.dataset.command}"]`)?.focus();
@@ -1168,9 +1229,19 @@ root.addEventListener("click", (event) => {
     simulateLinkLoss();
   } else if (button.dataset.action === "retry-lobby") {
     retryMockConnection();
+  } else if (button.dataset.action === "result-fixture") {
+    loadMatchResultFixture(button.dataset.outcome);
+  } else if (button.dataset.action === "match-link-loss") {
+    matchLinkLost = true;
+    matchLinkNotice = "The mock match connection was lost. No authoritative result is available, so the winner and score remain unknown.";
+    render("link-lost");
+  } else if (button.dataset.action === "check-match-result") {
+    checkMatchResultAfterDisconnect();
+  } else if (button.dataset.action === "copy-match-summary") {
+    copyMatchSummary();
   } else if (button.dataset.action === "reset-to-ship") {
-    camera.x = window.mockPlayerView.player.position.x;
-    camera.y = window.mockPlayerView.player.position.y;
+    camera.x = playerView.player.position.x;
+    camera.y = playerView.player.position.y;
     camera.zoom = 1;
     hoverCell = null;
     drawTacticalMap();
@@ -1214,20 +1285,73 @@ root.addEventListener("click", (event) => {
     const log = root.querySelector(".event-log");
     const toggle = button;
     log?.classList.toggle("expanded", eventLogExpanded);
-    toggle.textContent = `${eventLogExpanded ? "COLLAPSE" : "EXPAND"} · ${window.mockPlayerView.recentEvents.length + localActionEvents.length}`;
+    toggle.textContent = `${eventLogExpanded ? "COLLAPSE" : "EXPAND"} · ${playerView.recentEvents.length + localActionEvents.length}`;
     toggle.setAttribute("aria-expanded", String(eventLogExpanded));
   }
 });
 
 async function simulateMockOpponentTurn() {
-  if (pendingAction || window.mockPlayerView.turn.isMyTurn) return;
+  if (pendingAction || playerView.turn.isMyTurn) return;
   actionFlow.status = "pending";
   render("game");
-  const response = await window.mockActions.simulateOpponentTurn();
-  if (response.ok) window.mockPlayerView = response.view;
-  actionFlow = { status: response.ok ? "success" : "error", selected: null, result: response.ok ? { ok: true, report: { message: "Mock opponent turn complete." } } : { ok: false, error: { code: "MOCK_TURN_FAILED", message: "The mock turn could not be advanced." } } };
+  const response = await window.mockDemoAdapter.advanceOpponentTurn();
+  if (response.ok) playerView = response.playerView;
+  actionFlow = { status: response.ok ? "success" : "error", selected: null, result: response.ok ? { ok: true, actionReport: { message: "Mock opponent turn complete." } } : response };
   if (response.ok) enqueueToast({ level: "info", title: "YOUR TURN ACTIVE", message: "Mock opponent turn complete. AP restored from the new view.", code: "TURN_STARTED" });
   render("game");
+}
+
+async function loadMatchResultFixture(outcome) {
+  lobbyBusy = true;
+  render("game");
+  const response = await window.mockDemoAdapter.getResultFixture(outcome);
+  lobbyBusy = false;
+  if (!response.ok) return;
+  matchResult = response.result;
+  summaryNotice = "MOCK FIXTURE / RESULT RECEIVED";
+  render("match-result");
+}
+
+async function checkMatchResultAfterDisconnect() {
+  lobbyBusy = true;
+  render("link-lost");
+  const response = await window.gameAdapter.getMatchResult();
+  lobbyBusy = false;
+  if (response.ok && response.data?.result) {
+    matchResult = response.data.result;
+    summaryNotice = "MATCH RESULT RESPONSE RECEIVED";
+    render("match-result");
+    return;
+  }
+  matchLinkNotice = response.error
+    ? `${response.error.code}: ${response.error.message} The match outcome remains unknown.`
+    : "No verified MatchResult was included in the response. The match outcome remains unknown.";
+  render("link-lost");
+}
+
+async function copyMatchSummary() {
+  if (!matchResult) return;
+  const summary = matchResultSummary(matchResult);
+  try {
+    await navigator.clipboard.writeText(summary);
+    summaryNotice = "MATCH SUMMARY COPIED.";
+  } catch {
+    const field = document.createElement("textarea");
+    field.value = summary;
+    field.setAttribute("aria-label", "Match summary to copy");
+    field.className = "summary-copy-fallback";
+    document.body.append(field);
+    field.select();
+    const copied = document.execCommand("copy");
+    if (copied) {
+      field.remove();
+      summaryNotice = "MATCH SUMMARY COPIED.";
+    } else {
+      field.focus();
+      summaryNotice = "COPY FAILED. The match summary is selected below for manual copying.";
+    }
+  }
+  render("match-result");
 }
 
 root.addEventListener("submit", (event) => {
@@ -1260,7 +1384,7 @@ async function leaveMockRoom() {
   lobbyBusy = true;
   const returnScreen = currentScreen === "waiting-room" ? "waiting-room" : "game";
   render(returnScreen);
-  const response = await window.mockLobby.leaveRoom();
+  const response = await window.gameAdapter.leaveRoom();
   lobbyBusy = false;
   if (!response.ok) return;
   lobbyState = null;
@@ -1271,16 +1395,17 @@ async function simulateOpponentJoin() {
   if (lobbyBusy || !lobbyState) return;
   lobbyBusy = true;
   render("waiting-room");
-  const response = await window.mockLobby.simulateOpponentJoin(lobbyState.roomCode);
+  const response = await window.mockDemoAdapter.simulateOpponentJoin(lobbyState.roomCode);
+
   lobbyBusy = false;
-  if (response.ok && response.playersConnected) beginMatchTransition();
+  if (response.ok && response.data.playersConnected) beginMatchTransition();
 }
 
 async function simulateLinkLoss() {
   if (lobbyBusy) return;
   lobbyBusy = true;
   render("waiting-room");
-  await window.mockLobby.simulateLinkLoss();
+  await window.mockDemoAdapter.simulateLobbyLinkLoss();
   lobbyBusy = false;
   render("link-lost");
 }
@@ -1289,9 +1414,9 @@ async function retryMockConnection() {
   if (lobbyBusy) return;
   lobbyBusy = true;
   render("link-lost");
-  const response = await window.mockLobby.retryConnection();
+  const response = await window.gameAdapter.reconnectRoom();
   lobbyBusy = false;
-  if (response.ok && response.connection === "restored") render("waiting-room");
+  if (response.ok && response.data.connection === "restored") render("waiting-room");
 }
 
 root.addEventListener("input", (event) => {
@@ -1336,6 +1461,24 @@ root.addEventListener("change", (event) => {
 
 applySettings();
 render("home");
+window.gameAdapter.subscribeNotifications(showAdapterNotification);
+window.gameAdapter.subscribePlayerViews((nextView) => {
+  if (!nextView) return;
+  playerView = nextView;
+  if (currentScreen === "game") render("game");
+});
+window.gameAdapter.subscribeMatchResults((result) => {
+  matchResult = result;
+  summaryNotice = "MATCH RESULT RECEIVED";
+  render("match-result");
+});
+
+document.querySelector(".brand")?.addEventListener("click", (event) => {
+  event.preventDefault();
+  if (pendingAction) return;
+  lobbyError = null;
+  render("home");
+});
 
 window.addEventListener("resize", () => {
   if (currentScreen !== "game") return;

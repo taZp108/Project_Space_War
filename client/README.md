@@ -37,8 +37,30 @@ All of these outcomes are mock responses. They do not establish server behavior,
 
 ## Feedback demo (UI-7)
 
-- Successful Move plays a short ship slide and trail. Successful scan actions play a map sweep; newly discovered demo planets pulse only after the returned PlayerView includes them.
+- Successful Move plays a short ship slide and trail. Successful scan actions play a decorative map sweep that does not indicate scan range; newly discovered demo planets pulse only after the returned PlayerView includes them.
 - Each action response adds a Command Echo, a queued status toast, and a tone when **Sound** is enabled. Rejected actions show warning feedback but never animate as successful.
 - Repeated identical warning toasts are deduplicated for a short interval. The Event Log starts with the latest entries and **EXPAND** reveals more of the mock session history.
 - **Reduced motion** skips map motion and keeps response text, toasts, and logs. **Volume** controls the brief generated interface tone; sound is off by default.
 - Discovery fixture planets live only in the mock action adapter and are added to the player view only after an accepted Observe/ScanArea response. They do not represent production map data.
+
+## Result and disconnect demo (UI-8)
+
+- The match demo controls show explicit mock fixtures for Victory, Defeat, Draw, and an unverified result. Only verified fixtures show an outcome; scores, rounds, and deposited totals appear only when the result response supplies them.
+- **COPY MATCH SUMMARY** copies the fields in the displayed result. If the browser blocks clipboard access, the page selects a fallback text field so it can be copied manually.
+- **SIMULATE LINK LOST** shows that match outcome is unknown. **CHECK MATCH RESULT** returns a mock unavailable response; the UI keeps the outcome unknown and does not assign a winner based on disconnect.
+- These controls exercise UI fixtures only and do not represent server events or production match data.
+
+## Responsive and accessibility pass (UI-9)
+
+- The match view reflows from three columns to two, then to one at narrower widths. HUD, map, target, command console, and event log remain available in a scrollable page; the map and command controls stay usable on small screens.
+- Menu, help, settings, lobby, waiting, match, result, and disconnect layouts wrap at narrow widths. Keyboard focus is visible, the brand link returns to the menu, and native dialogs retain Escape behavior.
+- Settings font scaling, reduced motion preference, text labels, and non-color result states remain in place. These breakpoints are a reversible baseline because the specification leaves exact breakpoint choices open.
+- Visual viewport review is still needed at 1440×900, 1920×1080, and a narrow window before calling the UI-9 acceptance checklist complete.
+
+## Adapter boundary (UI-10)
+
+- `app.js` talks to `game-adapter.js` for PlayerView, action responses, lobby operations, match results, notifications, and Recharge preview values.
+- Optional `mockDemoAdapter` controls are separated from the production-facing adapter and disappear when that mock-only object is not loaded.
+- The adapter normalizes the fixture modules into the UI response shapes. Fixture values, mock timing, and mock rules remain in the mock modules.
+- See [`ADAPTER-CONTRACT.md`](ADAPTER-CONTRACT.md) for methods, response envelopes, PlayerView fields, notification/error conventions, result fields, and the open server-contract boundary.
+- No WebSocket or Haskell protocol implementation was added.

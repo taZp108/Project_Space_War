@@ -1249,7 +1249,7 @@ pending khóa action cho đến response. - Dừng chờ review.
 
 **Mục tiêu:** bổ sung motion/feedback sau khi state machine đã đúng.
 
-Việc làm: 1. Scan sweep. 2. Discovery effect chỉ sau response. 3. Ship
+Việc làm: 1. Scan sweep trang trí, không biểu thị tầm quét hay dữ liệu gameplay. 2. Discovery effect chỉ sau response. 3. Ship
 movement slide + trail chỉ sau response. 4. Command Echo hiển thị lệnh
 đã chọn và kết quả. 5. Toast phân cấp. 6. Gộp/xếp hàng toast. 7.
 Deduplicate cảnh báo lặp. 8. Event Log có thể mở rộng. 9. Sound
