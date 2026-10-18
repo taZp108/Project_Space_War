@@ -1,27 +1,33 @@
--- | Module chính của package @space-war@.
+-- | Module chinh cua package @space-war@.
 --
--- Các module game (@Game.*@) sẽ được re-export tại đây ở các phase sau.
+-- Re-export cac module game (@Game.*@) de cac noi khac chi can @import Lib@.
 module Lib
     ( someFunc
     , projectName
     , module Game.Types
     , module Game.Config
+    , module Game.State
+    , module Game.Action
+    , module Game.Turn
     , module Game.World
     , module Game.Generate
     ) where
 
+import Game.Action
 import Game.Config
 import Game.Generate
+import Game.State
+import Game.Turn
 import Game.Types
 import Game.World
 
--- | In một dòng chào mẫu (giữ lại từ template của stack).
+-- | In mot dong chao mau (giu lai tu template cua stack).
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
 
--- | Tên của project.
+-- | Ten cua project.
 --
--- Ví dụ:
+-- Vi du:
 --
 -- >>> projectName
 -- "space-war"

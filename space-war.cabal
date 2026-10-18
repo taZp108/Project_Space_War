@@ -50,9 +50,11 @@ test-suite space-war-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Game.ActionSpec
       Game.GenerateSpec
       Game.StateSpec
       Game.TestUtil
+      Game.TurnSpec
       Game.WorldSpec
       Paths_space_war
   hs-source-dirs:
