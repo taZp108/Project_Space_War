@@ -18,7 +18,7 @@ performAction config playerid act state =
         oppplayer = if playerid == Player1 then gsPlayer2 state else gsPlayer1 state
     in case act of
         Move direct -> 
-            case actionMove config direct curplayer state of 
+            case actionMove config direct curplayer of 
                 Left err -> Left err 
                 Right (playerNew, report) -> 
                     let stateNew = if playerid == Player1 
@@ -76,16 +76,16 @@ checkResources player cost =
 --3. Hàm Move
 --Di chuyển tàu đi tiếp 1 ô 
 
-actionMove :: Config -> Direction -> Player -> GameState -> Either GameError (Player, ActionReport)
-actionMove config direct player state =
+actionMove :: Config -> Direction -> Player -> Either GameError (Player, ActionReport)
+actionMove config direct player =
     let posNew = movePos direct (playerPos player)
     in 
 --trước khi di chuyển phải kiểm tra 2 điều kiện là ap/battery hoặc vị trí pos hiện tại có cho phép di chuyển tiếp hay không.
         case checkResources player (cfgCostMove config) of
-            Left error -> Left error
-            Right () --sau khi kiểm tra ap và battery thông qua thì tiếp tục kiểm tra biên
-                | not (inBounds config posNew) -> Left OutOfBounds
-                | otherwise -> 
+            Left err -> Left err
+            Right () -> --sau khi kiểm tra ap và battery thông qua thì tiếp tục kiểm tra biên
+                if not (inBounds config posNew) then Left OutOfBounds
+                else  
                     let playerNew = player {
                         playerPos = posNew,
                         playerAP = playerAP player - costAP (cfgCostMove config),
@@ -99,7 +99,7 @@ actionMove config direct player state =
 actionObserve :: Config -> Player -> GameState -> Either GameError (Player, ActionReport)
 actionObserve config player state =
     case checkResources player (cfgCostObserve config) of
-        Left error -> Left error
+        Left err -> Left err
         Right () ->
             let posShip = playerPos player
                 allPlanet = Map.elems (gsPlanets state)
@@ -128,7 +128,7 @@ actionObserve config player state =
 actionScanArea :: Config -> Player -> GameState -> Either GameError (Player, ActionReport)
 actionScanArea config player state =
     case checkResources player (cfgCostScanArea config) of
-            Left error -> Left error
+            Left err -> Left err
             Right () ->
                 let posShip = playerPos player
                     allPlanet = Map.elems (gsPlanets state)
@@ -156,41 +156,41 @@ actionScanArea config player state =
 actionScanNearest :: Config -> Player -> GameState -> Either GameError (Player, ActionReport)
 actionScanNearest config player state =
     case checkResources player (cfgCostScanNearest config) of
-            Left error -> Left error
+            Left err -> Left err
             Right () ->
                 let posShip = playerPos player
                     allPlanet = Map.elems (gsPlanets state)
-                --lọc ra các hành tinh còn tài nguyên khi tổng kho nó >0
-                planetHaveResources = filter (\p -> sum (Map.elems (planetStock p)) > 0) allPlanet
-                --khoảng cách với các hành tinh còn tài nguyên
-                planetDistances = map (\p -> (p, distance posShip (planetPos p))) planetHaveResources
-                --xử lý các trường hợp:
-                resultAct =
-                    case planetDistances of 
-                    --TH1: không còn hành tinh nào còn tài nguyên
-                        [] -> NearestPlanet Nothing 
-                    --TH2: còn hành tinh còn tài nguyên, lọc ra các hành tinh có khoảng cách bé nhất
-                        _ -> 
-                            let minDistence = minimum (map (\(p, d) -> d) planetDistances)
-                                nearPlanets = filter (\(p,d) -> d==minDistence) planetDistances
-                                --so id giữa các planet có khoảng cách tới tàu gần nhất như nhau
-                                finalMinPlanet = 
-                                    if null nearPlanets then Nothing 
-                                    else 
-                                        let 
-                                            minID (planet1,dis1) (planet2,dis2) =
-                                                let id1 = planetId planet1
-                                                    id2 = planetId planet2
-                                                in 
-                                                    if id1 < id2 then (planet1,dis1) else (planet2,dis2)
-                                            
-                                            nearestPlanet = foldr1 minID nearPlanets
-                                        in Just nearestPlanet
-                            in case finalMinPlanet of 
-                                    Nothing -> NearestPlanet Nothing
-                                    Just (finalPlanet,finalDistance) ->
-                                        let dir = compassFrom posShip (planetPos finalPlanet)
-                                        in NearestPlanet (Just (dir,finalDistance))
+                    --lọc ra các hành tinh còn tài nguyên khi tổng kho nó >0
+                    planetHaveResources = filter (\p -> sum (Map.elems (planetStock p)) > 0) allPlanet
+                    --khoảng cách với các hành tinh còn tài nguyên
+                    planetDistances = map (\p -> (p, distance posShip (planetPos p))) planetHaveResources
+                    --xử lý các trường hợp:
+                    resultAct =
+                        case planetDistances of 
+                        --TH1: không còn hành tinh nào còn tài nguyên
+                            [] -> NearestPlanet Nothing 
+                        --TH2: còn hành tinh còn tài nguyên, lọc ra các hành tinh có khoảng cách bé nhất
+                            _ -> 
+                                let minDistence = minimum (map (\(_, d) -> d) planetDistances)
+                                    nearPlanets = filter (\(_,d) -> d==minDistence) planetDistances
+                                    --so id giữa các planet có khoảng cách tới tàu gần nhất như nhau
+                                    finalMinPlanet = 
+                                        if null nearPlanets then Nothing 
+                                        else 
+                                            let 
+                                                minID (planet1,dis1) (planet2,dis2) =
+                                                    let id1 = planetId planet1
+                                                        id2 = planetId planet2
+                                                    in 
+                                                        if id1 < id2 then (planet1,dis1) else (planet2,dis2)
+                                                
+                                                nearestPlanet = foldr1 minID nearPlanets
+                                            in Just nearestPlanet
+                                in case finalMinPlanet of 
+                                        Nothing -> NearestPlanet Nothing
+                                        Just (finalPlanet,finalDistance) ->
+                                            let dir = compassFrom posShip (planetPos finalPlanet)
+                                            in NearestPlanet (Just (dir,finalDistance))
                     playerNew = player { 
                         playerAP = playerAP player - costAP (cfgCostScanNearest config),
                         playerBattery = playerBattery player - costBattery (cfgCostScanNearest config)
@@ -207,7 +207,7 @@ actionScanNearest config player state =
 actionScanOpponent ::  Config -> Player -> Player -> Either GameError (Player, ActionReport)
 actionScanOpponent config player opponent =
     case checkResources player (cfgCostScanOpponent config) of
-        Left error -> Left error
+        Left err -> Left err
         Right () ->
             let 
                 myPos = playerPos player
@@ -218,9 +218,9 @@ actionScanOpponent config player opponent =
                         playerBattery = playerBattery player - costBattery (cfgCostScanOpponent config)
                     }
 
-                    report = ActionReport {reportResult = OpponentDirection dir, reportNotice = Just YouWereScanned} 
-                in 
-                    Right (playerNew, report)
+                report = ActionReport {reportResult = OpponentDirection dir, reportNotice = Just YouWereScanned} 
+            in 
+                Right (playerNew, report)
 
 
 
