@@ -358,38 +358,49 @@ h1 span { color: var(--green); text-shadow: 0 0 28px rgba(113, 255, 145, 0.16); 
 .turn-right .field-label { margin: 0; }
 .turn-right > strong { color: var(--amber); font-size: 0.58rem; font-weight: 500; }
 .game-leave-button { min-height: 34px; margin-left: 0.5rem; padding-inline: 0.7rem; font-size: 0.49rem; }
-.game-grid { display: grid; min-height: 0; grid-template-columns: minmax(210px, 0.78fr) minmax(420px, 1.9fr) minmax(270px, 0.95fr); grid-template-rows: minmax(390px, 1fr) minmax(300px, auto); gap: 0.65rem; }
+.game-grid { display: grid; min-height: 0; grid-template-columns: minmax(180px, 0.68fr) minmax(360px, 1.45fr) minmax(300px, 1.05fr); grid-template-rows: minmax(390px, 1fr) minmax(165px, auto); gap: 0.65rem; }
 .game-grid > .panel { min-width: 0; }
-.ship-hud { display: flex; grid-row: 1 / span 2; flex-direction: column; }
+.ship-hud { display: flex; grid-row: 1; align-self: start; flex-direction: column; }
 .ship-hud .panel-heading, .tactical-panel .panel-heading, .target-panel .panel-heading, .command-console .panel-heading, .event-log .panel-heading { min-height: 57px; padding: 0.8rem 0.9rem 0.7rem; }
 .ship-hud .panel-heading h2, .tactical-panel .panel-heading h2, .target-panel .panel-heading h2, .command-console .panel-heading h2, .event-log .panel-heading h2 { font-size: 0.8rem; }
 .ship-hud .eyebrow, .tactical-panel .eyebrow, .target-panel .eyebrow, .command-console .eyebrow, .event-log .eyebrow { margin-bottom: 0.28rem; font-size: 0.49rem; }
 .ship-hud .panel-code, .tactical-panel .panel-code, .target-panel .panel-code, .command-console .panel-code, .event-log .panel-code { font-size: 0.48rem; }
-.hud-content { display: flex; flex: 1; flex-direction: column; gap: 0.95rem; padding: 0.9rem; }
+.ship-hud .panel-heading { min-height: 49px; padding: 0.75rem 0.9rem; }
+.ship-hud .panel-heading h2 { color: var(--green); font-size: 0.94rem; letter-spacing: 0.08em; }
+.hud-content { display: flex; flex: 0 0 auto; flex-direction: column; gap: 0.62rem; padding: 0.75rem 0.9rem 0.85rem; }
 .hud-position { display: grid; grid-template-columns: 1fr auto; align-items: center; row-gap: 0.3rem; }
-.hud-position .field-label { grid-column: 1 / -1; margin: 0; font-size: 0.48rem; }
-.hud-position strong { color: var(--green); font-size: 1.05rem; font-weight: 500; letter-spacing: 0.04em; }
+.hud-position .field-label { grid-column: 1 / -1; margin: 0; font-size: 0.55rem; }
+.hud-position strong { color: var(--green); font-size: 1.28rem; font-weight: 500; letter-spacing: 0.04em; }
 .position-caption { color: #5e7767; font-size: 0.44rem; letter-spacing: 0.08em; }
-.meter-block { display: grid; gap: 0.35rem; }
-.meter-label { display: flex; align-items: center; justify-content: space-between; color: #a5b9aa; font-size: 0.56rem; letter-spacing: 0.08em; }
-.meter-label strong { color: var(--green); font-size: 0.69rem; font-weight: 500; letter-spacing: 0.025em; }
+.meter-block { display: grid; gap: 0.42rem; }
+.meter-label { display: flex; align-items: center; justify-content: space-between; color: #a5b9aa; font-size: 0.58rem; letter-spacing: 0.08em; }
+.meter-label strong { color: var(--green); font-size: 0.86rem; font-weight: 500; letter-spacing: 0.025em; }
 .meter-label small { color: #789080; font-size: 0.53rem; font-weight: 400; }
 .meter-track { display: block; height: 5px; overflow: hidden; border: 1px solid rgba(63, 191, 107, 0.22); background: rgba(2, 6, 4, 0.8); }
 .meter-track > span { display: block; height: 100%; background: var(--green-soft); box-shadow: 0 0 9px rgba(113, 255, 145, 0.3); }
 .meter-amber > span { background: var(--amber-soft); box-shadow: 0 0 8px rgba(255, 180, 94, 0.22); }
 .meter-caption { color: #637a6b; font-size: 0.45rem; letter-spacing: 0.08em; }
-.hud-section-title { display: flex; justify-content: space-between; gap: 0.4rem; margin-top: 0.1rem; color: #91a797; font-size: 0.49rem; letter-spacing: 0.06em; }
+.hud-section-title { display: flex; justify-content: space-between; gap: 0.4rem; margin-top: 0.05rem; color: #91a797; font-size: 0.58rem; letter-spacing: 0.06em; }
 .hud-section-title span:last-child { color: #809886; font-size: 0.46rem; text-align: right; }
 .cargo-meter { height: 4px; }
-.cargo-list { display: grid; gap: 0.35rem; margin: -0.25rem 0 0; padding: 0; list-style: none; }
-.cargo-list li { display: flex; justify-content: space-between; color: #859b8c; font-size: 0.53rem; }
+.cargo-list { display: grid; gap: 0.3rem; margin: -0.18rem 0 0; padding: 0; list-style: none; }
+.cargo-list li { display: flex; justify-content: space-between; color: #9aab9e; font-size: 0.62rem; }
 .cargo-list b { color: var(--text); font-weight: 500; }
-.score-block { display: grid; gap: 0.38rem; margin-top: auto; padding-top: 0.65rem; border-top: var(--line); }
+.score-block { display: grid; gap: 0.45rem; margin-top: 0.05rem; padding-top: 0.65rem; border-top: var(--line); }
 .score-block .meter-label strong { color: var(--amber); }
 .score-meter > span { background: var(--amber-soft); box-shadow: 0 0 8px rgba(255, 180, 94, 0.22); }
-.ship-hud .panel-footnote { padding: 0.65rem 0.9rem; font-size: 0.46rem; }
 
-.tactical-panel { display: flex; min-height: 0; flex-direction: column; }
+.tactical-panel { display: flex; min-height: 0; grid-column: 2; grid-row: 1; flex-direction: column; }
+.ship-hud { grid-column: 1; grid-row: 1 / span 2; }
+.target-panel { grid-column: 3; grid-row: 2; align-self: start; }
+.command-console { grid-column: 3; grid-row: 1; }
+.event-log { grid-column: 2; grid-row: 2; }
+.game-grid > .panel-heading { text-align: center; }
+.ship-hud .panel-heading, .command-console .panel-heading, .target-panel .panel-heading, .event-log .panel-heading { display: flex; justify-content: center; }
+.ship-hud .panel-heading h2, .command-console .panel-heading h2, .target-panel .panel-heading h2, .event-log .panel-heading h2, .tactical-panel .panel-heading h2 { color: var(--green); font-size: 0.94rem; letter-spacing: 0.08em; text-align: center; }
+.map-panel-heading, .event-panel-heading { display: grid !important; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; }
+.map-panel-heading h2, .event-panel-heading h2 { grid-column: 2; grid-row: 1; }
+.map-panel-heading .map-controls, .event-panel-heading .event-toggle { grid-column: 3; grid-row: 1; justify-self: end; }
 .map-preview { display: flex; min-height: 0; flex: 1; flex-direction: column; justify-content: center; gap: 0.5rem; padding: 0.55rem 0.9rem 0.4rem; }
 .map-canvas-wrap { display: grid; min-height: 0; flex: 1; place-items: stretch; overflow: hidden; border: 1px solid rgba(63, 191, 107, 0.12); background: #07100b; }
 .tactical-canvas { display: block; width: 100%; height: 100%; min-height: 0; cursor: crosshair; touch-action: none; }
@@ -421,7 +432,8 @@ h1 span { color: var(--green); text-shadow: 0 0 28px rgba(113, 255, 145, 0.16); 
 .overview-dialog-panel .map-legend { min-height: 34px; align-items: center; }
 
 .target-panel { display: flex; min-height: 0; flex-direction: column; }
-.target-content { min-height: 112px; padding: 0.85rem 0.9rem 0.55rem; }
+.target-panel .panel-heading { min-height: 49px; padding: 0.7rem 0.8rem; }
+.target-content { min-height: 0; padding: 0.55rem 0.75rem; }
 .target-empty { display: grid; grid-template-columns: 27px 1fr; align-items: center; column-gap: 0.65rem; padding-block: 0.65rem; }
 .target-crosshair { grid-row: 1 / span 2; color: var(--amber); font-size: 1.1rem; }
 .target-empty strong { color: var(--text); font-size: 0.56rem; font-weight: 500; letter-spacing: 0.1em; }
@@ -439,7 +451,7 @@ h1 span { color: var(--green); text-shadow: 0 0 28px rgba(113, 255, 145, 0.16); 
 .target-details dt { color: #667d6d; font-size: 0.43rem; }
 .target-details dd { margin: 0; color: #a6b7aa; font-size: 0.49rem; }
 .target-details .unknown-value { color: #8b9d90; }
-.opponent-status { margin-top: auto; padding: 0.7rem 0.9rem 0.85rem; border-top: var(--line); background: rgba(4, 9, 6, 0.36); }
+.opponent-status { margin-top: 0; padding: 0.55rem 0.75rem 0.65rem; border-top: var(--line); background: rgba(4, 9, 6, 0.36); }
 .opponent-heading { display: flex; align-items: center; justify-content: space-between; }
 .opponent-heading .eyebrow { margin: 0; color: var(--amber); }
 .opponent-connection { display: flex; align-items: center; gap: 0.45rem; margin-top: 0.55rem; }
@@ -450,26 +462,33 @@ h1 span { color: var(--green); text-shadow: 0 0 28px rgba(113, 255, 145, 0.16); 
 .opponent-status .field-note { display: block; font-size: 0.45rem; }
 
 .command-console { display: flex; min-height: 0; flex-direction: column; }
-.command-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; gap: 0.38rem; padding: 0.55rem 0.8rem 0.25rem; }
-.command-option { display: grid; min-width: 0; gap: 0.24rem; padding: 0.42rem 0.48rem; border: 1px solid rgba(63, 191, 107, 0.18); background: rgba(3, 8, 5, 0.5); color: var(--text); text-align: left; font-family: var(--font-mono); cursor: pointer; }
+.command-console .panel-heading { min-height: 49px; padding: 0.7rem 0.75rem; }
+.command-console .panel-heading h2 { color: var(--green); font-size: 0.94rem; letter-spacing: 0.08em; }
+.command-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 0.42rem; padding: 0.55rem 0.7rem 0.35rem; }
+.command-option { display: grid; min-width: 0; min-height: 58px; align-content: center; justify-items: center; gap: 0.35rem; padding: 0.48rem; border: 1px solid rgba(63, 191, 107, 0.18); background: rgba(3, 8, 5, 0.5); color: var(--text); text-align: center; font-family: var(--font-mono); cursor: pointer; }
 .command-option:hover:not(:disabled), .command-option[aria-pressed="true"] { border-color: var(--amber-soft); background: rgba(255, 180, 94, 0.07); }
-.command-option:focus-visible, .action-controls button:focus-visible, .recharge-controls input:focus-visible, .recharge-controls select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.command-option strong { color: #b9c9bd; font-size: 0.49rem; font-weight: 500; letter-spacing: 0.05em; }
-.command-option span { color: #9eae9f; font-size: 0.44rem; }
+.command-option:focus-visible, .action-controls button:focus-visible, .command-idle .clear-target-button:focus-visible, .recharge-controls input:focus-visible, .recharge-controls select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.command-option strong { color: #c5d4c9; font-size: 0.67rem; font-weight: 500; letter-spacing: 0.06em; }
+.command-option span { color: #9eae9f; font-size: 0.53rem; }
 .command-option small { color: #73897b; font-size: 0.4rem; line-height: 1.35; }
 .command-option:disabled { opacity: 0.55; cursor: not-allowed; }
 .command-interaction { margin-top: auto; padding: 0.55rem 0.8rem 0.7rem; border-top: var(--line); }
+.command-idle { display: flex; justify-content: flex-end; }
 .command-note { display: flex; align-items: center; gap: 0.45rem; min-height: 36px; margin: 0; color: #8c9c8e; font-size: 0.46rem; line-height: 1.5; }
 .command-note .notice-icon { font-size: 0.75rem; }
 .action-summary-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
 .action-summary-heading .field-label { margin: 0; }
 .action-summary-heading > strong { color: var(--amber); font-size: 0.52rem; font-weight: 500; letter-spacing: 0.06em; }
-.action-summary dl { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 0.45rem 0; }
+.action-summary dl { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 0.1rem 0 0.45rem; }
 .action-summary dl > div { display: flex; gap: 0.35rem; }
 .action-summary dt { color: #718779; font-size: 0.42rem; }
 .action-summary dd { margin: 0; color: #b8c5ba; font-size: 0.44rem; }
-.action-controls { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.55rem; }
-.action-controls .primary-button, .action-controls .utility-button { min-height: 31px; margin: 0; padding: 0.3rem 0.5rem; font-size: 0.43rem; }
+.action-controls { display: flex; align-items: stretch; gap: 0.55rem; margin-top: 0.55rem; }
+.action-controls .primary-button, .action-controls .utility-button, .action-controls .clear-target-button, .command-idle .clear-target-button { min-height: 42px; margin: 0; padding: 0.55rem 0.8rem; font-size: 0.56rem; }
+.action-controls .primary-button { flex: 1; font-size: 0.62rem; }
+.action-controls .clear-target-button, .command-idle .clear-target-button { border-color: var(--border); background: transparent; color: #a2b2a6; }
+.action-controls .clear-target-button:hover:not(:disabled), .command-idle .clear-target-button:hover:not(:disabled) { border-color: var(--green-soft); background: rgba(113, 255, 145, 0.06); color: var(--green); }
+.action-controls .clear-target-button:disabled, .command-idle .clear-target-button:disabled { opacity: 0.45; cursor: not-allowed; }
 .recharge-controls { display: grid; grid-template-columns: 1.2fr 0.65fr; align-items: end; gap: 0.4rem; }
 .recharge-controls label { display: grid; gap: 0.2rem; color: #839688; font-size: 0.4rem; letter-spacing: 0.05em; }
 .recharge-controls select, .recharge-controls input { width: 100%; min-width: 0; min-height: 27px; padding: 0.25rem; border: 1px solid var(--border); background: #07100b; color: var(--text); font: inherit; font-size: 0.44rem; }
@@ -490,20 +509,20 @@ h1 span { color: var(--green); text-shadow: 0 0 28px rgba(113, 255, 145, 0.16); 
 .action-confirm-dialog .screen-footnote { margin-top: 0.8rem; }
 .opponent-turn-control { display: flex; align-items: center; justify-content: flex-end; gap: 0.8rem; color: var(--text-muted); font-size: 0.48rem; }
 .opponent-turn-control .utility-button { min-height: 30px; padding: 0.3rem 0.55rem; font-size: 0.42rem; }
-.event-log { display: flex; min-height: 0; flex-direction: column; }
-.event-log .panel-heading { min-height: 50px; }
+.event-log { display: flex; min-height: 0; grid-column: 2; grid-row: 2; flex-direction: column; }
+.event-log .panel-heading { min-height: 42px; padding: 0.5rem 0.75rem; }
 .event-toggle { padding: 0.3rem 0.4rem; border: 1px solid var(--border); background: transparent; color: var(--amber); font-family: var(--font-mono); font-size: 0.42rem; letter-spacing: 0.04em; cursor: pointer; }
 .event-toggle:hover { border-color: var(--amber-soft); }
-.event-list { display: grid; max-height: 180px; align-content: start; gap: 0.58rem; overflow: hidden; margin: 0; padding: 0.65rem 0.8rem; list-style: none; }
+.event-list { display: grid; max-height: 135px; align-content: start; gap: 0.32rem; overflow: hidden; margin: 0; padding: 0.35rem 0.7rem 0.55rem; list-style: none; }
 .event-log.expanded .event-list { max-height: 430px; overflow: auto; }
-.event-row { display: grid; grid-template-columns: 42px 42px minmax(0, 1fr); align-items: start; gap: 0.35rem; }
-.event-row time, .event-kind { padding-top: 0.08rem; color: #758a7b; font-size: 0.43rem; white-space: nowrap; }
+.event-row { display: grid; grid-template-columns: 42px 56px minmax(0, 1fr); align-items: start; gap: 0.32rem; }
+.event-row time, .event-kind { padding-top: 0.08rem; color: #758a7b; font-size: 0.48rem; white-space: nowrap; }
 .event-kind { color: var(--green-soft); }
 .event-scan .event-kind { color: var(--amber); }
 .event-warn .event-kind, .event-warn code { color: var(--danger); }
-.event-row code { color: #a6b7aa; font-size: 0.45rem; }
-.event-row p { margin: 0.2rem 0 0; color: #819487; font-size: 0.45rem; line-height: 1.4; }
-.event-log .panel-footnote { margin-top: auto; padding: 0.5rem 0.8rem; font-size: 0.43rem; }
+.event-row code { color: #a6b7aa; font-size: 0.48rem; }
+.event-row p { margin: 0.12rem 0 0; color: #9aa99d; font-size: 0.52rem; line-height: 1.35; }
+.event-log .panel-footnote { display: none; }
 .game-statusbar { display: flex; min-height: 26px; align-items: center; justify-content: space-between; gap: 0.7rem; color: #718779; font-size: 0.45rem; letter-spacing: 0.07em; }
 .game-statusbar > span:first-child { display: inline-flex; align-items: center; gap: 0.45rem; color: var(--green-soft); }
 .game-statusbar .live-mark { width: 4px; height: 4px; }
@@ -561,13 +580,23 @@ button:disabled { opacity: 0.58; }
 @media (max-width: 1100px) {
   .app-shell { width: min(100% - 2rem, 1760px); }
   .game-screen { min-height: 0; grid-template-rows: auto auto minmax(650px, auto) auto auto; }
-  .game-grid { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.5fr); grid-template-rows: minmax(390px, auto) minmax(300px, auto) minmax(260px, auto); }
-  .ship-hud { grid-column: 1; grid-row: 1 / span 2; }
-  .tactical-panel { grid-column: 2; grid-row: 1; }
-  .target-panel { grid-column: 2; grid-row: 2; }
-  .command-console { grid-column: 1; grid-row: 3; }
-  .event-log { grid-column: 2; grid-row: 3; }
+  .game-grid { grid-template-columns: minmax(170px, 0.68fr) minmax(330px, 1.45fr) minmax(260px, 1.05fr); grid-template-rows: minmax(390px, 1fr) minmax(165px, auto); }
   .settings-layout { grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr); }
+}
+
+@media (max-width: 900px) {
+  .game-grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
+  .game-grid > .ship-hud, .game-grid > .tactical-panel, .game-grid > .command-console,
+  .game-grid > .target-panel, .game-grid > .event-log { grid-column: 1; grid-row: auto; }
+  .game-grid > .ship-hud { order: 1; }
+  .game-grid > .tactical-panel { order: 2; }
+  .game-grid > .command-console { order: 3; }
+  .game-grid > .target-panel { order: 4; }
+  .game-grid > .event-log { order: 5; }
+  .ship-hud { grid-row: auto; }
+  .tactical-panel { min-height: 390px; }
+  .event-log { min-height: 150px; }
+  .target-panel { align-self: stretch; }
 }
 
 @media (max-width: 760px) {
@@ -599,13 +628,18 @@ button:disabled { opacity: 0.58; }
   .tactical-panel { min-height: 390px; }
   .hud-content { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
   .hud-position, .hud-section-title, .cargo-meter, .cargo-list, .score-block { grid-column: 1 / -1; }
-  .ship-hud .panel-footnote { margin-top: auto; }
+  .ship-hud .panel-footnote { display: none; }
   .target-panel .opponent-status { margin-top: 0; }
   .game-turnbar .turn-right > .field-label { display: none; }
-  .tactical-panel .panel-heading { flex-wrap: wrap; gap: 0.55rem; }
+  .tactical-panel .panel-heading { min-height: 74px; }
+  .map-panel-heading { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; gap: 0.45rem; }
+  .map-panel-heading h2 { grid-column: 1; grid-row: 1; }
+  .map-panel-heading .map-controls { grid-column: 1; grid-row: 2; justify-self: center; }
+  .event-panel-heading { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
   .map-controls { flex-wrap: wrap; }
   .map-control-button, .clear-target-button { min-height: 38px; }
   .cell-status-strip { grid-template-columns: minmax(0, auto) minmax(0, 1fr); }
+  .cell-status-strip .clear-target-button { grid-column: 1 / -1; justify-self: start; white-space: normal; }
   .cell-status-strip > span:last-child { text-align: left; }
   .game-statusbar { flex-wrap: wrap; justify-content: flex-start; padding-block: 0.35rem; }
   .opponent-turn-control { flex-wrap: wrap; justify-content: flex-start; }
@@ -623,6 +657,8 @@ button:disabled { opacity: 0.58; }
   .join-actions > *, .link-lost-actions > * { width: 100%; justify-content: center; }
   .command-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .command-option { min-height: 48px; }
+  .event-row { grid-template-columns: 38px 54px minmax(0, 1fr); }
+  .event-row code { overflow-wrap: anywhere; }
   .map-legend { gap: 0.35rem 0.55rem; font-size: 0.4rem; }
   .match-result-card .link-lost-actions { flex-direction: column; }
 }

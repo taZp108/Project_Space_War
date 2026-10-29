@@ -6,7 +6,9 @@ import qualified Game.ActionSpec
 import qualified Game.GenerateSpec
 import qualified Game.StateSpec
 import qualified Game.TurnSpec
+import qualified Game.ViewSpec
 import qualified Game.WorldSpec
+import qualified Protocol.JsonSpec
 
 main :: IO ()
 main = hspec $ do
@@ -21,3 +23,5 @@ main = hspec $ do
   describe "Game.State" Game.StateSpec.spec
   describe "Game.Action" Game.ActionSpec.spec
   describe "Game.Turn" Game.TurnSpec.spec
+  describe "Game.View" Game.ViewSpec.spec
+  describe "Protocol.Json" Protocol.JsonSpec.spec

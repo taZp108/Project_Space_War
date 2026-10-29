@@ -30,6 +30,16 @@
   (major1) == 4 && (major2) <  20 || \
   (major1) == 4 && (major2) == 20 && (minor) <= 2)
 #endif /* MIN_VERSION_base */
+/* package bytestring-0.12.2.0 */
+#ifndef VERSION_bytestring
+#define VERSION_bytestring "0.12.2.0"
+#endif /* VERSION_bytestring */
+#ifndef MIN_VERSION_bytestring
+#define MIN_VERSION_bytestring(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  12 || \
+  (major1) == 0 && (major2) == 12 && (minor) <= 2)
+#endif /* MIN_VERSION_bytestring */
 /* package containers-0.7 */
 #ifndef VERSION_containers
 #define VERSION_containers "0.7"
@@ -50,6 +60,16 @@
   (major1) == 1 && (major2) <  2 || \
   (major1) == 1 && (major2) == 2 && (minor) <= 1)
 #endif /* MIN_VERSION_random */
+/* package text-2.1.3 */
+#ifndef VERSION_text
+#define VERSION_text "2.1.3"
+#endif /* VERSION_text */
+#ifndef MIN_VERSION_text
+#define MIN_VERSION_text(major1,major2,minor) (\
+  (major1) <  2 || \
+  (major1) == 2 && (major2) <  1 || \
+  (major1) == 2 && (major2) == 1 && (minor) <= 3)
+#endif /* MIN_VERSION_text */
 /* package websockets-0.13.0.0 */
 #ifndef VERSION_websockets
 #define VERSION_websockets "0.13.0.0"
@@ -133,10 +153,10 @@
 #endif /* MIN_TOOL_VERSION_runghc */
 
 #ifndef CURRENT_PACKAGE_KEY
-#define CURRENT_PACKAGE_KEY "space-war-0.1.0.0-P11Ug3PjFo3IHEuQG0x16"
+#define CURRENT_PACKAGE_KEY "space-war-0.1.0.0-KDPqFkvo8r95n5es67Lwh"
 #endif /* CURRENT_packageKey */
 #ifndef CURRENT_COMPONENT_ID
-#define CURRENT_COMPONENT_ID "space-war-0.1.0.0-P11Ug3PjFo3IHEuQG0x16"
+#define CURRENT_COMPONENT_ID "space-war-0.1.0.0-KDPqFkvo8r95n5es67Lwh"
 #endif /* CURRENT_COMPONENT_ID */
 #ifndef CURRENT_PACKAGE_VERSION
 #define CURRENT_PACKAGE_VERSION "0.1.0.0"

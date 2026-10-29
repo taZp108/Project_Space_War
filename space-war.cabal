@@ -19,8 +19,11 @@ library
       Game.State
       Game.Turn
       Game.Types
+      Game.View
       Game.World
       Lib
+      Protocol.Json
+      Protocol.Message
   other-modules:
       Paths_space_war
   hs-source-dirs:
@@ -29,8 +32,10 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , bytestring
     , containers
     , random
+    , text
     , websockets
   default-language: Haskell2010
 
@@ -55,16 +60,21 @@ test-suite space-war-test
       Game.StateSpec
       Game.TestUtil
       Game.TurnSpec
+      Game.ViewSpec
       Game.WorldSpec
+      Protocol.JsonSpec
       Paths_space_war
   hs-source-dirs:
       test
   ghc-options: -Wall
   build-depends:
       QuickCheck
+    , aeson
     , base >=4.7 && <5
+    , bytestring
     , containers
     , hspec
     , random
     , space-war
+    , text
   default-language: Haskell2010

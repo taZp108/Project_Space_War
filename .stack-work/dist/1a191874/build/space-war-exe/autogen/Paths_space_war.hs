@@ -47,7 +47,7 @@ getBinDir, getLibDir, getDynLibDir, getDataDir, getLibexecDir, getSysconfDir :: 
 
 bindir, libdir, dynlibdir, datadir, libexecdir, sysconfdir :: FilePath
 bindir     = "D:\\Dev\\space-war\\.stack-work\\install\\e81b2cb5\\bin"
-libdir     = "D:\\Dev\\space-war\\.stack-work\\install\\e81b2cb5\\lib\\x86_64-windows-ghc-9.10.3-b42a\\space-war-0.1.0.0-nTn7OQDU57EQlxUMSHDOM-space-war-exe"
+libdir     = "D:\\Dev\\space-war\\.stack-work\\install\\e81b2cb5\\lib\\x86_64-windows-ghc-9.10.3-b42a\\space-war-0.1.0.0-2BQJ0Vy7F6uIvoNt64lwW0-space-war-exe"
 dynlibdir  = "D:\\Dev\\space-war\\.stack-work\\install\\e81b2cb5\\lib\\x86_64-windows-ghc-9.10.3-b42a"
 datadir    = "D:\\Dev\\space-war\\.stack-work\\install\\e81b2cb5\\share\\x86_64-windows-ghc-9.10.3-b42a\\space-war-0.1.0.0"
 libexecdir = "D:\\Dev\\space-war\\.stack-work\\install\\e81b2cb5\\libexec\\x86_64-windows-ghc-9.10.3-b42a\\space-war-0.1.0.0"

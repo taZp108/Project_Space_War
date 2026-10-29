@@ -20,6 +20,16 @@
   (major1) == 2 && (major2) <  15 || \
   (major1) == 2 && (major2) == 15 && (minor) <= 0)
 #endif /* MIN_VERSION_QuickCheck */
+/* package aeson-2.2.5.1 */
+#ifndef VERSION_aeson
+#define VERSION_aeson "2.2.5.1"
+#endif /* VERSION_aeson */
+#ifndef MIN_VERSION_aeson
+#define MIN_VERSION_aeson(major1,major2,minor) (\
+  (major1) <  2 || \
+  (major1) == 2 && (major2) <  2 || \
+  (major1) == 2 && (major2) == 2 && (minor) <= 5)
+#endif /* MIN_VERSION_aeson */
 /* package base-4.20.2.0 */
 #ifndef VERSION_base
 #define VERSION_base "4.20.2.0"
@@ -30,6 +40,16 @@
   (major1) == 4 && (major2) <  20 || \
   (major1) == 4 && (major2) == 20 && (minor) <= 2)
 #endif /* MIN_VERSION_base */
+/* package bytestring-0.12.2.0 */
+#ifndef VERSION_bytestring
+#define VERSION_bytestring "0.12.2.0"
+#endif /* VERSION_bytestring */
+#ifndef MIN_VERSION_bytestring
+#define MIN_VERSION_bytestring(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  12 || \
+  (major1) == 0 && (major2) == 12 && (minor) <= 2)
+#endif /* MIN_VERSION_bytestring */
 /* package containers-0.7 */
 #ifndef VERSION_containers
 #define VERSION_containers "0.7"
@@ -70,6 +90,16 @@
   (major1) == 0 && (major2) <  1 || \
   (major1) == 0 && (major2) == 1 && (minor) <= 0)
 #endif /* MIN_VERSION_space_war */
+/* package text-2.1.3 */
+#ifndef VERSION_text
+#define VERSION_text "2.1.3"
+#endif /* VERSION_text */
+#ifndef MIN_VERSION_text
+#define MIN_VERSION_text(major1,major2,minor) (\
+  (major1) <  2 || \
+  (major1) == 2 && (major2) <  1 || \
+  (major1) == 2 && (major2) == 1 && (minor) <= 3)
+#endif /* MIN_VERSION_text */
 
 /* tool gcc-14.0.6 */
 #ifndef TOOL_VERSION_gcc
@@ -143,7 +173,7 @@
 #endif /* MIN_TOOL_VERSION_runghc */
 
 #ifndef CURRENT_COMPONENT_ID
-#define CURRENT_COMPONENT_ID "space-war-0.1.0.0-9MYk9TIGt1VCXK8wZYZg3y-space-war-test"
+#define CURRENT_COMPONENT_ID "space-war-0.1.0.0-Gpa1xv80EYV84kwUcgns30-space-war-test"
 #endif /* CURRENT_COMPONENT_ID */
 #ifndef CURRENT_PACKAGE_VERSION
 #define CURRENT_PACKAGE_VERSION "0.1.0.0"

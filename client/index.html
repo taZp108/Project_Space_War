@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#050907" />
-    <meta name="description" content="Space War — a two-player tactical space game." />
-    <title>SPACE WAR // Tactical Interface</title>
+    <meta name="description" content="Space War — game chiến thuật không gian hai người chơi." />
+    <title>SPACE WAR // Giao diện chiến thuật</title>
     <link rel="stylesheet" href="style.css" />
     <script src="mock-data.js" defer></script>
     <script src="mock-lobby.js" defer></script>
@@ -15,25 +15,25 @@
   </head>
   <body>
     <div class="app-shell">
-      <header class="topbar" aria-label="Application header">
-        <a class="brand" href="#home" data-screen="home" aria-label="Space War home">
+      <header class="topbar" aria-label="Thanh tiêu đề ứng dụng">
+        <a class="brand" href="#home" data-screen="home" aria-label="Về trang chủ Space War">
           <span class="brand-mark" aria-hidden="true">SW</span>
-          <span class="brand-copy"><strong>SPACE WAR</strong><span>TACTICAL INTERFACE</span></span>
+          <span class="brand-copy"><strong>SPACE WAR</strong><span>GIAO DIỆN CHIẾN THUẬT</span></span>
         </a>
         <div class="topbar-status" role="status" aria-live="polite">
           <span class="status-indicator" aria-hidden="true"></span>
-          <span id="runtime-status">LOCAL INTERFACE READY</span>
+          <span id="runtime-status">GIAO DIỆN SẴN SÀNG</span>
           <span class="topbar-divider" aria-hidden="true"></span>
-          <span class="build-label">UI FRAME / 10</span>
+          <span class="build-label">KHUNG GIAO DIỆN / 10</span>
         </div>
-        <div class="topbar-meta"><span class="meta-label">NETWORK</span><span class="status-text">OFFLINE</span></div>
+        <div class="topbar-meta"><span class="meta-label">MẠNG</span><span class="status-text">NGOẠI TUYẾN</span></div>
       </header>
 
       <main id="main" class="main-layout screen-root" tabindex="-1" aria-live="polite"></main>
 
       <footer class="footer-bar">
-        <span>OPERATOR INTERFACE <span class="footer-slash">/</span> MOCK MODE</span>
-        <span>ALL SYSTEMS <span class="footer-state">LOCAL</span></span>
+        <span>GIAO DIỆN ĐIỀU KHIỂN <span class="footer-slash">/</span> CHẾ ĐỘ THỬ</span>
+        <span>HỆ THỐNG <span class="footer-state">CỤC BỘ</span></span>
         <span class="footer-version">SPACE WAR <span>—</span> UI 0.10</span>
       </footer>
     </div>
