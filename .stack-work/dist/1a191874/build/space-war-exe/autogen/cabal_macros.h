@@ -103,7 +103,7 @@
 #endif /* MIN_TOOL_VERSION_runghc */
 
 #ifndef CURRENT_COMPONENT_ID
-#define CURRENT_COMPONENT_ID "space-war-0.1.0.0-2BQJ0Vy7F6uIvoNt64lwW0-space-war-exe"
+#define CURRENT_COMPONENT_ID "space-war-0.1.0.0-68mAQBx3JSsFXw7Xn0nMAk-space-war-exe"
 #endif /* CURRENT_COMPONENT_ID */
 #ifndef CURRENT_PACKAGE_VERSION
 #define CURRENT_PACKAGE_VERSION "0.1.0.0"

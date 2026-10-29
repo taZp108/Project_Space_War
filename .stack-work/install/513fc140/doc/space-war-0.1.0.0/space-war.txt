@@ -9,21 +9,624 @@
 @version 0.1.0.0
 
 
--- | Module chính của package <tt>space-war</tt>.
+-- | Cac kieu du lieu cot loi cua game (chi la du lieu, chua co luat choi).
 --   
---   Các module game (<tt>Game.*</tt>) sẽ được re-export tại đây ở các
---   phase sau.
+--   Luat choi nam o cac module khac (<tt>Game.World</tt>,
+--   <tt>Game.Action</tt>, ...).
+module Game.Types
+
+-- | Toa do tren map. <tt>posX</tt> tang sang phai, <tt>posY</tt> tang
+--   xuong duoi.
+data Pos
+Pos :: Int -> Int -> Pos
+[posX] :: Pos -> Int
+[posY] :: Pos -> Int
+
+-- | Bon huong di chuyen. <a>DirUp</a> lam giam <tt>posY</tt> di 1.
+data Direction
+DirUp :: Direction
+DirDown :: Direction
+DirLeft :: Direction
+DirRight :: Direction
+
+-- | Tam huong (8 phia) dung cho ket qua scan. <a>Here</a> nghia la cung o.
+data Compass
+North :: Compass
+NorthEast :: Compass
+East :: Compass
+SouthEast :: Compass
+South :: Compass
+SouthWest :: Compass
+West :: Compass
+NorthWest :: Compass
+Here :: Compass
+
+-- | Nam loai tai nguyen.
+data ResourceType
+Iron :: ResourceType
+Crystal :: ResourceType
+EnergyCore :: ResourceType
+RareOre :: ResourceType
+ExoticMatter :: ResourceType
+
+-- | So luong tung loai tai nguyen (loai khong co trong bang nghia la 0).
+type Resources = Map ResourceType Int
+
+-- | Ba loai hanh tinh cua ban MVP.
+data PlanetType
+Mining :: PlanetType
+Energy :: PlanetType
+Rare :: PlanetType
+
+-- | Ma so cua hanh tinh (1, 2, 3, ...).
+type PlanetId = Int
+
+-- | Mot hanh tinh. <a>planetStock</a> la ton kho con lai, dung chung cho
+--   hai nguoi.
+data Planet
+Planet :: PlanetId -> Pos -> PlanetType -> Resources -> Planet
+[planetId] :: Planet -> PlanetId
+[planetPos] :: Planet -> Pos
+[planetType] :: Planet -> PlanetType
+[planetStock] :: Planet -> Resources
+
+-- | Thong tin ve mot hanh tinh ma nguoi choi da kham pha (vi tri va loai).
+data KnownPlanet
+KnownPlanet :: Pos -> PlanetType -> KnownPlanet
+[knownPos] :: KnownPlanet -> Pos
+[knownType] :: KnownPlanet -> PlanetType
+
+-- | Hai nguoi choi.
+data PlayerId
+Player1 :: PlayerId
+Player2 :: PlayerId
+
+-- | Trang thai cua mot nguoi choi.
+data Player
+Player :: Pos -> Int -> Int -> Resources -> Resources -> Map PlanetId KnownPlanet -> Player
+[playerPos] :: Player -> Pos
+[playerBattery] :: Player -> Int
+[playerAP] :: Player -> Int
+
+-- | kho tren tau
+[playerCargo] :: Player -> Resources
+
+-- | kho rieng tai Earth
+[playerStorage] :: Player -> Resources
+
+-- | hanh tinh da kham pha
+[playerKnown] :: Player -> Map PlanetId KnownPlanet
+
+-- | Ly do thang.
+data WinReason
+
+-- | du diem o kho Earth
+ReachedTarget :: WinReason
+
+-- | doi thu het battery
+OpponentOutOfBattery :: WinReason
+
+-- | doi thu mat ket noi
+OpponentDisconnected :: WinReason
+
+-- | het so vong, diem Earth cao hon
+HigherScoreAtLimit :: WinReason
+
+-- | Ket qua cua mot tran.
+data GameResult
+Winner :: PlayerId -> WinReason -> GameResult
+Draw :: GameResult
+
+-- | Giai doan cua tran dau.
+data GamePhase
+WaitingForPlayers :: GamePhase
+InProgress :: GamePhase
+Finished :: GameResult -> GamePhase
+
+-- | Toan bo trang thai cua mot tran. Server giu ban day du nay.
+data GameState
+GameState :: Int -> Int -> Pos -> Map PlanetId Planet -> Player -> Player -> PlayerId -> Int -> GamePhase -> StdGen -> GameState
+[gsMapWidth] :: GameState -> Int
+[gsMapHeight] :: GameState -> Int
+[gsEarth] :: GameState -> Pos
+[gsPlanets] :: GameState -> Map PlanetId Planet
+[gsPlayer1] :: GameState -> Player
+[gsPlayer2] :: GameState -> Player
+
+-- | nguoi dang co luot
+[gsCurrent] :: GameState -> PlayerId
+
+-- | vong hien tai (1 vong = luot P1 roi luot P2)
+[gsRound] :: GameState -> Int
+[gsPhase] :: GameState -> GamePhase
+
+-- | bo sinh so ngau nhien
+[gsRng] :: GameState -> StdGen
+data Action
+Move :: Direction -> Action
+Observe :: Action
+ScanArea :: Action
+ScanNearest :: Action
+ScanOpponent :: Action
+Mine :: ResourceType -> Action
+Deposit :: Action
+
+-- | loai tai nguyen va so luong dung de nap
+Recharge :: ResourceType -> Int -> Action
+EndTurn :: Action
+
+-- | Ly do mot action bi tu choi (khi bi tu choi thi khong mat gi).
+data GameError
+
+-- | tran chua bat dau hoac da ket thuc
+GameNotInProgress :: GameError
+NotYourTurn :: GameError
+NotEnoughAP :: GameError
+NotEnoughBattery :: GameError
+
+-- | di ra ngoai map
+OutOfBounds :: GameError
+
+-- | Mine khi khong dung tren hanh tinh
+NotOnPlanet :: GameError
+
+-- | hanh tinh khong con loai tai nguyen do
+PlanetHasNoSuchResource :: GameError
+CargoFull :: GameError
+
+-- | Deposit khi cargo rong
+CargoEmpty :: GameError
+
+-- | Recharge khi khong dung o Earth
+NotAtEarth :: GameError
+
+-- | Deposit khi qua xa Earth
+OutOfDepositRange :: GameError
+
+-- | Recharge khi battery da day
+BatteryFull :: GameError
+
+-- | kho Earth khong du tai nguyen de nap
+NotEnoughResources :: GameError
+
+-- | so luong khong hop le (&lt;= 0)
+InvalidAmount :: GameError
+
+-- | Thong bao gui cho doi thu khi ban lam mot action.
+data Notice
+YouWereScanned :: Notice
+
+-- | Ket qua rieng cua tung action danh cho nguoi hanh dong.
+data ActionResult
+Moved :: Pos -> ActionResult
+PlanetsFound :: [KnownPlanet] -> ActionResult
+
+-- | huong va khoang cach, hoac khong con hanh tinh
+NearestPlanet :: Maybe (Compass, Int) -> ActionResult
+OpponentDirection :: Compass -> ActionResult
+Mined :: ResourceType -> Int -> ActionResult
+Deposited :: Resources -> ActionResult
+
+-- | so battery thuc su nhan duoc
+Recharged :: Int -> ActionResult
+TurnEnded :: ActionResult
+
+-- | Bao cao cua mot action thanh cong.
+data ActionReport
+ActionReport :: ActionResult -> Maybe Notice -> ActionReport
+[reportResult] :: ActionReport -> ActionResult
+
+-- | thong bao cho doi thu, neu co
+[reportNotice] :: ActionReport -> Maybe Notice
+instance GHC.Internal.Enum.Bounded Game.Types.Compass
+instance GHC.Internal.Enum.Bounded Game.Types.Direction
+instance GHC.Internal.Enum.Bounded Game.Types.PlanetType
+instance GHC.Internal.Enum.Bounded Game.Types.PlayerId
+instance GHC.Internal.Enum.Bounded Game.Types.ResourceType
+instance GHC.Internal.Enum.Enum Game.Types.Compass
+instance GHC.Internal.Enum.Enum Game.Types.Direction
+instance GHC.Internal.Enum.Enum Game.Types.PlanetType
+instance GHC.Internal.Enum.Enum Game.Types.PlayerId
+instance GHC.Internal.Enum.Enum Game.Types.ResourceType
+instance GHC.Classes.Eq Game.Types.Action
+instance GHC.Classes.Eq Game.Types.ActionReport
+instance GHC.Classes.Eq Game.Types.ActionResult
+instance GHC.Classes.Eq Game.Types.Compass
+instance GHC.Classes.Eq Game.Types.Direction
+instance GHC.Classes.Eq Game.Types.GameError
+instance GHC.Classes.Eq Game.Types.GamePhase
+instance GHC.Classes.Eq Game.Types.GameResult
+instance GHC.Classes.Eq Game.Types.GameState
+instance GHC.Classes.Eq Game.Types.KnownPlanet
+instance GHC.Classes.Eq Game.Types.Notice
+instance GHC.Classes.Eq Game.Types.Planet
+instance GHC.Classes.Eq Game.Types.PlanetType
+instance GHC.Classes.Eq Game.Types.Player
+instance GHC.Classes.Eq Game.Types.PlayerId
+instance GHC.Classes.Eq Game.Types.Pos
+instance GHC.Classes.Eq Game.Types.ResourceType
+instance GHC.Classes.Eq Game.Types.WinReason
+instance GHC.Classes.Ord Game.Types.Compass
+instance GHC.Classes.Ord Game.Types.Direction
+instance GHC.Classes.Ord Game.Types.PlanetType
+instance GHC.Classes.Ord Game.Types.PlayerId
+instance GHC.Classes.Ord Game.Types.Pos
+instance GHC.Classes.Ord Game.Types.ResourceType
+instance GHC.Internal.Show.Show Game.Types.Action
+instance GHC.Internal.Show.Show Game.Types.ActionReport
+instance GHC.Internal.Show.Show Game.Types.ActionResult
+instance GHC.Internal.Show.Show Game.Types.Compass
+instance GHC.Internal.Show.Show Game.Types.Direction
+instance GHC.Internal.Show.Show Game.Types.GameError
+instance GHC.Internal.Show.Show Game.Types.GamePhase
+instance GHC.Internal.Show.Show Game.Types.GameResult
+instance GHC.Internal.Show.Show Game.Types.GameState
+instance GHC.Internal.Show.Show Game.Types.KnownPlanet
+instance GHC.Internal.Show.Show Game.Types.Notice
+instance GHC.Internal.Show.Show Game.Types.Planet
+instance GHC.Internal.Show.Show Game.Types.PlanetType
+instance GHC.Internal.Show.Show Game.Types.Player
+instance GHC.Internal.Show.Show Game.Types.PlayerId
+instance GHC.Internal.Show.Show Game.Types.Pos
+instance GHC.Internal.Show.Show Game.Types.ResourceType
+instance GHC.Internal.Show.Show Game.Types.WinReason
+
+
+-- | Moi thong so cua game nam o day de chinh sua o mot cho.
+--   
+--   Cac con so trong <a>defaultConfig</a> la gia tri tam, se can bang lai
+--   sau.
+module Game.Config
+
+-- | Chi phi cua mot action.
+data Cost
+Cost :: Int -> Int -> Cost
+[costAP] :: Cost -> Int
+[costBattery] :: Cost -> Int
+
+-- | Cac thong so cua game.
+data Config
+Config :: Int -> Int -> Map PlanetType Int -> Map PlanetType Resources -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> Map ResourceType Int -> Int -> Int -> Cost -> Cost -> Cost -> Cost -> Cost -> Cost -> Cost -> Cost -> Cost -> Config
+[cfgMapWidth] :: Config -> Int
+[cfgMapHeight] :: Config -> Int
+
+-- | so hanh tinh moi loai
+[cfgPlanetCounts] :: Config -> Map PlanetType Int
+
+-- | ton kho ban dau moi loai
+[cfgPlanetStock] :: Config -> Map PlanetType Resources
+
+-- | hanh tinh cach Earth toi thieu
+[cfgPlanetMinEarthDist] :: Config -> Int
+[cfgSpawnMinDist] :: Config -> Int
+[cfgSpawnMaxDist] :: Config -> Int
+[cfgBatteryMax] :: Config -> Int
+[cfgApMax] :: Config -> Int
+[cfgCargoCapacity] :: Config -> Int
+[cfgObserveRadius] :: Config -> Int
+[cfgScanRadius] :: Config -> Int
+
+-- | toi da moi lan Mine
+[cfgMineAmount] :: Config -> Int
+
+-- | tam gui hang ve Earth
+[cfgDepositRange] :: Config -> Int
+
+-- | battery nhan duoc cho 1 diem tai nguyen
+[cfgRechargeRate] :: Config -> Int
+
+-- | diem moi don vi
+[cfgResourceValue] :: Config -> Map ResourceType Int
+[cfgScoreTarget] :: Config -> Int
+[cfgMaxRounds] :: Config -> Int
+[cfgCostMove] :: Config -> Cost
+[cfgCostObserve] :: Config -> Cost
+[cfgCostScanArea] :: Config -> Cost
+[cfgCostScanNearest] :: Config -> Cost
+[cfgCostScanOpponent] :: Config -> Cost
+[cfgCostMine] :: Config -> Cost
+[cfgCostDepositAtEarth] :: Config -> Cost
+[cfgCostDepositRemote] :: Config -> Cost
+[cfgCostRecharge] :: Config -> Cost
+
+-- | Cau hinh mac dinh theo spec v1.0.
+defaultConfig :: Config
+
+-- | Vi tri Earth: giua map (rong chia 2, cao chia 2). Mac dinh la (50,
+--   50).
+earthPosition :: Config -> Pos
+instance GHC.Classes.Eq Game.Config.Config
+instance GHC.Classes.Eq Game.Config.Cost
+instance GHC.Internal.Show.Show Game.Config.Config
+instance GHC.Internal.Show.Show Game.Config.Cost
+
+
+-- | Ham tien ich de doc va cap nhat <a>GameState</a> va tai nguyen.
+module Game.State
+
+-- | Lay nguoi choi theo <a>PlayerId</a>.
+getPlayer :: PlayerId -> GameState -> Player
+
+-- | Thay nguoi choi bang mot ban moi.
+setPlayer :: PlayerId -> Player -> GameState -> GameState
+
+-- | Ap dung mot ham len nguoi choi.
+modifyPlayer :: PlayerId -> (Player -> Player) -> GameState -> GameState
+
+-- | Nguoi choi con lai.
+otherPlayer :: PlayerId -> PlayerId
+
+-- | Hanh tinh dang nam tai mot o (neu co).
+planetAt :: Pos -> GameState -> Maybe Planet
+
+-- | Cong hai kho tai nguyen.
+addResources :: Resources -> Resources -> Resources
+
+-- | Tru tai nguyen. Tra ve <a>Nothing</a> neu kho khong du bat ky loai
+--   nao. Ket qua khong chua loai co so luong 0.
+removeResources :: Resources -> Resources -> Maybe Resources
+
+-- | Tong so don vi tai nguyen.
+totalUnits :: Resources -> Int
+
+-- | Tong diem cua mot kho tai nguyen.
+resourcesValue :: Config -> Resources -> Int
+
+-- | Diem cua nguoi choi (chi tinh kho Earth, khong tinh cargo).
+playerScore :: Config -> Player -> Int
+
+
+-- | Chieu <a>GameState</a> thanh phan ma mot nguoi choi duoc phep biet.
+--   
+--   Server giu <a>GameState</a> day du, nhung chi gui <a>PlayerView</a>
+--   cho tung nguoi. Trong luc choi, <a>PlayerView</a> khong chua vi tri,
+--   kho hay diem cua doi thu, khong chua hanh tinh chua kham pha. Khi tran
+--   ket thuc, <a>summaryOf</a> tao ban tong ket lo diem va vi tri cuoi cua
+--   ca hai ben.
+module Game.View
+
+-- | Nhung gi mot nguoi choi duoc thay.
+data PlayerView
+PlayerView :: PlayerId -> Int -> Int -> Pos -> Int -> Int -> PlayerId -> GamePhase -> Pos -> Int -> Int -> Int -> Int -> Resources -> Int -> Resources -> Int -> Int -> Map PlanetId KnownPlanet -> Maybe Planet -> PlayerView
+[viewSelf] :: PlayerView -> PlayerId
+[viewMapWidth] :: PlayerView -> Int
+[viewMapHeight] :: PlayerView -> Int
+[viewEarth] :: PlayerView -> Pos
+[viewRound] :: PlayerView -> Int
+[viewMaxRounds] :: PlayerView -> Int
+
+-- | ai dang co luot
+[viewCurrent] :: PlayerView -> PlayerId
+[viewPhase] :: PlayerView -> GamePhase
+[viewPos] :: PlayerView -> Pos
+[viewBattery] :: PlayerView -> Int
+[viewBatteryMax] :: PlayerView -> Int
+[viewAP] :: PlayerView -> Int
+[viewApMax] :: PlayerView -> Int
+[viewCargo] :: PlayerView -> Resources
+[viewCargoCapacity] :: PlayerView -> Int
+[viewStorage] :: PlayerView -> Resources
+
+-- | chi diem cua chinh nguoi choi
+[viewScore] :: PlayerView -> Int
+[viewScoreTarget] :: PlayerView -> Int
+[viewKnown] :: PlayerView -> Map PlanetId KnownPlanet
+
+-- | hanh tinh dang dung tren (kem ton kho)
+[viewHere] :: PlayerView -> Maybe Planet
+
+-- | Thong tin cuoi cung cua mot nguoi choi, lo ra khi tran ket thuc.
+data PlayerFinal
+PlayerFinal :: Pos -> Int -> PlayerFinal
+[finalPos] :: PlayerFinal -> Pos
+[finalScore] :: PlayerFinal -> Int
+
+-- | Ban tong ket cua hai nguoi choi khi tran ket thuc.
+data GameSummary
+GameSummary :: PlayerFinal -> PlayerFinal -> GameSummary
+[summaryPlayer1] :: GameSummary -> PlayerFinal
+[summaryPlayer2] :: GameSummary -> PlayerFinal
+
+-- | Phan trang thai ma nguoi choi nay duoc thay.
+viewFor :: Config -> PlayerId -> GameState -> PlayerView
+
+-- | Ban tong ket: vi tri va diem cuoi cua ca hai nguoi choi.
+summaryOf :: Config -> GameState -> GameSummary
+instance GHC.Classes.Eq Game.View.GameSummary
+instance GHC.Classes.Eq Game.View.PlayerFinal
+instance GHC.Classes.Eq Game.View.PlayerView
+instance GHC.Internal.Show.Show Game.View.GameSummary
+instance GHC.Internal.Show.Show Game.View.PlayerFinal
+instance GHC.Internal.Show.Show Game.View.PlayerView
+
+
+-- | Cac ham thuan ve toa do: khoang cach, bien map, huong, di chuyen.
+module Game.World
+
+-- | Khoang cach Manhattan giua hai o (bang so buoc phai di).
+--   
+--   <pre>
+--   &gt;&gt;&gt; distance (Pos 0 0) (Pos 3 4)
+--   7
+--   </pre>
+distance :: Pos -> Pos -> Int
+
+-- | O co nam trong map khong (toa do tu 0 den kich thuoc tru 1).
+inBounds :: Config -> Pos -> Bool
+
+-- | Moi o cua map.
+allCells :: Config -> [Pos]
+
+-- | Di mot buoc theo huong. Ham nay khong kiem tra bien map.
+movePos :: Direction -> Pos -> Pos
+
+-- | Huong (8 phia) tu o thu nhat toi o thu hai.
+--   
+--   Neu doc lech &gt;= 2 lan ngang lech thi chi tinh Bac/Nam (va nguoc lai
+--   cho Dong/Tay), con lai la huong cheo. Cung o thi tra ve <a>Here</a>.
+compassFrom :: Pos -> Pos -> Compass
+
+-- | O thu hai co nam trong ban kinh (Manhattan) quanh o thu nhat khong.
+withinRadius :: Int -> Pos -> Pos -> Bool
+
+-- | Cac o trong map cach o trung tam tu <tt>lo</tt> den <tt>hi</tt> buoc
+--   (Manhattan).
+ringCells :: Config -> Pos -> Int -> Int -> [Pos]
+
+
+-- | Sinh map, hanh tinh va vi tri xuat phat tu mot seed ngau nhien.
+module Game.Generate
+
+-- | Tao mot tran moi (da du hai nguoi, Player1 di truoc, vong 1). Cung cau
+--   hinh va cung seed luon ra cung ket qua.
+newGame :: Config -> Int -> GameState
+
+-- | Sinh cac hanh tinh: dung so luong tung loai, o khac nhau, khong nam
+--   gan Earth hon <a>cfgPlanetMinEarthDist</a>.
+generatePlanets :: Config -> StdGen -> (Map PlanetId Planet, StdGen)
+
+-- | Boc ngau nhien <tt>k</tt> phan tu khac nhau (khong lap) tu danh sach.
+--   Neu <tt>k</tt> bang do dai danh sach thi ket qua la mot hoan vi ngau
+--   nhien.
+pickDistinct :: Int -> [a] -> StdGen -> ([a], StdGen)
+
+
+-- | Luat cua tung action: kiem tra dieu kien, tru chi phi, cap nhat trang
+--   thai.
+--   
+--   Module nay khong lo chuyen luot hay kiem tra thang/thua (viec cua
+--   <a>Game.Turn</a>).
+module Game.Action
+
+-- | Thuc hien mot action cho nguoi choi. Khong kiem tra luot (viec cua
+--   <a>Game.Turn</a>). Tra ve loi neu khong hop le, hoac trang thai moi va
+--   bao cao.
+performAction :: Config -> PlayerId -> Action -> GameState -> Either GameError (GameState, ActionReport)
+
+
+-- | Luot choi: ap dung action cua mot nguoi, doi luot, kiem tra
+--   thang/thua.
+module Game.Turn
+
+-- | Ap dung mot action cua nguoi choi. Kiem tra tran dang choi va dung
+--   luot, roi thuc hien action, roi xu ly ket qua (thang, thua, het AP thi
+--   doi luot).
+applyAction :: Config -> PlayerId -> Action -> GameState -> Either GameError (GameState, ActionReport)
+
+-- | Ket thuc luot hien tai. Sau luot cua Player2 thi sang vong moi, neu da
+--   het so vong thi tinh ket qua theo diem kho Earth. Nguoi den luot duoc
+--   nap day AP.
+endTurn :: Config -> GameState -> GameState
+
+-- | Nguoi choi mat ket noi thi doi thu thang. Tran da ket thuc thi giu
+--   nguyen.
+forfeit :: PlayerId -> GameState -> GameState
+
+
+-- | Module chinh cua package <tt>space-war</tt>.
+--   
+--   Re-export cac module game (<tt>Game.*</tt>) de cac noi khac chi can
+--   <tt>import Lib</tt>.
 module Lib
 
--- | In một dòng chào mẫu (giữ lại từ template của stack).
+-- | In mot dong chao mau (giu lai tu template cua stack).
 someFunc :: IO ()
 
--- | Tên của project.
+-- | Ten cua project.
 --   
---   Ví dụ:
+--   Vi du:
 --   
 --   <pre>
 --   &gt;&gt;&gt; projectName
 --   "space-war"
 --   </pre>
 projectName :: String
+
+
+-- | Cac tin nhan giua client (trinh duyet) va server.
+module Protocol.Message
+
+-- | Tin nhan nguoi choi gui len server.
+data ClientMsg
+
+-- | xin vao tran
+Join :: ClientMsg
+
+-- | lam mot action
+DoAction :: Action -> ClientMsg
+
+-- | Tin nhan server gui xuong nguoi choi.
+data ServerMsg
+
+-- | chao mung, cho biet minh la ai
+Welcome :: PlayerId -> ServerMsg
+
+-- | dang cho nguoi choi thu hai
+WaitingForOpponent :: ServerMsg
+
+-- | tran bat dau
+GameStarted :: PlayerView -> ServerMsg
+
+-- | action cua minh duoc chap nhan
+ActionAccepted :: ActionReport -> PlayerView -> ServerMsg
+
+-- | action cua minh bi tu choi
+ActionRejected :: GameError -> ServerMsg
+
+-- | doi thu vua lam xong, kem thong bao neu co
+OpponentActed :: Maybe Notice -> PlayerView -> ServerMsg
+
+-- | tran ket thuc
+GameOver :: GameResult -> GameSummary -> ServerMsg
+
+-- | tin nhan gui len bi hong hoac khong hieu
+ProtocolError :: String -> ServerMsg
+instance GHC.Classes.Eq Protocol.Message.ClientMsg
+instance GHC.Classes.Eq Protocol.Message.ServerMsg
+instance GHC.Internal.Show.Show Protocol.Message.ClientMsg
+instance GHC.Internal.Show.Show Protocol.Message.ServerMsg
+
+
+-- | Chuyen cac kieu cua game va cac tin nhan sang JSON (va nguoc lai),
+--   viet tay.
+--   
+--   Cac instance duoc dat o day thay vi trong <a>Game.Types</a> de loi
+--   game khong phu thuoc vao JSON (vi vay phai tat canh bao orphan o dau
+--   file).
+module Protocol.Json
+
+-- | Ma hoa mot tin nhan server thanh chuoi JSON de gui di.
+encodeServerMsg :: ServerMsg -> ByteString
+
+-- | Giai ma mot tin nhan tu client. Tra ve <a>Left</a> kem ly do neu tin
+--   hong.
+decodeClientMsg :: ByteString -> Either String ClientMsg
+
+-- | Doi mot kho tai nguyen thanh doi tuong JSON, vi du <tt>{"iron":
+--   5}</tt>.
+resourcesToJSON :: Resources -> Value
+instance Data.Aeson.Types.FromJSON.FromJSON Game.Types.Action
+instance Data.Aeson.Types.FromJSON.FromJSON Protocol.Message.ClientMsg
+instance Data.Aeson.Types.FromJSON.FromJSON Game.Types.Direction
+instance Data.Aeson.Types.FromJSON.FromJSON Game.Types.ResourceType
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.Action
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.ActionReport
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.ActionResult
+instance Data.Aeson.Types.ToJSON.ToJSON Protocol.Message.ClientMsg
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.Compass
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.Direction
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.GameError
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.GamePhase
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.GameResult
+instance Data.Aeson.Types.ToJSON.ToJSON Game.View.GameSummary
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.KnownPlanet
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.Notice
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.Planet
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.PlanetType
+instance Data.Aeson.Types.ToJSON.ToJSON Game.View.PlayerFinal
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.PlayerId
+instance Data.Aeson.Types.ToJSON.ToJSON Game.View.PlayerView
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.Pos
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.ResourceType
+instance Data.Aeson.Types.ToJSON.ToJSON Protocol.Message.ServerMsg
+instance Data.Aeson.Types.ToJSON.ToJSON Game.Types.WinReason

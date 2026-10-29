@@ -1,0 +1,186 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | Ham tien ich de doc va cap nhat 'GameState' va tai nguyen.</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.State.html"><span class="hs-identifier">Game.State</span></a></span><span>
+</span><span id="line-3"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Game.State.html#getPlayer"><span class="hs-identifier">getPlayer</span></a></span><span>
+</span><span id="line-4"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.State.html#setPlayer"><span class="hs-identifier">setPlayer</span></a></span><span>
+</span><span id="line-5"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.State.html#modifyPlayer"><span class="hs-identifier">modifyPlayer</span></a></span><span>
+</span><span id="line-6"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.State.html#otherPlayer"><span class="hs-identifier">otherPlayer</span></a></span><span>
+</span><span id="line-7"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.State.html#planetAt"><span class="hs-identifier">planetAt</span></a></span><span>
+</span><span id="line-8"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.State.html#addResources"><span class="hs-identifier">addResources</span></a></span><span>
+</span><span id="line-9"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.State.html#removeResources"><span class="hs-identifier">removeResources</span></a></span><span>
+</span><span id="line-10"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.State.html#totalUnits"><span class="hs-identifier">totalUnits</span></a></span><span>
+</span><span id="line-11"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.State.html#resourcesValue"><span class="hs-identifier">resourcesValue</span></a></span><span>
+</span><span id="line-12"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.State.html#playerScore"><span class="hs-identifier">playerScore</span></a></span><span>
+</span><span id="line-13"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">find</span></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Config.html"><span class="hs-identifier">Game.Config</span></a></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Types.html"><span class="hs-identifier">Game.Types</span></a></span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="annot"><span class="hs-comment">-- | Lay nguoi choi theo 'PlayerId'.</span></span><span>
+</span><span id="line-22"></span><span class="annot"><a href="Game.State.html#getPlayer"><span class="hs-identifier hs-type">getPlayer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span>
+</span><span id="line-23"></span><span id="getPlayer"><span class="annot"><span class="annottext">getPlayer :: PlayerId -&gt; GameState -&gt; Player
+</span><a href="Game.State.html#getPlayer"><span class="hs-identifier hs-var hs-var">getPlayer</span></a></span></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player1"><span class="hs-identifier hs-var">Player1</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameState -&gt; Player
+</span><a href="Game.Types.html#gsPlayer1"><span class="hs-identifier hs-var">gsPlayer1</span></a></span><span>
+</span><span id="line-24"></span><span class="annot"><a href="Game.State.html#getPlayer"><span class="hs-identifier hs-var">getPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player2"><span class="hs-identifier hs-var">Player2</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameState -&gt; Player
+</span><a href="Game.Types.html#gsPlayer2"><span class="hs-identifier hs-var">gsPlayer2</span></a></span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="annot"><span class="hs-comment">-- | Thay nguoi choi bang mot ban moi.</span></span><span>
+</span><span id="line-27"></span><span class="annot"><a href="Game.State.html#setPlayer"><span class="hs-identifier hs-type">setPlayer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span>
+</span><span id="line-28"></span><span id="setPlayer"><span class="annot"><span class="annottext">setPlayer :: PlayerId -&gt; Player -&gt; GameState -&gt; GameState
+</span><a href="Game.State.html#setPlayer"><span class="hs-identifier hs-var hs-var">setPlayer</span></a></span></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player1"><span class="hs-identifier hs-var">Player1</span></a></span><span> </span><span id="local-6989586621679110573"><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679110573"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span id="local-6989586621679110574"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110574"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110574"><span class="hs-identifier hs-var">gs</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Game.Types.html#gsPlayer1"><span class="hs-identifier hs-var">gsPlayer1</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679110573"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-29"></span><span class="annot"><a href="Game.State.html#setPlayer"><span class="hs-identifier hs-var">setPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player2"><span class="hs-identifier hs-var">Player2</span></a></span><span> </span><span id="local-6989586621679110575"><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679110575"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span id="local-6989586621679110576"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110576"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110576"><span class="hs-identifier hs-var">gs</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Game.Types.html#gsPlayer2"><span class="hs-identifier hs-var">gsPlayer2</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679110575"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="annot"><span class="hs-comment">-- | Ap dung mot ham len nguoi choi.</span></span><span>
+</span><span id="line-32"></span><span class="annot"><a href="Game.State.html#modifyPlayer"><span class="hs-identifier hs-type">modifyPlayer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span>
+</span><span id="line-33"></span><span id="modifyPlayer"><span class="annot"><span class="annottext">modifyPlayer :: PlayerId -&gt; (Player -&gt; Player) -&gt; GameState -&gt; GameState
+</span><a href="Game.State.html#modifyPlayer"><span class="hs-identifier hs-var hs-var">modifyPlayer</span></a></span></span><span> </span><span id="local-6989586621679110577"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679110577"><span class="hs-identifier hs-var">pid</span></a></span></span><span> </span><span id="local-6989586621679110578"><span class="annot"><span class="annottext">Player -&gt; Player
+</span><a href="#local-6989586621679110578"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679110579"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110579"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; Player -&gt; GameState -&gt; GameState
+</span><a href="Game.State.html#setPlayer"><span class="hs-identifier hs-var">setPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679110577"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Player
+</span><a href="#local-6989586621679110578"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlayerId -&gt; GameState -&gt; Player
+</span><a href="Game.State.html#getPlayer"><span class="hs-identifier hs-var">getPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679110577"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110579"><span class="hs-identifier hs-var">gs</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110579"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="annot"><span class="hs-comment">-- | Nguoi choi con lai.</span></span><span>
+</span><span id="line-36"></span><span class="annot"><a href="Game.State.html#otherPlayer"><span class="hs-identifier hs-type">otherPlayer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span>
+</span><span id="line-37"></span><span id="otherPlayer"><span class="annot"><span class="annottext">otherPlayer :: PlayerId -&gt; PlayerId
+</span><a href="Game.State.html#otherPlayer"><span class="hs-identifier hs-var hs-var">otherPlayer</span></a></span></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player1"><span class="hs-identifier hs-var">Player1</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player2"><span class="hs-identifier hs-var">Player2</span></a></span><span>
+</span><span id="line-38"></span><span class="annot"><a href="Game.State.html#otherPlayer"><span class="hs-identifier hs-var">otherPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player2"><span class="hs-identifier hs-var">Player2</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player1"><span class="hs-identifier hs-var">Player1</span></a></span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="annot"><span class="hs-comment">-- | Hanh tinh dang nam tai mot o (neu co).</span></span><span>
+</span><span id="line-41"></span><span class="annot"><a href="Game.State.html#planetAt"><span class="hs-identifier hs-type">planetAt</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Game.Types.html#Planet"><span class="hs-identifier hs-type">Planet</span></a></span><span>
+</span><span id="line-42"></span><span id="planetAt"><span class="annot"><span class="annottext">planetAt :: Pos -&gt; GameState -&gt; Maybe Planet
+</span><a href="Game.State.html#planetAt"><span class="hs-identifier hs-var hs-var">planetAt</span></a></span></span><span> </span><span id="local-6989586621679110580"><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679110580"><span class="hs-identifier hs-var">pos</span></a></span></span><span> </span><span id="local-6989586621679110581"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110581"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Planet -&gt; Bool) -&gt; [Planet] -&gt; Maybe Planet
+forall (t :: * -&gt; *) a. Foldable t =&gt; (a -&gt; Bool) -&gt; t a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">find</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Pos -&gt; Pos -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679110580"><span class="hs-identifier hs-var">pos</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Pos -&gt; Bool) -&gt; (Planet -&gt; Pos) -&gt; Planet -&gt; Bool
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Planet -&gt; Pos
+</span><a href="Game.Types.html#planetPos"><span class="hs-identifier hs-var">planetPos</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Map Int Planet -&gt; [Planet]
+forall k a. Map k a -&gt; [a]
+</span><span class="hs-identifier hs-var">Map.elems</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameState -&gt; Map Int Planet
+</span><a href="Game.Types.html#gsPlanets"><span class="hs-identifier hs-var">gsPlanets</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110581"><span class="hs-identifier hs-var">gs</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span class="annot"><span class="hs-comment">-- | Cong hai kho tai nguyen.</span></span><span>
+</span><span id="line-45"></span><span class="annot"><a href="Game.State.html#addResources"><span class="hs-identifier hs-type">addResources</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span>
+</span><span id="line-46"></span><span id="addResources"><span class="annot"><span class="annottext">addResources :: Resources -&gt; Resources -&gt; Resources
+</span><a href="Game.State.html#addResources"><span class="hs-identifier hs-var hs-var">addResources</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int -&gt; Int -&gt; Int) -&gt; Resources -&gt; Resources -&gt; Resources
+forall k a. Ord k =&gt; (a -&gt; a -&gt; a) -&gt; Map k a -&gt; Map k a -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.unionWith</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">(+)</span></span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- | Tru tai nguyen. Tra ve 'Nothing' neu kho khong du bat ky loai nao.</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- Ket qua khong chua loai co so luong 0.</span><span>
+</span><span id="line-50"></span><span class="annot"><a href="Game.State.html#removeResources"><span class="hs-identifier hs-type">removeResources</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span>
+</span><span id="line-51"></span><span id="removeResources"><span class="annot"><span class="annottext">removeResources :: Resources -&gt; Resources -&gt; Maybe Resources
+</span><a href="Game.State.html#removeResources"><span class="hs-identifier hs-var hs-var">removeResources</span></a></span></span><span> </span><span id="local-6989586621679110588"><span class="annot"><span class="annottext">Resources
+</span><a href="#local-6989586621679110588"><span class="hs-identifier hs-var">have</span></a></span></span><span> </span><span id="local-6989586621679110589"><span class="annot"><span class="annottext">Resources
+</span><a href="#local-6989586621679110589"><span class="hs-identifier hs-var">cost</span></a></span></span><span>
+</span><span id="line-52"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">(Int -&gt; Bool) -&gt; [Int] -&gt; Bool
+forall (t :: * -&gt; *) a. Foldable t =&gt; (a -&gt; Bool) -&gt; t a -&gt; Bool
+</span><span class="hs-identifier hs-var">any</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Resources -&gt; [Int]
+forall k a. Map k a -&gt; [a]
+</span><span class="hs-identifier hs-var">Map.elems</span></span><span> </span><span class="annot"><span class="annottext">Resources
+</span><a href="#local-6989586621679110592"><span class="hs-identifier hs-var">diff</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Resources
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-53"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>                  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Resources -&gt; Maybe Resources
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Int -&gt; Bool) -&gt; Resources -&gt; Resources
+forall a k. (a -&gt; Bool) -&gt; Map k a -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.filter</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Resources
+</span><a href="#local-6989586621679110592"><span class="hs-identifier hs-var">diff</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-54"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-55"></span><span>    </span><span id="local-6989586621679110592"><span class="annot"><span class="annottext">diff :: Resources
+</span><a href="#local-6989586621679110592"><span class="hs-identifier hs-var hs-var">diff</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int -&gt; Int -&gt; Int) -&gt; Resources -&gt; Resources -&gt; Resources
+forall k a. Ord k =&gt; (a -&gt; a -&gt; a) -&gt; Map k a -&gt; Map k a -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.unionWith</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">(+)</span></span><span> </span><span class="annot"><span class="annottext">Resources
+</span><a href="#local-6989586621679110588"><span class="hs-identifier hs-var">have</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Int -&gt; Int) -&gt; Resources -&gt; Resources
+forall a b k. (a -&gt; b) -&gt; Map k a -&gt; Map k b
+</span><span class="hs-identifier hs-var">Map.map</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">negate</span></span><span> </span><span class="annot"><span class="annottext">Resources
+</span><a href="#local-6989586621679110589"><span class="hs-identifier hs-var">cost</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span class="annot"><span class="hs-comment">-- | Tong so don vi tai nguyen.</span></span><span>
+</span><span id="line-58"></span><span class="annot"><a href="Game.State.html#totalUnits"><span class="hs-identifier hs-type">totalUnits</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-59"></span><span id="totalUnits"><span class="annot"><span class="annottext">totalUnits :: Resources -&gt; Int
+</span><a href="Game.State.html#totalUnits"><span class="hs-identifier hs-var hs-var">totalUnits</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Int] -&gt; Int
+forall a. Num a =&gt; [a] -&gt; a
+forall (t :: * -&gt; *) a. (Foldable t, Num a) =&gt; t a -&gt; a
+</span><span class="hs-identifier hs-var">sum</span></span><span> </span><span class="annot"><span class="annottext">([Int] -&gt; Int) -&gt; (Resources -&gt; [Int]) -&gt; Resources -&gt; Int
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Resources -&gt; [Int]
+forall k a. Map k a -&gt; [a]
+</span><span class="hs-identifier hs-var">Map.elems</span></span><span>
+</span><span id="line-60"></span><span>
+</span><span id="line-61"></span><span class="annot"><span class="hs-comment">-- | Tong diem cua mot kho tai nguyen.</span></span><span>
+</span><span id="line-62"></span><span class="annot"><a href="Game.State.html#resourcesValue"><span class="hs-identifier hs-type">resourcesValue</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-63"></span><span id="resourcesValue"><span class="annot"><span class="annottext">resourcesValue :: Config -&gt; Resources -&gt; Int
+</span><a href="Game.State.html#resourcesValue"><span class="hs-identifier hs-var hs-var">resourcesValue</span></a></span></span><span> </span><span id="local-6989586621679110600"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110600"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679110601"><span class="annot"><span class="annottext">Resources
+</span><a href="#local-6989586621679110601"><span class="hs-identifier hs-var">rs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Int] -&gt; Int
+forall a. Num a =&gt; [a] -&gt; a
+forall (t :: * -&gt; *) a. (Foldable t, Num a) =&gt; t a -&gt; a
+</span><span class="hs-identifier hs-var">sum</span></span><span>
+</span><span id="line-64"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110602"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; ResourceType -&gt; Resources -&gt; Int
+forall k a. Ord k =&gt; a -&gt; k -&gt; Map k a -&gt; a
+</span><span class="hs-identifier hs-var">Map.findWithDefault</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679110605"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Resources
+</span><a href="Game.Config.html#cfgResourceValue"><span class="hs-identifier hs-var">cfgResourceValue</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110600"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110605"><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679110605"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110602"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110602"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Resources -&gt; [(ResourceType, Int)]
+forall k a. Map k a -&gt; [(k, a)]
+</span><span class="hs-identifier hs-var">Map.toList</span></span><span> </span><span class="annot"><span class="annottext">Resources
+</span><a href="#local-6989586621679110601"><span class="hs-identifier hs-var">rs</span></a></span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span class="annot"><span class="hs-comment">-- | Diem cua nguoi choi (chi tinh kho Earth, khong tinh cargo).</span></span><span>
+</span><span id="line-67"></span><span class="annot"><a href="Game.State.html#playerScore"><span class="hs-identifier hs-type">playerScore</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-68"></span><span id="playerScore"><span class="annot"><span class="annottext">playerScore :: Config -&gt; Player -&gt; Int
+</span><a href="Game.State.html#playerScore"><span class="hs-identifier hs-var hs-var">playerScore</span></a></span></span><span> </span><span id="local-6989586621679110608"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110608"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Resources -&gt; Int
+</span><a href="Game.State.html#resourcesValue"><span class="hs-identifier hs-var">resourcesValue</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110608"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">(Resources -&gt; Int) -&gt; (Player -&gt; Resources) -&gt; Player -&gt; Int
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Player -&gt; Resources
+</span><a href="Game.Types.html#playerStorage"><span class="hs-identifier hs-var">playerStorage</span></a></span></pre></body></html>

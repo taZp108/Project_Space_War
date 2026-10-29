@@ -9,6 +9,7 @@ module Lib
     , module Game.State
     , module Game.Action
     , module Game.Turn
+    , module Game.View
     , module Game.World
     , module Game.Generate
     ) where
@@ -19,6 +20,7 @@ import Game.Generate
 import Game.State
 import Game.Turn
 import Game.Types
+import Game.View
 import Game.World
 
 -- | In mot dong chao mau (giu lai tu template cua stack).

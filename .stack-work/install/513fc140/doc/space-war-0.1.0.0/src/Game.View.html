@@ -1,0 +1,269 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Chieu 'GameState' thanh phan ma mot nguoi choi duoc phep biet.</span><span>
+</span><span id="line-2"></span><span class="hs-comment">--</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Server giu 'GameState' day du, nhung chi gui 'PlayerView' cho tung nguoi.</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Trong luc choi, 'PlayerView' khong chua vi tri, kho hay diem cua doi thu,</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- khong chua hanh tinh chua kham pha. Khi tran ket thuc, 'summaryOf' tao</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- ban tong ket lo diem va vi tri cuoi cua ca hai ben.</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.View.html"><span class="hs-identifier">Game.View</span></a></span><span>
+</span><span id="line-8"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Game.View.html#PlayerView"><span class="hs-identifier">PlayerView</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.View.html#PlayerFinal"><span class="hs-identifier">PlayerFinal</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.View.html#GameSummary"><span class="hs-identifier">GameSummary</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.View.html#viewFor"><span class="hs-identifier">viewFor</span></a></span><span>
+</span><span id="line-12"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.View.html#summaryOf"><span class="hs-identifier">summaryOf</span></a></span><span>
+</span><span id="line-13"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Config.html"><span class="hs-identifier">Game.Config</span></a></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.State.html"><span class="hs-identifier">Game.State</span></a></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Types.html"><span class="hs-identifier">Game.Types</span></a></span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="annot"><span class="hs-comment">-- | Nhung gi mot nguoi choi duoc thay.</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">data</span><span> </span><span id="PlayerView"><span class="annot"><a href="Game.View.html#PlayerView"><span class="hs-identifier hs-var">PlayerView</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="PlayerView"><span class="annot"><a href="Game.View.html#PlayerView"><span class="hs-identifier hs-var">PlayerView</span></a></span></span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="viewSelf"><span class="annot"><span class="annottext">PlayerView -&gt; PlayerId
+</span><a href="Game.View.html#viewSelf"><span class="hs-identifier hs-var hs-var">viewSelf</span></a></span></span><span>          </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span>
+</span><span id="line-24"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewMapWidth"><span class="annot"><span class="annottext">PlayerView -&gt; Int
+</span><a href="Game.View.html#viewMapWidth"><span class="hs-identifier hs-var hs-var">viewMapWidth</span></a></span></span><span>      </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-25"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewMapHeight"><span class="annot"><span class="annottext">PlayerView -&gt; Int
+</span><a href="Game.View.html#viewMapHeight"><span class="hs-identifier hs-var hs-var">viewMapHeight</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-26"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewEarth"><span class="annot"><span class="annottext">PlayerView -&gt; Pos
+</span><a href="Game.View.html#viewEarth"><span class="hs-identifier hs-var hs-var">viewEarth</span></a></span></span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewRound"><span class="annot"><span class="annottext">PlayerView -&gt; Int
+</span><a href="Game.View.html#viewRound"><span class="hs-identifier hs-var hs-var">viewRound</span></a></span></span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewMaxRounds"><span class="annot"><span class="annottext">PlayerView -&gt; Int
+</span><a href="Game.View.html#viewMaxRounds"><span class="hs-identifier hs-var hs-var">viewMaxRounds</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-29"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewCurrent"><span class="annot"><span class="annottext">PlayerView -&gt; PlayerId
+</span><a href="Game.View.html#viewCurrent"><span class="hs-identifier hs-var hs-var">viewCurrent</span></a></span></span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span>      </span><span class="annot"><span class="hs-comment">-- ^ ai dang co luot</span></span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewPhase"><span class="annot"><span class="annottext">PlayerView -&gt; GamePhase
+</span><a href="Game.View.html#viewPhase"><span class="hs-identifier hs-var hs-var">viewPhase</span></a></span></span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#GamePhase"><span class="hs-identifier hs-type">GamePhase</span></a></span><span>
+</span><span id="line-31"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewPos"><span class="annot"><span class="annottext">PlayerView -&gt; Pos
+</span><a href="Game.View.html#viewPos"><span class="hs-identifier hs-var hs-var">viewPos</span></a></span></span><span>           </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span>
+</span><span id="line-32"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewBattery"><span class="annot"><span class="annottext">PlayerView -&gt; Int
+</span><a href="Game.View.html#viewBattery"><span class="hs-identifier hs-var hs-var">viewBattery</span></a></span></span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-33"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewBatteryMax"><span class="annot"><span class="annottext">PlayerView -&gt; Int
+</span><a href="Game.View.html#viewBatteryMax"><span class="hs-identifier hs-var hs-var">viewBatteryMax</span></a></span></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewAP"><span class="annot"><span class="annottext">PlayerView -&gt; Int
+</span><a href="Game.View.html#viewAP"><span class="hs-identifier hs-var hs-var">viewAP</span></a></span></span><span>            </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewApMax"><span class="annot"><span class="annottext">PlayerView -&gt; Int
+</span><a href="Game.View.html#viewApMax"><span class="hs-identifier hs-var hs-var">viewApMax</span></a></span></span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-36"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewCargo"><span class="annot"><span class="annottext">PlayerView -&gt; Resources
+</span><a href="Game.View.html#viewCargo"><span class="hs-identifier hs-var hs-var">viewCargo</span></a></span></span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span>
+</span><span id="line-37"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewCargoCapacity"><span class="annot"><span class="annottext">PlayerView -&gt; Int
+</span><a href="Game.View.html#viewCargoCapacity"><span class="hs-identifier hs-var hs-var">viewCargoCapacity</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewStorage"><span class="annot"><span class="annottext">PlayerView -&gt; Resources
+</span><a href="Game.View.html#viewStorage"><span class="hs-identifier hs-var hs-var">viewStorage</span></a></span></span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewScore"><span class="annot"><span class="annottext">PlayerView -&gt; Int
+</span><a href="Game.View.html#viewScore"><span class="hs-identifier hs-var hs-var">viewScore</span></a></span></span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>           </span><span class="annot"><span class="hs-comment">-- ^ chi diem cua chinh nguoi choi</span></span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewScoreTarget"><span class="annot"><span class="annottext">PlayerView -&gt; Int
+</span><a href="Game.View.html#viewScoreTarget"><span class="hs-identifier hs-var hs-var">viewScoreTarget</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewKnown"><span class="annot"><span class="annottext">PlayerView -&gt; Map Int KnownPlanet
+</span><a href="Game.View.html#viewKnown"><span class="hs-identifier hs-var hs-var">viewKnown</span></a></span></span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.Map</span></span><span> </span><span class="annot"><a href="Game.Types.html#PlanetId"><span class="hs-identifier hs-type">PlanetId</span></a></span><span> </span><span class="annot"><a href="Game.Types.html#KnownPlanet"><span class="hs-identifier hs-type">KnownPlanet</span></a></span><span>
+</span><span id="line-42"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="viewHere"><span class="annot"><span class="annottext">PlayerView -&gt; Maybe Planet
+</span><a href="Game.View.html#viewHere"><span class="hs-identifier hs-var hs-var">viewHere</span></a></span></span><span>          </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Game.Types.html#Planet"><span class="hs-identifier hs-type">Planet</span></a></span><span>  </span><span class="annot"><span class="hs-comment">-- ^ hanh tinh dang dung tren (kem ton kho)</span></span><span>
+</span><span id="line-43"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110659"><span id="local-6989586621679110692"><span id="local-6989586621679110696"><span class="annot"><span class="annottext">Int -&gt; PlayerView -&gt; ShowS
+[PlayerView] -&gt; ShowS
+PlayerView -&gt; String
+(Int -&gt; PlayerView -&gt; ShowS)
+-&gt; (PlayerView -&gt; String)
+-&gt; ([PlayerView] -&gt; ShowS)
+-&gt; Show PlayerView
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; PlayerView -&gt; ShowS
+showsPrec :: Int -&gt; PlayerView -&gt; ShowS
+$cshow :: PlayerView -&gt; String
+show :: PlayerView -&gt; String
+$cshowList :: [PlayerView] -&gt; ShowS
+showList :: [PlayerView] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110704"><span id="local-6989586621679110735"><span class="annot"><span class="annottext">PlayerView -&gt; PlayerView -&gt; Bool
+(PlayerView -&gt; PlayerView -&gt; Bool)
+-&gt; (PlayerView -&gt; PlayerView -&gt; Bool) -&gt; Eq PlayerView
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: PlayerView -&gt; PlayerView -&gt; Bool
+== :: PlayerView -&gt; PlayerView -&gt; Bool
+$c/= :: PlayerView -&gt; PlayerView -&gt; Bool
+/= :: PlayerView -&gt; PlayerView -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="annot"><span class="hs-comment">-- | Thong tin cuoi cung cua mot nguoi choi, lo ra khi tran ket thuc.</span></span><span>
+</span><span id="line-46"></span><span class="hs-keyword">data</span><span> </span><span id="PlayerFinal"><span class="annot"><a href="Game.View.html#PlayerFinal"><span class="hs-identifier hs-var">PlayerFinal</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="PlayerFinal"><span class="annot"><a href="Game.View.html#PlayerFinal"><span class="hs-identifier hs-var">PlayerFinal</span></a></span></span><span>
+</span><span id="line-47"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="finalPos"><span class="annot"><span class="annottext">PlayerFinal -&gt; Pos
+</span><a href="Game.View.html#finalPos"><span class="hs-identifier hs-var hs-var">finalPos</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span>
+</span><span id="line-48"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="finalScore"><span class="annot"><span class="annottext">PlayerFinal -&gt; Int
+</span><a href="Game.View.html#finalScore"><span class="hs-identifier hs-var hs-var">finalScore</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-49"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110746"><span id="local-6989586621679110751"><span id="local-6989586621679110755"><span class="annot"><span class="annottext">Int -&gt; PlayerFinal -&gt; ShowS
+[PlayerFinal] -&gt; ShowS
+PlayerFinal -&gt; String
+(Int -&gt; PlayerFinal -&gt; ShowS)
+-&gt; (PlayerFinal -&gt; String)
+-&gt; ([PlayerFinal] -&gt; ShowS)
+-&gt; Show PlayerFinal
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; PlayerFinal -&gt; ShowS
+showsPrec :: Int -&gt; PlayerFinal -&gt; ShowS
+$cshow :: PlayerFinal -&gt; String
+show :: PlayerFinal -&gt; String
+$cshowList :: [PlayerFinal] -&gt; ShowS
+showList :: [PlayerFinal] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110758"><span id="local-6989586621679110762"><span class="annot"><span class="annottext">PlayerFinal -&gt; PlayerFinal -&gt; Bool
+(PlayerFinal -&gt; PlayerFinal -&gt; Bool)
+-&gt; (PlayerFinal -&gt; PlayerFinal -&gt; Bool) -&gt; Eq PlayerFinal
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: PlayerFinal -&gt; PlayerFinal -&gt; Bool
+== :: PlayerFinal -&gt; PlayerFinal -&gt; Bool
+$c/= :: PlayerFinal -&gt; PlayerFinal -&gt; Bool
+/= :: PlayerFinal -&gt; PlayerFinal -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span class="annot"><span class="hs-comment">-- | Ban tong ket cua hai nguoi choi khi tran ket thuc.</span></span><span>
+</span><span id="line-52"></span><span class="hs-keyword">data</span><span> </span><span id="GameSummary"><span class="annot"><a href="Game.View.html#GameSummary"><span class="hs-identifier hs-var">GameSummary</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="GameSummary"><span class="annot"><a href="Game.View.html#GameSummary"><span class="hs-identifier hs-var">GameSummary</span></a></span></span><span>
+</span><span id="line-53"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="summaryPlayer1"><span class="annot"><span class="annottext">GameSummary -&gt; PlayerFinal
+</span><a href="Game.View.html#summaryPlayer1"><span class="hs-identifier hs-var hs-var">summaryPlayer1</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.View.html#PlayerFinal"><span class="hs-identifier hs-type">PlayerFinal</span></a></span><span>
+</span><span id="line-54"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="summaryPlayer2"><span class="annot"><span class="annottext">GameSummary -&gt; PlayerFinal
+</span><a href="Game.View.html#summaryPlayer2"><span class="hs-identifier hs-var hs-var">summaryPlayer2</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.View.html#PlayerFinal"><span class="hs-identifier hs-type">PlayerFinal</span></a></span><span>
+</span><span id="line-55"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110769"><span id="local-6989586621679110774"><span id="local-6989586621679110778"><span class="annot"><span class="annottext">Int -&gt; GameSummary -&gt; ShowS
+[GameSummary] -&gt; ShowS
+GameSummary -&gt; String
+(Int -&gt; GameSummary -&gt; ShowS)
+-&gt; (GameSummary -&gt; String)
+-&gt; ([GameSummary] -&gt; ShowS)
+-&gt; Show GameSummary
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; GameSummary -&gt; ShowS
+showsPrec :: Int -&gt; GameSummary -&gt; ShowS
+$cshow :: GameSummary -&gt; String
+show :: GameSummary -&gt; String
+$cshowList :: [GameSummary] -&gt; ShowS
+showList :: [GameSummary] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110781"><span id="local-6989586621679110785"><span class="annot"><span class="annottext">GameSummary -&gt; GameSummary -&gt; Bool
+(GameSummary -&gt; GameSummary -&gt; Bool)
+-&gt; (GameSummary -&gt; GameSummary -&gt; Bool) -&gt; Eq GameSummary
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: GameSummary -&gt; GameSummary -&gt; Bool
+== :: GameSummary -&gt; GameSummary -&gt; Bool
+$c/= :: GameSummary -&gt; GameSummary -&gt; Bool
+/= :: GameSummary -&gt; GameSummary -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span class="annot"><span class="hs-comment">-- | Phan trang thai ma nguoi choi nay duoc thay.</span></span><span>
+</span><span id="line-58"></span><span class="annot"><a href="Game.View.html#viewFor"><span class="hs-identifier hs-type">viewFor</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.View.html#PlayerView"><span class="hs-identifier hs-type">PlayerView</span></a></span><span>
+</span><span id="line-59"></span><span id="viewFor"><span class="annot"><span class="annottext">viewFor :: Config -&gt; PlayerId -&gt; GameState -&gt; PlayerView
+</span><a href="Game.View.html#viewFor"><span class="hs-identifier hs-var hs-var">viewFor</span></a></span></span><span> </span><span id="local-6989586621679110788"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110788"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679110789"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679110789"><span class="hs-identifier hs-var">pid</span></a></span></span><span> </span><span id="local-6989586621679110790"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110790"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Game.View.html#PlayerView"><span class="hs-identifier hs-type">PlayerView</span></a></span><span>
+</span><span id="line-60"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">viewSelf :: PlayerId
+</span><a href="Game.View.html#viewSelf"><span class="hs-identifier hs-var">viewSelf</span></a></span><span>          </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679110789"><span class="hs-identifier hs-var">pid</span></a></span><span>
+</span><span id="line-61"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewMapWidth :: Int
+</span><a href="Game.View.html#viewMapWidth"><span class="hs-identifier hs-var">viewMapWidth</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameState -&gt; Int
+</span><a href="Game.Types.html#gsMapWidth"><span class="hs-identifier hs-var">gsMapWidth</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110790"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-62"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewMapHeight :: Int
+</span><a href="Game.View.html#viewMapHeight"><span class="hs-identifier hs-var">viewMapHeight</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameState -&gt; Int
+</span><a href="Game.Types.html#gsMapHeight"><span class="hs-identifier hs-var">gsMapHeight</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110790"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-63"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewEarth :: Pos
+</span><a href="Game.View.html#viewEarth"><span class="hs-identifier hs-var">viewEarth</span></a></span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameState -&gt; Pos
+</span><a href="Game.Types.html#gsEarth"><span class="hs-identifier hs-var">gsEarth</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110790"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-64"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewRound :: Int
+</span><a href="Game.View.html#viewRound"><span class="hs-identifier hs-var">viewRound</span></a></span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameState -&gt; Int
+</span><a href="Game.Types.html#gsRound"><span class="hs-identifier hs-var">gsRound</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110790"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-65"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewMaxRounds :: Int
+</span><a href="Game.View.html#viewMaxRounds"><span class="hs-identifier hs-var">viewMaxRounds</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgMaxRounds"><span class="hs-identifier hs-var">cfgMaxRounds</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110788"><span class="hs-identifier hs-var">cfg</span></a></span><span>
+</span><span id="line-66"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewCurrent :: PlayerId
+</span><a href="Game.View.html#viewCurrent"><span class="hs-identifier hs-var">viewCurrent</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameState -&gt; PlayerId
+</span><a href="Game.Types.html#gsCurrent"><span class="hs-identifier hs-var">gsCurrent</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110790"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-67"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewPhase :: GamePhase
+</span><a href="Game.View.html#viewPhase"><span class="hs-identifier hs-var">viewPhase</span></a></span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameState -&gt; GamePhase
+</span><a href="Game.Types.html#gsPhase"><span class="hs-identifier hs-var">gsPhase</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110790"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-68"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewPos :: Pos
+</span><a href="Game.View.html#viewPos"><span class="hs-identifier hs-var">viewPos</span></a></span><span>           </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Player -&gt; Pos
+</span><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var">playerPos</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679110799"><span class="hs-identifier hs-var">me</span></a></span><span>
+</span><span id="line-69"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewBattery :: Int
+</span><a href="Game.View.html#viewBattery"><span class="hs-identifier hs-var">viewBattery</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Player -&gt; Int
+</span><a href="Game.Types.html#playerBattery"><span class="hs-identifier hs-var">playerBattery</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679110799"><span class="hs-identifier hs-var">me</span></a></span><span>
+</span><span id="line-70"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewBatteryMax :: Int
+</span><a href="Game.View.html#viewBatteryMax"><span class="hs-identifier hs-var">viewBatteryMax</span></a></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgBatteryMax"><span class="hs-identifier hs-var">cfgBatteryMax</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110788"><span class="hs-identifier hs-var">cfg</span></a></span><span>
+</span><span id="line-71"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewAP :: Int
+</span><a href="Game.View.html#viewAP"><span class="hs-identifier hs-var">viewAP</span></a></span><span>            </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Player -&gt; Int
+</span><a href="Game.Types.html#playerAP"><span class="hs-identifier hs-var">playerAP</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679110799"><span class="hs-identifier hs-var">me</span></a></span><span>
+</span><span id="line-72"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewApMax :: Int
+</span><a href="Game.View.html#viewApMax"><span class="hs-identifier hs-var">viewApMax</span></a></span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgApMax"><span class="hs-identifier hs-var">cfgApMax</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110788"><span class="hs-identifier hs-var">cfg</span></a></span><span>
+</span><span id="line-73"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewCargo :: Resources
+</span><a href="Game.View.html#viewCargo"><span class="hs-identifier hs-var">viewCargo</span></a></span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Player -&gt; Resources
+</span><a href="Game.Types.html#playerCargo"><span class="hs-identifier hs-var">playerCargo</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679110799"><span class="hs-identifier hs-var">me</span></a></span><span>
+</span><span id="line-74"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewCargoCapacity :: Int
+</span><a href="Game.View.html#viewCargoCapacity"><span class="hs-identifier hs-var">viewCargoCapacity</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgCargoCapacity"><span class="hs-identifier hs-var">cfgCargoCapacity</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110788"><span class="hs-identifier hs-var">cfg</span></a></span><span>
+</span><span id="line-75"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewStorage :: Resources
+</span><a href="Game.View.html#viewStorage"><span class="hs-identifier hs-var">viewStorage</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Player -&gt; Resources
+</span><a href="Game.Types.html#playerStorage"><span class="hs-identifier hs-var">playerStorage</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679110799"><span class="hs-identifier hs-var">me</span></a></span><span>
+</span><span id="line-76"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewScore :: Int
+</span><a href="Game.View.html#viewScore"><span class="hs-identifier hs-var">viewScore</span></a></span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Player -&gt; Int
+</span><a href="Game.State.html#playerScore"><span class="hs-identifier hs-var">playerScore</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110788"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679110799"><span class="hs-identifier hs-var">me</span></a></span><span>
+</span><span id="line-77"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewScoreTarget :: Int
+</span><a href="Game.View.html#viewScoreTarget"><span class="hs-identifier hs-var">viewScoreTarget</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgScoreTarget"><span class="hs-identifier hs-var">cfgScoreTarget</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110788"><span class="hs-identifier hs-var">cfg</span></a></span><span>
+</span><span id="line-78"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewKnown :: Map Int KnownPlanet
+</span><a href="Game.View.html#viewKnown"><span class="hs-identifier hs-var">viewKnown</span></a></span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Player -&gt; Map Int KnownPlanet
+</span><a href="Game.Types.html#playerKnown"><span class="hs-identifier hs-var">playerKnown</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679110799"><span class="hs-identifier hs-var">me</span></a></span><span>
+</span><span id="line-79"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">viewHere :: Maybe Planet
+</span><a href="Game.View.html#viewHere"><span class="hs-identifier hs-var">viewHere</span></a></span><span>          </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Pos -&gt; GameState -&gt; Maybe Planet
+</span><a href="Game.State.html#planetAt"><span class="hs-identifier hs-var">planetAt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Pos
+</span><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var">playerPos</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679110799"><span class="hs-identifier hs-var">me</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110790"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-80"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-81"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-82"></span><span>    </span><span id="local-6989586621679110799"><span class="annot"><span class="annottext">me :: Player
+</span><a href="#local-6989586621679110799"><span class="hs-identifier hs-var hs-var">me</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; GameState -&gt; Player
+</span><a href="Game.State.html#getPlayer"><span class="hs-identifier hs-var">getPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679110789"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110790"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-83"></span><span>
+</span><span id="line-84"></span><span class="annot"><span class="hs-comment">-- | Ban tong ket: vi tri va diem cuoi cua ca hai nguoi choi.</span></span><span>
+</span><span id="line-85"></span><span class="annot"><a href="Game.View.html#summaryOf"><span class="hs-identifier hs-type">summaryOf</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.View.html#GameSummary"><span class="hs-identifier hs-type">GameSummary</span></a></span><span>
+</span><span id="line-86"></span><span id="summaryOf"><span class="annot"><span class="annottext">summaryOf :: Config -&gt; GameState -&gt; GameSummary
+</span><a href="Game.View.html#summaryOf"><span class="hs-identifier hs-var hs-var">summaryOf</span></a></span></span><span> </span><span id="local-6989586621679110812"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110812"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679110813"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110813"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerFinal -&gt; PlayerFinal -&gt; GameSummary
+</span><a href="Game.View.html#GameSummary"><span class="hs-identifier hs-var">GameSummary</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; PlayerFinal
+</span><a href="#local-6989586621679110814"><span class="hs-identifier hs-var">final</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameState -&gt; Player
+</span><a href="Game.Types.html#gsPlayer1"><span class="hs-identifier hs-var">gsPlayer1</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110813"><span class="hs-identifier hs-var">gs</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; PlayerFinal
+</span><a href="#local-6989586621679110814"><span class="hs-identifier hs-var">final</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameState -&gt; Player
+</span><a href="Game.Types.html#gsPlayer2"><span class="hs-identifier hs-var">gsPlayer2</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679110813"><span class="hs-identifier hs-var">gs</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-87"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-88"></span><span>    </span><span id="local-6989586621679110814"><span class="annot"><span class="annottext">final :: Player -&gt; PlayerFinal
+</span><a href="#local-6989586621679110814"><span class="hs-identifier hs-var hs-var">final</span></a></span></span><span> </span><span id="local-6989586621679110817"><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679110817"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Pos -&gt; Int -&gt; PlayerFinal
+</span><a href="Game.View.html#PlayerFinal"><span class="hs-identifier hs-var">PlayerFinal</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Pos
+</span><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var">playerPos</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679110817"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Player -&gt; Int
+</span><a href="Game.State.html#playerScore"><span class="hs-identifier hs-var">playerScore</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110812"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679110817"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span></pre></body></html>

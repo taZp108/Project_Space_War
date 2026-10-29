@@ -1,26 +1,40 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Module ch&#237;nh c&#7911;a package @space-war@.</span><span>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Module chinh cua package @space-war@.</span><span>
 </span><span id="line-2"></span><span class="hs-comment">--</span><span>
-</span><span id="line-3"></span><span class="hs-comment">-- C&#225;c module game (@Game.*@) s&#7869; &#273;&#432;&#7907;c re-export t&#7841;i &#273;&#226;y &#7903; c&#225;c phase sau.</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Re-export cac module game (@Game.*@) de cac noi khac chi can @import Lib@.</span><span>
 </span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Lib.html"><span class="hs-identifier">Lib</span></a></span><span>
 </span><span id="line-5"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Lib.html#someFunc"><span class="hs-identifier">someFunc</span></a></span><span>
 </span><span id="line-6"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Lib.html#projectName"><span class="hs-identifier">projectName</span></a></span><span>
-</span><span id="line-7"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-8"></span><span>
-</span><span id="line-9"></span><span class="annot"><span class="hs-comment">-- | In m&#7897;t d&#242;ng ch&#224;o m&#7851;u (gi&#7919; l&#7841;i t&#7915; template c&#7911;a stack).</span></span><span>
-</span><span id="line-10"></span><span class="annot"><a href="Lib.html#someFunc"><span class="hs-identifier hs-type">someFunc</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
-</span><span id="line-11"></span><span id="someFunc"><span class="annot"><span class="annottext">someFunc :: IO ()
+</span><span id="line-7"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.Types.html"><span class="hs-identifier">Game.Types</span></a></span><span>
+</span><span id="line-8"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.Config.html"><span class="hs-identifier">Game.Config</span></a></span><span>
+</span><span id="line-9"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.State.html"><span class="hs-identifier">Game.State</span></a></span><span>
+</span><span id="line-10"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.Action.html"><span class="hs-identifier">Game.Action</span></a></span><span>
+</span><span id="line-11"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.Turn.html"><span class="hs-identifier">Game.Turn</span></a></span><span>
+</span><span id="line-12"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.World.html"><span class="hs-identifier">Game.World</span></a></span><span>
+</span><span id="line-13"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.Generate.html"><span class="hs-identifier">Game.Generate</span></a></span><span>
+</span><span id="line-14"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Action.html"><span class="hs-identifier">Game.Action</span></a></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Config.html"><span class="hs-identifier">Game.Config</span></a></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Generate.html"><span class="hs-identifier">Game.Generate</span></a></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.State.html"><span class="hs-identifier">Game.State</span></a></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Turn.html"><span class="hs-identifier">Game.Turn</span></a></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Types.html"><span class="hs-identifier">Game.Types</span></a></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.World.html"><span class="hs-identifier">Game.World</span></a></span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="annot"><span class="hs-comment">-- | In mot dong chao mau (giu lai tu template cua stack).</span></span><span>
+</span><span id="line-25"></span><span class="annot"><a href="Lib.html#someFunc"><span class="hs-identifier hs-type">someFunc</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span id="someFunc"><span class="annot"><span class="annottext">someFunc :: IO ()
 </span><a href="Lib.html#someFunc"><span class="hs-identifier hs-var hs-var">someFunc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; IO ()
 </span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
 </span><span class="hs-string">&quot;someFunc&quot;</span></span><span>
-</span><span id="line-12"></span><span>
-</span><span id="line-13"></span><span class="hs-comment">-- | T&#234;n c&#7911;a project.</span><span>
-</span><span id="line-14"></span><span class="hs-comment">--</span><span>
-</span><span id="line-15"></span><span class="hs-comment">-- V&#237; d&#7909;:</span><span>
-</span><span id="line-16"></span><span class="hs-comment">--</span><span>
-</span><span id="line-17"></span><span class="hs-comment">-- &gt;&gt;&gt; projectName</span><span>
-</span><span id="line-18"></span><span class="hs-comment">-- &quot;space-war&quot;</span><span>
-</span><span id="line-19"></span><span class="annot"><a href="Lib.html#projectName"><span class="hs-identifier hs-type">projectName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
-</span><span id="line-20"></span><span id="projectName"><span class="annot"><span class="annottext">projectName :: String
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-comment">-- | Ten cua project.</span><span>
+</span><span id="line-29"></span><span class="hs-comment">--</span><span>
+</span><span id="line-30"></span><span class="hs-comment">-- Vi du:</span><span>
+</span><span id="line-31"></span><span class="hs-comment">--</span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- &gt;&gt;&gt; projectName</span><span>
+</span><span id="line-33"></span><span class="hs-comment">-- &quot;space-war&quot;</span><span>
+</span><span id="line-34"></span><span class="annot"><a href="Lib.html#projectName"><span class="hs-identifier hs-type">projectName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-35"></span><span id="projectName"><span class="annot"><span class="annottext">projectName :: String
 </span><a href="Lib.html#projectName"><span class="hs-identifier hs-var hs-var">projectName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
-</span><span class="hs-string">&quot;space-war&quot;</span></span><span>
-</span><span id="line-21"></span></pre></body></html>
+</span><span class="hs-string">&quot;space-war&quot;</span></span></pre></body></html>

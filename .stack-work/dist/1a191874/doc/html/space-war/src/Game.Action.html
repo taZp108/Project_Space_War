@@ -1,0 +1,672 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Luat cua tung action: kiem tra dieu kien, tru chi phi, cap nhat trang thai.</span><span>
+</span><span id="line-2"></span><span class="hs-comment">--</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module nay khong lo chuyen luot hay kiem tra thang/thua (viec cua &quot;Game.Turn&quot;).</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.Action.html"><span class="hs-identifier">Game.Action</span></a></span><span>
+</span><span id="line-5"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Game.Action.html#performAction"><span class="hs-identifier">performAction</span></a></span><span>
+</span><span id="line-6"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">unless</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">when</span></span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">sortOn</span></span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Config.html"><span class="hs-identifier">Game.Config</span></a></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.State.html"><span class="hs-identifier">Game.State</span></a></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Types.html"><span class="hs-identifier">Game.Types</span></a></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.World.html"><span class="hs-identifier">Game.World</span></a></span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span class="hs-comment">-- | Thuc hien mot action cho nguoi choi. Khong kiem tra luot (viec cua</span><span>
+</span><span id="line-18"></span><span class="hs-comment">-- &quot;Game.Turn&quot;). Tra ve loi neu khong hop le, hoac trang thai moi va bao cao.</span><span>
+</span><span id="line-19"></span><span class="annot"><a href="Game.Action.html#performAction"><span class="hs-identifier hs-type">performAction</span></a></span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Action"><span class="hs-identifier hs-type">Action</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span>
+</span><span id="line-21"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier hs-type">GameError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-type">ActionReport</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span id="performAction"><span class="annot"><span class="annottext">performAction :: Config
+-&gt; PlayerId
+-&gt; Action
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#performAction"><span class="hs-identifier hs-var hs-var">performAction</span></a></span></span><span> </span><span id="local-6989586621679111236"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111236"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111237"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111237"><span class="hs-identifier hs-var">pid</span></a></span></span><span> </span><span id="local-6989586621679111238"><span class="annot"><span class="annottext">Action
+</span><a href="#local-6989586621679111238"><span class="hs-identifier hs-var">action</span></a></span></span><span> </span><span id="local-6989586621679111239"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111239"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="#local-6989586621679111238"><span class="hs-identifier hs-var">action</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-23"></span><span>    </span><span class="annot"><a href="Game.Types.html#Move"><span class="hs-identifier hs-type">Move</span></a></span><span> </span><span id="local-6989586621679111241"><span class="annot"><span class="annottext">Direction
+</span><a href="#local-6989586621679111241"><span class="hs-identifier hs-var">dir</span></a></span></span><span>       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Config
+-&gt; PlayerId
+-&gt; Direction
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doMove"><span class="hs-identifier hs-var">doMove</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111236"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111237"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">Direction
+</span><a href="#local-6989586621679111241"><span class="hs-identifier hs-var">dir</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111239"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#Observe"><span class="hs-identifier hs-var">Observe</span></a></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Cost
+-&gt; PlanetId
+-&gt; PlayerId
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doScanArea"><span class="hs-identifier hs-var">doScanArea</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostObserve"><span class="hs-identifier hs-var">cfgCostObserve</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111236"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgObserveRadius"><span class="hs-identifier hs-var">cfgObserveRadius</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111236"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111237"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111239"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#ScanArea"><span class="hs-identifier hs-var">ScanArea</span></a></span><span>       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Cost
+-&gt; PlanetId
+-&gt; PlayerId
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doScanArea"><span class="hs-identifier hs-var">doScanArea</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostScanArea"><span class="hs-identifier hs-var">cfgCostScanArea</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111236"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgScanRadius"><span class="hs-identifier hs-var">cfgScanRadius</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111236"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111237"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111239"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#ScanNearest"><span class="hs-identifier hs-var">ScanNearest</span></a></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Config
+-&gt; PlayerId
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doScanNearest"><span class="hs-identifier hs-var">doScanNearest</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111236"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111237"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111239"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-27"></span><span>    </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#ScanOpponent"><span class="hs-identifier hs-var">ScanOpponent</span></a></span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Config
+-&gt; PlayerId
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doScanOpponent"><span class="hs-identifier hs-var">doScanOpponent</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111236"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111237"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111239"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-28"></span><span>    </span><span class="annot"><a href="Game.Types.html#Mine"><span class="hs-identifier hs-type">Mine</span></a></span><span> </span><span id="local-6989586621679111255"><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679111255"><span class="hs-identifier hs-var">res</span></a></span></span><span>       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Config
+-&gt; PlayerId
+-&gt; ResourceType
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doMine"><span class="hs-identifier hs-var">doMine</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111236"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111237"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679111255"><span class="hs-identifier hs-var">res</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111239"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#Deposit"><span class="hs-identifier hs-var">Deposit</span></a></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Config
+-&gt; PlayerId
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doDeposit"><span class="hs-identifier hs-var">doDeposit</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111236"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111237"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111239"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-30"></span><span>    </span><span class="annot"><a href="Game.Types.html#Recharge"><span class="hs-identifier hs-type">Recharge</span></a></span><span> </span><span id="local-6989586621679111260"><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679111260"><span class="hs-identifier hs-var">res</span></a></span></span><span> </span><span id="local-6989586621679111261"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111261"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Config
+-&gt; PlayerId
+-&gt; ResourceType
+-&gt; PlanetId
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doRecharge"><span class="hs-identifier hs-var">doRecharge</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111236"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111237"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679111260"><span class="hs-identifier hs-var">res</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111261"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111239"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#EndTurn"><span class="hs-identifier hs-var">EndTurn</span></a></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(GameState, ActionReport)
+-&gt; Either GameError (GameState, ActionReport)
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111239"><span class="hs-identifier hs-var">gs</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ActionResult -&gt; ActionReport
+</span><a href="Game.Action.html#report"><span class="hs-identifier hs-var">report</span></a></span><span> </span><span class="annot"><span class="annottext">ActionResult
+</span><a href="Game.Types.html#TurnEnded"><span class="hs-identifier hs-var">TurnEnded</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="annot"><span class="hs-comment">-- | Bao cao khong kem thong bao cho doi thu.</span></span><span>
+</span><span id="line-34"></span><span class="annot"><a href="Game.Action.html#report"><span class="hs-identifier hs-type">report</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#ActionResult"><span class="hs-identifier hs-type">ActionResult</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-type">ActionReport</span></a></span><span>
+</span><span id="line-35"></span><span id="report"><span class="annot"><span class="annottext">report :: ActionResult -&gt; ActionReport
+</span><a href="Game.Action.html#report"><span class="hs-identifier hs-var hs-var">report</span></a></span></span><span> </span><span id="local-6989586621679111266"><span class="annot"><span class="annottext">ActionResult
+</span><a href="#local-6989586621679111266"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ActionResult -&gt; Maybe Notice -&gt; ActionReport
+</span><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-var">ActionReport</span></a></span><span> </span><span class="annot"><span class="annottext">ActionResult
+</span><a href="#local-6989586621679111266"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Notice
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span class="annot"><span class="hs-comment">-- | Tru AP va battery. Loi neu khong du.</span></span><span>
+</span><span id="line-38"></span><span class="annot"><a href="Game.Action.html#payCost"><span class="hs-identifier hs-type">payCost</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier hs-type">Cost</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier hs-type">GameError</span></a></span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span>
+</span><span id="line-39"></span><span id="payCost"><span class="annot"><span class="annottext">payCost :: Cost -&gt; Player -&gt; Either GameError Player
+</span><a href="Game.Action.html#payCost"><span class="hs-identifier hs-var hs-var">payCost</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier hs-type">Cost</span></a></span><span> </span><span id="local-6989586621679111270"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111270"><span class="hs-identifier hs-var">ap</span></a></span></span><span> </span><span id="local-6989586621679111271"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111271"><span class="hs-identifier hs-var">battery</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679111272"><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111272"><span class="hs-identifier hs-var">p</span></a></span></span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Player -&gt; PlanetId
+</span><a href="Game.Types.html#playerAP"><span class="hs-identifier hs-var">playerAP</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111272"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111270"><span class="hs-identifier hs-var">ap</span></a></span><span>           </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameError -&gt; Either GameError Player
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#NotEnoughAP"><span class="hs-identifier hs-var">NotEnoughAP</span></a></span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Player -&gt; PlanetId
+</span><a href="Game.Types.html#playerBattery"><span class="hs-identifier hs-var">playerBattery</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111272"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111271"><span class="hs-identifier hs-var">battery</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameError -&gt; Either GameError Player
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#NotEnoughBattery"><span class="hs-identifier hs-var">NotEnoughBattery</span></a></span><span>
+</span><span id="line-42"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Player -&gt; Either GameError Player
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111272"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><span id="line-43"></span><span>        </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Game.Types.html#playerAP"><span class="hs-identifier hs-var">playerAP</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Game.Types.html#playerAP"><span class="hs-identifier hs-var">playerAP</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111272"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><span class="hs-glyph hs-type">-</span></span><span> </span><span class="annot"><a href="#local-6989586621679111270"><span class="hs-identifier hs-type">ap</span></a></span><span>
+</span><span id="line-44"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#playerBattery"><span class="hs-identifier hs-var">playerBattery</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Game.Types.html#playerBattery"><span class="hs-identifier hs-var">playerBattery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111272"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><span class="hs-glyph hs-type">-</span></span><span> </span><span class="annot"><a href="#local-6989586621679111271"><span class="hs-identifier hs-type">battery</span></a></span><span>
+</span><span id="line-45"></span><span>        </span><span class="hs-special">}</span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span class="annot"><a href="Game.Action.html#toKnown"><span class="hs-identifier hs-type">toKnown</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Planet"><span class="hs-identifier hs-type">Planet</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#KnownPlanet"><span class="hs-identifier hs-type">KnownPlanet</span></a></span><span>
+</span><span id="line-48"></span><span id="toKnown"><span class="annot"><span class="annottext">toKnown :: Planet -&gt; KnownPlanet
+</span><a href="Game.Action.html#toKnown"><span class="hs-identifier hs-var hs-var">toKnown</span></a></span></span><span> </span><span id="local-6989586621679111279"><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111279"><span class="hs-identifier hs-var">pl</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Pos -&gt; PlanetType -&gt; KnownPlanet
+</span><a href="Game.Types.html#KnownPlanet"><span class="hs-identifier hs-var">KnownPlanet</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Planet -&gt; Pos
+</span><a href="Game.Types.html#planetPos"><span class="hs-identifier hs-var">planetPos</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111279"><span class="hs-identifier hs-var">pl</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Planet -&gt; PlanetType
+</span><a href="Game.Types.html#planetType"><span class="hs-identifier hs-var">planetType</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111279"><span class="hs-identifier hs-var">pl</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>
+</span><span id="line-50"></span><span class="annot"><span class="hs-comment">-- | Them mot hanh tinh vao danh sach da kham pha.</span></span><span>
+</span><span id="line-51"></span><span class="annot"><a href="Game.Action.html#learn"><span class="hs-identifier hs-type">learn</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Planet"><span class="hs-identifier hs-type">Planet</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span>
+</span><span id="line-52"></span><span id="learn"><span class="annot"><span class="annottext">learn :: Planet -&gt; Player -&gt; Player
+</span><a href="Game.Action.html#learn"><span class="hs-identifier hs-var hs-var">learn</span></a></span></span><span> </span><span id="local-6989586621679111284"><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111284"><span class="hs-identifier hs-var">pl</span></a></span></span><span> </span><span id="local-6989586621679111285"><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111285"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111285"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Game.Types.html#playerKnown"><span class="hs-identifier hs-var">playerKnown</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.insert</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#planetId"><span class="hs-identifier hs-var">planetId</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111284"><span class="hs-identifier hs-type">pl</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Action.html#toKnown"><span class="hs-identifier hs-type">toKnown</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111284"><span class="hs-identifier hs-type">pl</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#playerKnown"><span class="hs-identifier hs-var">playerKnown</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111285"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="annot"><span class="hs-comment">-- | Neu dang dung tren mot hanh tinh thi tu kham pha no.</span></span><span>
+</span><span id="line-55"></span><span class="annot"><a href="Game.Action.html#discoverHere"><span class="hs-identifier hs-type">discoverHere</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span>
+</span><span id="line-56"></span><span id="discoverHere"><span class="annot"><span class="annottext">discoverHere :: GameState -&gt; Player -&gt; Player
+</span><a href="Game.Action.html#discoverHere"><span class="hs-identifier hs-var hs-var">discoverHere</span></a></span></span><span> </span><span id="local-6989586621679111290"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111290"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span id="local-6989586621679111291"><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111291"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Player -&gt; (Planet -&gt; Player) -&gt; Maybe Planet -&gt; Player
+forall b a. b -&gt; (a -&gt; b) -&gt; Maybe a -&gt; b
+</span><span class="hs-identifier hs-var">maybe</span></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111291"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Planet -&gt; Player -&gt; Player
+</span><a href="Game.Action.html#learn"><span class="hs-operator hs-var">`learn`</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111291"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Pos -&gt; GameState -&gt; Maybe Planet
+</span><a href="Game.State.html#planetAt"><span class="hs-identifier hs-var">planetAt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Pos
+</span><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var">playerPos</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111291"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111290"><span class="hs-identifier hs-var">gs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span class="annot"><a href="Game.Action.html#doMove"><span class="hs-identifier hs-type">doMove</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Direction"><span class="hs-identifier hs-type">Direction</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier hs-type">GameError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-type">ActionReport</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span id="doMove"><span class="annot"><span class="annottext">doMove :: Config
+-&gt; PlayerId
+-&gt; Direction
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doMove"><span class="hs-identifier hs-var hs-var">doMove</span></a></span></span><span> </span><span id="local-6989586621679111295"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111295"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111296"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111296"><span class="hs-identifier hs-var">pid</span></a></span></span><span> </span><span id="local-6989586621679111297"><span class="annot"><span class="annottext">Direction
+</span><a href="#local-6989586621679111297"><span class="hs-identifier hs-var">dir</span></a></span></span><span> </span><span id="local-6989586621679111298"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111298"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-60"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679111299"><span class="annot"><span class="annottext">player :: Player
+</span><a href="#local-6989586621679111299"><span class="hs-identifier hs-var hs-var hs-var">player</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; GameState -&gt; Player
+</span><a href="Game.State.html#getPlayer"><span class="hs-identifier hs-var">getPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111296"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111298"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-61"></span><span>        </span><span id="local-6989586621679111301"><span class="annot"><span class="annottext">target :: Pos
+</span><a href="#local-6989586621679111301"><span class="hs-identifier hs-var hs-var hs-var">target</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Direction -&gt; Pos -&gt; Pos
+</span><a href="Game.World.html#movePos"><span class="hs-identifier hs-var">movePos</span></a></span><span> </span><span class="annot"><span class="annottext">Direction
+</span><a href="#local-6989586621679111297"><span class="hs-identifier hs-var">dir</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Pos
+</span><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var">playerPos</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111299"><span class="hs-identifier hs-var">player</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-62"></span><span>    </span><span class="annot"><span class="annottext">Bool -&gt; Either GameError () -&gt; Either GameError ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">unless</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Pos -&gt; Bool
+</span><a href="Game.World.html#inBounds"><span class="hs-identifier hs-var">inBounds</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111295"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111301"><span class="hs-identifier hs-var">target</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameError -&gt; Either GameError ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#OutOfBounds"><span class="hs-identifier hs-var">OutOfBounds</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-63"></span><span>    </span><span id="local-6989586621679111305"><span class="annot"><a href="#local-6989586621679111305"><span class="hs-identifier hs-var">paid</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Cost -&gt; Player -&gt; Either GameError Player
+</span><a href="Game.Action.html#payCost"><span class="hs-identifier hs-var">payCost</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostMove"><span class="hs-identifier hs-var">cfgCostMove</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111295"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111299"><span class="hs-identifier hs-var">player</span></a></span><span>
+</span><span id="line-64"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679111307"><span class="annot"><a href="#local-6989586621679111307"><span class="hs-identifier hs-var hs-var">moved</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameState -&gt; Player -&gt; Player
+</span><a href="Game.Action.html#discoverHere"><span class="hs-identifier hs-var">discoverHere</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111298"><span class="hs-identifier hs-var">gs</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111305"><span class="hs-identifier hs-var">paid</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var">playerPos</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679111301"><span class="hs-identifier hs-type">target</span></a></span><span> </span><span class="hs-special">}</span><span class="hs-special">)</span><span>
+</span><span id="line-65"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.State.html#setPlayer"><span class="hs-identifier hs-type">setPlayer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111296"><span class="hs-identifier hs-type">pid</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111307"><span class="hs-identifier hs-type">moved</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111298"><span class="hs-identifier hs-type">gs</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Action.html#report"><span class="hs-identifier hs-type">report</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Moved"><span class="hs-identifier hs-type">Moved</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111301"><span class="hs-identifier hs-type">target</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span class="annot"><span class="hs-comment">-- | Dung chung cho Observe va ScanArea, chi khac ban kinh va chi phi.</span></span><span>
+</span><span id="line-68"></span><span class="annot"><a href="Game.Action.html#doScanArea"><span class="hs-identifier hs-type">doScanArea</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier hs-type">Cost</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier hs-type">GameError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-type">ActionReport</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span id="doScanArea"><span class="annot"><span class="annottext">doScanArea :: Cost
+-&gt; PlanetId
+-&gt; PlayerId
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doScanArea"><span class="hs-identifier hs-var hs-var">doScanArea</span></a></span></span><span> </span><span id="local-6989586621679111310"><span class="annot"><span class="annottext">Cost
+</span><a href="#local-6989586621679111310"><span class="hs-identifier hs-var">cost</span></a></span></span><span> </span><span id="local-6989586621679111311"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111311"><span class="hs-identifier hs-var">radius</span></a></span></span><span> </span><span id="local-6989586621679111312"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111312"><span class="hs-identifier hs-var">pid</span></a></span></span><span> </span><span id="local-6989586621679111313"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111313"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-70"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679111314"><span class="annot"><span class="annottext">player :: Player
+</span><a href="#local-6989586621679111314"><span class="hs-identifier hs-var hs-var hs-var">player</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; GameState -&gt; Player
+</span><a href="Game.State.html#getPlayer"><span class="hs-identifier hs-var">getPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111312"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111313"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-71"></span><span>        </span><span id="local-6989586621679111315"><span class="annot"><span class="annottext">visible :: [Planet]
+</span><a href="#local-6989586621679111315"><span class="hs-identifier hs-var hs-var hs-var">visible</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-72"></span><span>            </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111316"><span class="hs-identifier hs-var">pl</span></a></span><span>
+</span><span id="line-73"></span><span>            </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679111316"><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111316"><span class="hs-identifier hs-var">pl</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Map PlanetId Planet -&gt; [Planet]
+forall k a. Map k a -&gt; [a]
+</span><span class="hs-identifier hs-var">Map.elems</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameState -&gt; Map PlanetId Planet
+</span><a href="Game.Types.html#gsPlanets"><span class="hs-identifier hs-var">gsPlanets</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111313"><span class="hs-identifier hs-var">gs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span>            </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; Pos -&gt; Pos -&gt; Bool
+</span><a href="Game.World.html#withinRadius"><span class="hs-identifier hs-var">withinRadius</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111311"><span class="hs-identifier hs-var">radius</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Pos
+</span><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var">playerPos</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111314"><span class="hs-identifier hs-var">player</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Planet -&gt; Pos
+</span><a href="Game.Types.html#planetPos"><span class="hs-identifier hs-var">planetPos</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111316"><span class="hs-identifier hs-var">pl</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-75"></span><span>            </span><span class="hs-special">]</span><span>
+</span><span id="line-76"></span><span>    </span><span id="local-6989586621679111320"><span class="annot"><a href="#local-6989586621679111320"><span class="hs-identifier hs-var">paid</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Cost -&gt; Player -&gt; Either GameError Player
+</span><a href="Game.Action.html#payCost"><span class="hs-identifier hs-var">payCost</span></a></span><span> </span><span class="annot"><span class="annottext">Cost
+</span><a href="#local-6989586621679111310"><span class="hs-identifier hs-var">cost</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111314"><span class="hs-identifier hs-var">player</span></a></span><span>
+</span><span id="line-77"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679111323"><span class="annot"><a href="#local-6989586621679111323"><span class="hs-identifier hs-var hs-var">learned</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Planet -&gt; Player -&gt; Player) -&gt; Player -&gt; [Planet] -&gt; Player
+forall a b. (a -&gt; b -&gt; b) -&gt; b -&gt; [a] -&gt; b
+forall (t :: * -&gt; *) a b.
+Foldable t =&gt;
+(a -&gt; b -&gt; b) -&gt; b -&gt; t a -&gt; b
+</span><span class="hs-identifier hs-var">foldr</span></span><span> </span><span class="annot"><span class="annottext">Planet -&gt; Player -&gt; Player
+</span><a href="Game.Action.html#learn"><span class="hs-identifier hs-var">learn</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111320"><span class="hs-identifier hs-var">paid</span></a></span><span> </span><span class="annot"><span class="annottext">[Planet]
+</span><a href="#local-6989586621679111315"><span class="hs-identifier hs-var">visible</span></a></span><span>
+</span><span id="line-78"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.State.html#setPlayer"><span class="hs-identifier hs-type">setPlayer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111312"><span class="hs-identifier hs-type">pid</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111323"><span class="hs-identifier hs-type">learned</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111313"><span class="hs-identifier hs-type">gs</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Action.html#report"><span class="hs-identifier hs-type">report</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#PlanetsFound"><span class="hs-identifier hs-type">PlanetsFound</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">map</span></span><span> </span><span class="annot"><a href="Game.Action.html#toKnown"><span class="hs-identifier hs-type">toKnown</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111315"><span class="hs-identifier hs-type">visible</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-79"></span><span>
+</span><span id="line-80"></span><span class="annot"><a href="Game.Action.html#doScanNearest"><span class="hs-identifier hs-type">doScanNearest</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier hs-type">GameError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-type">ActionReport</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-81"></span><span id="doScanNearest"><span class="annot"><span class="annottext">doScanNearest :: Config
+-&gt; PlayerId
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doScanNearest"><span class="hs-identifier hs-var hs-var">doScanNearest</span></a></span></span><span> </span><span id="local-6989586621679111326"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111326"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111327"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111327"><span class="hs-identifier hs-var">pid</span></a></span></span><span> </span><span id="local-6989586621679111328"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111328"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-82"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679111329"><span class="annot"><span class="annottext">player :: Player
+</span><a href="#local-6989586621679111329"><span class="hs-identifier hs-var hs-var hs-var">player</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; GameState -&gt; Player
+</span><a href="Game.State.html#getPlayer"><span class="hs-identifier hs-var">getPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111327"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111328"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-83"></span><span>        </span><span id="local-6989586621679111330"><span class="annot"><span class="annottext">here :: Pos
+</span><a href="#local-6989586621679111330"><span class="hs-identifier hs-var hs-var hs-var">here</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Player -&gt; Pos
+</span><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var">playerPos</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111329"><span class="hs-identifier hs-var">player</span></a></span><span>
+</span><span id="line-84"></span><span>        </span><span id="local-6989586621679111333"><span class="annot"><span class="annottext">candidates :: [Planet]
+</span><a href="#local-6989586621679111333"><span class="hs-identifier hs-var hs-var hs-var">candidates</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111334"><span class="hs-identifier hs-var">pl</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679111334"><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111334"><span class="hs-identifier hs-var">pl</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Map PlanetId Planet -&gt; [Planet]
+forall k a. Map k a -&gt; [a]
+</span><span class="hs-identifier hs-var">Map.elems</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameState -&gt; Map PlanetId Planet
+</span><a href="Game.Types.html#gsPlanets"><span class="hs-identifier hs-var">gsPlanets</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111328"><span class="hs-identifier hs-var">gs</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Resources -&gt; PlanetId
+</span><a href="Game.State.html#totalUnits"><span class="hs-identifier hs-var">totalUnits</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Planet -&gt; Resources
+</span><a href="Game.Types.html#planetStock"><span class="hs-identifier hs-var">planetStock</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111334"><span class="hs-identifier hs-var">pl</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-85"></span><span>        </span><span id="local-6989586621679111342"><span class="annot"><span class="annottext">nearest :: Maybe (Compass, PlanetId)
+</span><a href="#local-6989586621679111342"><span class="hs-identifier hs-var hs-var hs-var">nearest</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">(Planet -&gt; (PlanetId, PlanetId)) -&gt; [Planet] -&gt; [Planet]
+forall b a. Ord b =&gt; (a -&gt; b) -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">sortOn</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679111343"><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111343"><span class="hs-identifier hs-var">pl</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Pos -&gt; Pos -&gt; PlanetId
+</span><a href="Game.World.html#distance"><span class="hs-identifier hs-var">distance</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111330"><span class="hs-identifier hs-var">here</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Planet -&gt; Pos
+</span><a href="Game.Types.html#planetPos"><span class="hs-identifier hs-var">planetPos</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111343"><span class="hs-identifier hs-var">pl</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Planet -&gt; PlanetId
+</span><a href="Game.Types.html#planetId"><span class="hs-identifier hs-var">planetId</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111343"><span class="hs-identifier hs-var">pl</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Planet]
+</span><a href="#local-6989586621679111333"><span class="hs-identifier hs-var">candidates</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-86"></span><span>            </span><span class="hs-special">[</span><span class="hs-special">]</span><span>       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe (Compass, PlanetId)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-87"></span><span>            </span><span class="hs-special">(</span><span id="local-6989586621679111345"><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111345"><span class="hs-identifier hs-var">pl</span></a></span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span class="annot"><span class="annottext">[Planet]
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Compass, PlanetId) -&gt; Maybe (Compass, PlanetId)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Pos -&gt; Pos -&gt; Compass
+</span><a href="Game.World.html#compassFrom"><span class="hs-identifier hs-var">compassFrom</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111330"><span class="hs-identifier hs-var">here</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Planet -&gt; Pos
+</span><a href="Game.Types.html#planetPos"><span class="hs-identifier hs-var">planetPos</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111345"><span class="hs-identifier hs-var">pl</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Pos -&gt; Pos -&gt; PlanetId
+</span><a href="Game.World.html#distance"><span class="hs-identifier hs-var">distance</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111330"><span class="hs-identifier hs-var">here</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Planet -&gt; Pos
+</span><a href="Game.Types.html#planetPos"><span class="hs-identifier hs-var">planetPos</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111345"><span class="hs-identifier hs-var">pl</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-88"></span><span>    </span><span id="local-6989586621679111347"><span class="annot"><a href="#local-6989586621679111347"><span class="hs-identifier hs-var">paid</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Cost -&gt; Player -&gt; Either GameError Player
+</span><a href="Game.Action.html#payCost"><span class="hs-identifier hs-var">payCost</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostScanNearest"><span class="hs-identifier hs-var">cfgCostScanNearest</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111326"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111329"><span class="hs-identifier hs-var">player</span></a></span><span>
+</span><span id="line-89"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.State.html#setPlayer"><span class="hs-identifier hs-type">setPlayer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111327"><span class="hs-identifier hs-type">pid</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111347"><span class="hs-identifier hs-type">paid</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111328"><span class="hs-identifier hs-type">gs</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Action.html#report"><span class="hs-identifier hs-type">report</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#NearestPlanet"><span class="hs-identifier hs-type">NearestPlanet</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111342"><span class="hs-identifier hs-type">nearest</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-90"></span><span>
+</span><span id="line-91"></span><span class="annot"><a href="Game.Action.html#doScanOpponent"><span class="hs-identifier hs-type">doScanOpponent</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier hs-type">GameError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-type">ActionReport</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-92"></span><span id="doScanOpponent"><span class="annot"><span class="annottext">doScanOpponent :: Config
+-&gt; PlayerId
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doScanOpponent"><span class="hs-identifier hs-var hs-var">doScanOpponent</span></a></span></span><span> </span><span id="local-6989586621679111350"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111350"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111351"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111351"><span class="hs-identifier hs-var">pid</span></a></span></span><span> </span><span id="local-6989586621679111352"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111352"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-93"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679111353"><span class="annot"><span class="annottext">player :: Player
+</span><a href="#local-6989586621679111353"><span class="hs-identifier hs-var hs-var hs-var">player</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; GameState -&gt; Player
+</span><a href="Game.State.html#getPlayer"><span class="hs-identifier hs-var">getPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111351"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111352"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-94"></span><span>        </span><span id="local-6989586621679111354"><span class="annot"><span class="annottext">opponent :: Player
+</span><a href="#local-6989586621679111354"><span class="hs-identifier hs-var hs-var hs-var">opponent</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; GameState -&gt; Player
+</span><a href="Game.State.html#getPlayer"><span class="hs-identifier hs-var">getPlayer</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlayerId -&gt; PlayerId
+</span><a href="Game.State.html#otherPlayer"><span class="hs-identifier hs-var">otherPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111351"><span class="hs-identifier hs-var">pid</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111352"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-95"></span><span>        </span><span id="local-6989586621679111356"><span class="annot"><span class="annottext">direction :: Compass
+</span><a href="#local-6989586621679111356"><span class="hs-identifier hs-var hs-var hs-var">direction</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Pos -&gt; Pos -&gt; Compass
+</span><a href="Game.World.html#compassFrom"><span class="hs-identifier hs-var">compassFrom</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Pos
+</span><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var">playerPos</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111353"><span class="hs-identifier hs-var">player</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Pos
+</span><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var">playerPos</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111354"><span class="hs-identifier hs-var">opponent</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-96"></span><span>    </span><span id="local-6989586621679111357"><span class="annot"><a href="#local-6989586621679111357"><span class="hs-identifier hs-var">paid</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Cost -&gt; Player -&gt; Either GameError Player
+</span><a href="Game.Action.html#payCost"><span class="hs-identifier hs-var">payCost</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostScanOpponent"><span class="hs-identifier hs-var">cfgCostScanOpponent</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111350"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111353"><span class="hs-identifier hs-var">player</span></a></span><span>
+</span><span id="line-97"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Game.State.html#setPlayer"><span class="hs-identifier hs-type">setPlayer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111351"><span class="hs-identifier hs-type">pid</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111357"><span class="hs-identifier hs-type">paid</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111352"><span class="hs-identifier hs-type">gs</span></a></span><span>
+</span><span id="line-98"></span><span>          </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-type">ActionReport</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#OpponentDirection"><span class="hs-identifier hs-type">OpponentDirection</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111356"><span class="hs-identifier hs-type">direction</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><a href="Game.Types.html#YouWereScanned"><span class="hs-identifier hs-type">YouWereScanned</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-99"></span><span>
+</span><span id="line-100"></span><span class="annot"><a href="Game.Action.html#doMine"><span class="hs-identifier hs-type">doMine</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#ResourceType"><span class="hs-identifier hs-type">ResourceType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier hs-type">GameError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-type">ActionReport</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-101"></span><span id="doMine"><span class="annot"><span class="annottext">doMine :: Config
+-&gt; PlayerId
+-&gt; ResourceType
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doMine"><span class="hs-identifier hs-var hs-var">doMine</span></a></span></span><span> </span><span id="local-6989586621679111361"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111361"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111362"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111362"><span class="hs-identifier hs-var">pid</span></a></span></span><span> </span><span id="local-6989586621679111363"><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679111363"><span class="hs-identifier hs-var">res</span></a></span></span><span> </span><span id="local-6989586621679111364"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111364"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-102"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679111365"><span class="annot"><span class="annottext">player :: Player
+</span><a href="#local-6989586621679111365"><span class="hs-identifier hs-var hs-var hs-var">player</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; GameState -&gt; Player
+</span><a href="Game.State.html#getPlayer"><span class="hs-identifier hs-var">getPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111362"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111364"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-103"></span><span>    </span><span id="local-6989586621679111366"><span class="annot"><a href="#local-6989586621679111366"><span class="hs-identifier hs-var">planet</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Either GameError Planet
+-&gt; (Planet -&gt; Either GameError Planet)
+-&gt; Maybe Planet
+-&gt; Either GameError Planet
+forall b a. b -&gt; (a -&gt; b) -&gt; Maybe a -&gt; b
+</span><span class="hs-identifier hs-var">maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameError -&gt; Either GameError Planet
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#NotOnPlanet"><span class="hs-identifier hs-var">NotOnPlanet</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Planet -&gt; Either GameError Planet
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Pos -&gt; GameState -&gt; Maybe Planet
+</span><a href="Game.State.html#planetAt"><span class="hs-identifier hs-var">planetAt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Pos
+</span><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var">playerPos</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111365"><span class="hs-identifier hs-var">player</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111364"><span class="hs-identifier hs-var">gs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-104"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679111371"><span class="annot"><a href="#local-6989586621679111371"><span class="hs-keyword hs-var hs-var">stock</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; ResourceType -&gt; Resources -&gt; PlanetId
+forall k a. Ord k =&gt; a -&gt; k -&gt; Map k a -&gt; a
+</span><span class="hs-identifier hs-var">Map.findWithDefault</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679111363"><span class="hs-identifier hs-var">res</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Planet -&gt; Resources
+</span><a href="Game.Types.html#planetStock"><span class="hs-identifier hs-var">planetStock</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111366"><span class="hs-identifier hs-var">planet</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-105"></span><span>        </span><span id="local-6989586621679111374"><span class="annot"><a href="#local-6989586621679111374"><span class="hs-identifier hs-var hs-var">free</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgCargoCapacity"><span class="hs-identifier hs-var">cfgCargoCapacity</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111361"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; PlanetId
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Resources -&gt; PlanetId
+</span><a href="Game.State.html#totalUnits"><span class="hs-identifier hs-var">totalUnits</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Resources
+</span><a href="Game.Types.html#playerCargo"><span class="hs-identifier hs-var">playerCargo</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111365"><span class="hs-identifier hs-var">player</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-106"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679111371"><span class="hs-keyword hs-type">stock</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">&lt;=</span></span><span> </span><span class="annot"><span class="hs-number">0</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="annot"><a href="Game.Types.html#PlanetHasNoSuchResource"><span class="hs-identifier hs-type">PlanetHasNoSuchResource</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-107"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679111374"><span class="hs-identifier hs-type">free</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">&lt;=</span></span><span> </span><span class="annot"><span class="hs-number">0</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="annot"><a href="Game.Types.html#CargoFull"><span class="hs-identifier hs-type">CargoFull</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-108"></span><span>    </span><span id="local-6989586621679111380"><span class="annot"><a href="#local-6989586621679111380"><span class="hs-identifier hs-var">paid</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="Game.Action.html#payCost"><span class="hs-identifier hs-type">payCost</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Config.html#cfgCostMine"><span class="hs-identifier hs-var">cfgCostMine</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111361"><span class="hs-identifier hs-type">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679111365"><span class="hs-identifier hs-type">player</span></a></span><span>
+</span><span id="line-109"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679111384"><span class="annot"><a href="#local-6989586621679111384"><span class="hs-identifier hs-var hs-var">amount</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[PlanetId] -&gt; PlanetId
+forall a. Ord a =&gt; [a] -&gt; a
+forall (t :: * -&gt; *) a. (Foldable t, Ord a) =&gt; t a -&gt; a
+</span><span class="hs-identifier hs-var">minimum</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgMineAmount"><span class="hs-identifier hs-var">cfgMineAmount</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111361"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111371"><span class="hs-keyword hs-var">stock</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111374"><span class="hs-identifier hs-var">free</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-110"></span><span>        </span><span id="local-6989586621679111391"><span class="annot"><a href="#local-6989586621679111391"><span class="hs-identifier hs-var hs-var">newStock</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(PlanetId -&gt; Bool) -&gt; Resources -&gt; Resources
+forall a k. (a -&gt; Bool) -&gt; Map k a -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.filter</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType -&gt; PlanetId -&gt; Resources -&gt; Resources
+forall k a. Ord k =&gt; k -&gt; a -&gt; Map k a -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.insert</span></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679111363"><span class="hs-identifier hs-var">res</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111371"><span class="hs-keyword hs-var">stock</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; PlanetId
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111384"><span class="hs-identifier hs-var">amount</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Planet -&gt; Resources
+</span><a href="Game.Types.html#planetStock"><span class="hs-identifier hs-var">planetStock</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111366"><span class="hs-identifier hs-var">planet</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-111"></span><span>        </span><span id="local-6989586621679111393"><span class="annot"><a href="#local-6989586621679111393"><span class="hs-identifier hs-var hs-var">planet'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111366"><span class="hs-identifier hs-var">planet</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Game.Types.html#planetStock"><span class="hs-identifier hs-var">planetStock</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679111391"><span class="hs-identifier hs-type">newStock</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-112"></span><span>        </span><span id="local-6989586621679111396"><span class="annot"><a href="#local-6989586621679111396"><span class="hs-identifier hs-var hs-var">cargo'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(PlanetId -&gt; PlanetId -&gt; PlanetId)
+-&gt; ResourceType -&gt; PlanetId -&gt; Resources -&gt; Resources
+forall k a. Ord k =&gt; (a -&gt; a -&gt; a) -&gt; k -&gt; a -&gt; Map k a -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.insertWith</span></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; PlanetId
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">(+)</span></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679111363"><span class="hs-identifier hs-var">res</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111384"><span class="hs-identifier hs-var">amount</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Resources
+</span><a href="Game.Types.html#playerCargo"><span class="hs-identifier hs-var">playerCargo</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111380"><span class="hs-identifier hs-var">paid</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-113"></span><span>        </span><span id="local-6989586621679111399"><span class="annot"><a href="#local-6989586621679111399"><span class="hs-identifier hs-var hs-var">player'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Planet -&gt; Player -&gt; Player
+</span><a href="Game.Action.html#learn"><span class="hs-identifier hs-var">learn</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111393"><span class="hs-identifier hs-var">planet'</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111380"><span class="hs-identifier hs-var">paid</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Game.Types.html#playerCargo"><span class="hs-identifier hs-var">playerCargo</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679111396"><span class="hs-identifier hs-type">cargo'</span></a></span><span> </span><span class="hs-special">}</span><span class="hs-special">)</span><span>
+</span><span id="line-114"></span><span>        </span><span id="local-6989586621679111401"><span class="annot"><a href="#local-6989586621679111401"><span class="hs-identifier hs-var hs-var">gs'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; Player -&gt; GameState -&gt; GameState
+</span><a href="Game.State.html#setPlayer"><span class="hs-identifier hs-var">setPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111362"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111399"><span class="hs-identifier hs-var">player'</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111364"><span class="hs-identifier hs-var">gs</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Game.Types.html#gsPlanets"><span class="hs-identifier hs-var">gsPlanets</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.insert</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#planetId"><span class="hs-identifier hs-var">planetId</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111366"><span class="hs-identifier hs-type">planet</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679111393"><span class="hs-identifier hs-type">planet'</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#gsPlanets"><span class="hs-identifier hs-var">gsPlanets</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111364"><span class="hs-identifier hs-type">gs</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">}</span><span class="hs-special">)</span><span>
+</span><span id="line-115"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679111401"><span class="hs-identifier hs-type">gs'</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Action.html#report"><span class="hs-identifier hs-type">report</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Mined"><span class="hs-identifier hs-type">Mined</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111363"><span class="hs-identifier hs-type">res</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111384"><span class="hs-identifier hs-type">amount</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-116"></span><span>
+</span><span id="line-117"></span><span class="annot"><a href="Game.Action.html#doDeposit"><span class="hs-identifier hs-type">doDeposit</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier hs-type">GameError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-type">ActionReport</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-118"></span><span id="doDeposit"><span class="annot"><span class="annottext">doDeposit :: Config
+-&gt; PlayerId
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doDeposit"><span class="hs-identifier hs-var hs-var">doDeposit</span></a></span></span><span> </span><span id="local-6989586621679111403"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111403"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111404"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111404"><span class="hs-identifier hs-var">pid</span></a></span></span><span> </span><span id="local-6989586621679111405"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111405"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-119"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679111406"><span class="annot"><span class="annottext">player :: Player
+</span><a href="#local-6989586621679111406"><span class="hs-identifier hs-var hs-var hs-var">player</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; GameState -&gt; Player
+</span><a href="Game.State.html#getPlayer"><span class="hs-identifier hs-var">getPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111404"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111405"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-120"></span><span>        </span><span id="local-6989586621679111407"><span class="annot"><span class="annottext">d :: PlanetId
+</span><a href="#local-6989586621679111407"><span class="hs-identifier hs-var hs-var hs-var">d</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Pos -&gt; Pos -&gt; PlanetId
+</span><a href="Game.World.html#distance"><span class="hs-identifier hs-var">distance</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Pos
+</span><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var">playerPos</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111406"><span class="hs-identifier hs-var">player</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameState -&gt; Pos
+</span><a href="Game.Types.html#gsEarth"><span class="hs-identifier hs-var">gsEarth</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111405"><span class="hs-identifier hs-var">gs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-121"></span><span>        </span><span id="local-6989586621679111411"><span class="annot"><span class="annottext">cost :: Cost
+</span><a href="#local-6989586621679111411"><span class="hs-identifier hs-var hs-var hs-var">cost</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111407"><span class="hs-identifier hs-var">d</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostDepositAtEarth"><span class="hs-identifier hs-var">cfgCostDepositAtEarth</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111403"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostDepositRemote"><span class="hs-identifier hs-var">cfgCostDepositRemote</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111403"><span class="hs-identifier hs-var">cfg</span></a></span><span>
+</span><span id="line-122"></span><span>    </span><span class="annot"><span class="annottext">Bool -&gt; Either GameError () -&gt; Either GameError ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111407"><span class="hs-identifier hs-var">d</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgDepositRange"><span class="hs-identifier hs-var">cfgDepositRange</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111403"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameError -&gt; Either GameError ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#OutOfDepositRange"><span class="hs-identifier hs-var">OutOfDepositRange</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-123"></span><span>    </span><span class="annot"><span class="annottext">Bool -&gt; Either GameError () -&gt; Either GameError ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Resources -&gt; PlanetId
+</span><a href="Game.State.html#totalUnits"><span class="hs-identifier hs-var">totalUnits</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Resources
+</span><a href="Game.Types.html#playerCargo"><span class="hs-identifier hs-var">playerCargo</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111406"><span class="hs-identifier hs-var">player</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameError -&gt; Either GameError ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#CargoEmpty"><span class="hs-identifier hs-var">CargoEmpty</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-124"></span><span>    </span><span id="local-6989586621679111417"><span class="annot"><a href="#local-6989586621679111417"><span class="hs-identifier hs-var">paid</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Cost -&gt; Player -&gt; Either GameError Player
+</span><a href="Game.Action.html#payCost"><span class="hs-identifier hs-var">payCost</span></a></span><span> </span><span class="annot"><span class="annottext">Cost
+</span><a href="#local-6989586621679111411"><span class="hs-identifier hs-var">cost</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111406"><span class="hs-identifier hs-var">player</span></a></span><span>
+</span><span id="line-125"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679111418"><span class="annot"><a href="#local-6989586621679111418"><span class="hs-identifier hs-var hs-var">deposited</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Player -&gt; Resources
+</span><a href="Game.Types.html#playerCargo"><span class="hs-identifier hs-var">playerCargo</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111417"><span class="hs-identifier hs-var">paid</span></a></span><span>
+</span><span id="line-126"></span><span>        </span><span id="local-6989586621679111419"><span class="annot"><a href="#local-6989586621679111419"><span class="hs-identifier hs-var hs-var">player'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111417"><span class="hs-identifier hs-var">paid</span></a></span><span>
+</span><span id="line-127"></span><span>            </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Game.Types.html#playerCargo"><span class="hs-identifier hs-var">playerCargo</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.empty</span></span><span>
+</span><span id="line-128"></span><span>            </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#playerStorage"><span class="hs-identifier hs-var">playerStorage</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Game.State.html#addResources"><span class="hs-identifier hs-type">addResources</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#playerStorage"><span class="hs-identifier hs-var">playerStorage</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111417"><span class="hs-identifier hs-type">paid</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679111418"><span class="hs-identifier hs-type">deposited</span></a></span><span>
+</span><span id="line-129"></span><span>            </span><span class="hs-special">}</span><span>
+</span><span id="line-130"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.State.html#setPlayer"><span class="hs-identifier hs-type">setPlayer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111404"><span class="hs-identifier hs-type">pid</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111419"><span class="hs-identifier hs-type">player'</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111405"><span class="hs-identifier hs-type">gs</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Action.html#report"><span class="hs-identifier hs-type">report</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Deposited"><span class="hs-identifier hs-type">Deposited</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111418"><span class="hs-identifier hs-type">deposited</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-131"></span><span>
+</span><span id="line-132"></span><span class="annot"><a href="Game.Action.html#doRecharge"><span class="hs-identifier hs-type">doRecharge</span></a></span><span>
+</span><span id="line-133"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#ResourceType"><span class="hs-identifier hs-type">ResourceType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span>
+</span><span id="line-134"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier hs-type">GameError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-type">ActionReport</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-135"></span><span id="doRecharge"><span class="annot"><span class="annottext">doRecharge :: Config
+-&gt; PlayerId
+-&gt; ResourceType
+-&gt; PlanetId
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#doRecharge"><span class="hs-identifier hs-var hs-var">doRecharge</span></a></span></span><span> </span><span id="local-6989586621679111424"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111424"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111425"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111425"><span class="hs-identifier hs-var">pid</span></a></span></span><span> </span><span id="local-6989586621679111426"><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679111426"><span class="hs-identifier hs-var">res</span></a></span></span><span> </span><span id="local-6989586621679111427"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111427"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span id="local-6989586621679111428"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111428"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-136"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679111429"><span class="annot"><span class="annottext">player :: Player
+</span><a href="#local-6989586621679111429"><span class="hs-identifier hs-var hs-var hs-var">player</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; GameState -&gt; Player
+</span><a href="Game.State.html#getPlayer"><span class="hs-identifier hs-var">getPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111425"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111428"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-137"></span><span>    </span><span class="annot"><span class="annottext">Bool -&gt; Either GameError () -&gt; Either GameError ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111427"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameError -&gt; Either GameError ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#InvalidAmount"><span class="hs-identifier hs-var">InvalidAmount</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-138"></span><span>    </span><span class="annot"><span class="annottext">Bool -&gt; Either GameError () -&gt; Either GameError ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Pos
+</span><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var">playerPos</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111429"><span class="hs-identifier hs-var">player</span></a></span><span> </span><span class="annot"><span class="annottext">Pos -&gt; Pos -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">GameState -&gt; Pos
+</span><a href="Game.Types.html#gsEarth"><span class="hs-identifier hs-var">gsEarth</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111428"><span class="hs-identifier hs-var">gs</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameError -&gt; Either GameError ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#NotAtEarth"><span class="hs-identifier hs-var">NotAtEarth</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-139"></span><span>    </span><span class="annot"><span class="annottext">Bool -&gt; Either GameError () -&gt; Either GameError ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; PlanetId
+</span><a href="Game.Types.html#playerBattery"><span class="hs-identifier hs-var">playerBattery</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111429"><span class="hs-identifier hs-var">player</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgBatteryMax"><span class="hs-identifier hs-var">cfgBatteryMax</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111424"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameError -&gt; Either GameError ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#BatteryFull"><span class="hs-identifier hs-var">BatteryFull</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-140"></span><span>    </span><span id="local-6989586621679111435"><span class="annot"><a href="#local-6989586621679111435"><span class="hs-identifier hs-var">remaining</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Either GameError Resources
+-&gt; (Resources -&gt; Either GameError Resources)
+-&gt; Maybe Resources
+-&gt; Either GameError Resources
+forall b a. b -&gt; (a -&gt; b) -&gt; Maybe a -&gt; b
+</span><span class="hs-identifier hs-var">maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameError -&gt; Either GameError Resources
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#NotEnoughResources"><span class="hs-identifier hs-var">NotEnoughResources</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Resources -&gt; Either GameError Resources
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span>
+</span><span id="line-141"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Resources -&gt; Resources -&gt; Maybe Resources
+</span><a href="Game.State.html#removeResources"><span class="hs-identifier hs-var">removeResources</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; Resources
+</span><a href="Game.Types.html#playerStorage"><span class="hs-identifier hs-var">playerStorage</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111429"><span class="hs-identifier hs-var">player</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType -&gt; PlanetId -&gt; Resources
+forall k a. k -&gt; a -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.singleton</span></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679111426"><span class="hs-identifier hs-var">res</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111427"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-142"></span><span>    </span><span id="local-6989586621679111439"><span class="annot"><a href="#local-6989586621679111439"><span class="hs-identifier hs-var">paid</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="Game.Action.html#payCost"><span class="hs-identifier hs-type">payCost</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Config.html#cfgCostRecharge"><span class="hs-identifier hs-var">cfgCostRecharge</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111424"><span class="hs-identifier hs-type">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679111429"><span class="hs-identifier hs-type">player</span></a></span><span>
+</span><span id="line-143"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679111444"><span class="annot"><a href="#local-6989586621679111444"><span class="hs-identifier hs-var hs-var">value</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111427"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; PlanetId
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; ResourceType -&gt; Resources -&gt; PlanetId
+forall k a. Ord k =&gt; a -&gt; k -&gt; Map k a -&gt; a
+</span><span class="hs-identifier hs-var">Map.findWithDefault</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679111426"><span class="hs-identifier hs-var">res</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Resources
+</span><a href="Game.Config.html#cfgResourceValue"><span class="hs-identifier hs-var">cfgResourceValue</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111424"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-144"></span><span>        </span><span id="local-6989586621679111450"><span class="annot"><a href="#local-6989586621679111450"><span class="hs-identifier hs-var hs-var">newBattery</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; PlanetId
+forall a. Ord a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">min</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgBatteryMax"><span class="hs-identifier hs-var">cfgBatteryMax</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111424"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Player -&gt; PlanetId
+</span><a href="Game.Types.html#playerBattery"><span class="hs-identifier hs-var">playerBattery</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111439"><span class="hs-identifier hs-var">paid</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; PlanetId
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111444"><span class="hs-identifier hs-var">value</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; PlanetId
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgRechargeRate"><span class="hs-identifier hs-var">cfgRechargeRate</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111424"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-145"></span><span>        </span><span id="local-6989586621679111454"><span class="annot"><a href="#local-6989586621679111454"><span class="hs-identifier hs-var hs-var">gained</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111450"><span class="hs-identifier hs-var">newBattery</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; PlanetId
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Player -&gt; PlanetId
+</span><a href="Game.Types.html#playerBattery"><span class="hs-identifier hs-var">playerBattery</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111439"><span class="hs-identifier hs-var">paid</span></a></span><span>
+</span><span id="line-146"></span><span>        </span><span id="local-6989586621679111455"><span class="annot"><a href="#local-6989586621679111455"><span class="hs-identifier hs-var hs-var">player'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111439"><span class="hs-identifier hs-var">paid</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Game.Types.html#playerBattery"><span class="hs-identifier hs-var">playerBattery</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679111450"><span class="hs-identifier hs-type">newBattery</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#playerStorage"><span class="hs-identifier hs-var">playerStorage</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679111435"><span class="hs-identifier hs-type">remaining</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-147"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.State.html#setPlayer"><span class="hs-identifier hs-type">setPlayer</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111425"><span class="hs-identifier hs-type">pid</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111455"><span class="hs-identifier hs-type">player'</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111428"><span class="hs-identifier hs-type">gs</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Action.html#report"><span class="hs-identifier hs-type">report</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Recharged"><span class="hs-identifier hs-type">Recharged</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111454"><span class="hs-identifier hs-type">gained</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span></pre></body></html>

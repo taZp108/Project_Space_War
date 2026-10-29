@@ -1,0 +1,72 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | Cac tin nhan giua client (trinh duyet) va server.</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Protocol.Message.html"><span class="hs-identifier">Protocol.Message</span></a></span><span>
+</span><span id="line-3"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Protocol.Message.html#ClientMsg"><span class="hs-identifier">ClientMsg</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-4"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Protocol.Message.html#ServerMsg"><span class="hs-identifier">ServerMsg</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-5"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-6"></span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Types.html"><span class="hs-identifier">Game.Types</span></a></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.View.html"><span class="hs-identifier">Game.View</span></a></span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="annot"><span class="hs-comment">-- | Tin nhan nguoi choi gui len server.</span></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">data</span><span> </span><span id="ClientMsg"><span class="annot"><a href="Protocol.Message.html#ClientMsg"><span class="hs-identifier hs-var">ClientMsg</span></a></span></span><span>
+</span><span id="line-12"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="Join"><span class="annot"><a href="Protocol.Message.html#Join"><span class="hs-identifier hs-var">Join</span></a></span></span><span>                </span><span class="annot"><span class="hs-comment">-- ^ xin vao tran</span></span><span>
+</span><span id="line-13"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="DoAction"><span class="annot"><a href="Protocol.Message.html#DoAction"><span class="hs-identifier hs-var">DoAction</span></a></span></span><span> </span><span class="annot"><a href="Game.Types.html#Action"><span class="hs-identifier hs-type">Action</span></a></span><span>     </span><span class="annot"><span class="hs-comment">-- ^ lam mot action</span></span><span>
+</span><span id="line-14"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679111820"><span id="local-6989586621679111826"><span id="local-6989586621679111830"><span class="annot"><span class="annottext">Int -&gt; ClientMsg -&gt; ShowS
+[ClientMsg] -&gt; ShowS
+ClientMsg -&gt; String
+(Int -&gt; ClientMsg -&gt; ShowS)
+-&gt; (ClientMsg -&gt; String)
+-&gt; ([ClientMsg] -&gt; ShowS)
+-&gt; Show ClientMsg
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ClientMsg -&gt; ShowS
+showsPrec :: Int -&gt; ClientMsg -&gt; ShowS
+$cshow :: ClientMsg -&gt; String
+show :: ClientMsg -&gt; String
+$cshowList :: [ClientMsg] -&gt; ShowS
+showList :: [ClientMsg] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111835"><span id="local-6989586621679111842"><span class="annot"><span class="annottext">ClientMsg -&gt; ClientMsg -&gt; Bool
+(ClientMsg -&gt; ClientMsg -&gt; Bool)
+-&gt; (ClientMsg -&gt; ClientMsg -&gt; Bool) -&gt; Eq ClientMsg
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: ClientMsg -&gt; ClientMsg -&gt; Bool
+== :: ClientMsg -&gt; ClientMsg -&gt; Bool
+$c/= :: ClientMsg -&gt; ClientMsg -&gt; Bool
+/= :: ClientMsg -&gt; ClientMsg -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="annot"><span class="hs-comment">-- | Tin nhan server gui xuong nguoi choi.</span></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">data</span><span> </span><span id="ServerMsg"><span class="annot"><a href="Protocol.Message.html#ServerMsg"><span class="hs-identifier hs-var">ServerMsg</span></a></span></span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="Welcome"><span class="annot"><a href="Protocol.Message.html#Welcome"><span class="hs-identifier hs-var">Welcome</span></a></span></span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span>                          </span><span class="annot"><span class="hs-comment">-- ^ chao mung, cho biet minh la ai</span></span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="WaitingForOpponent"><span class="annot"><a href="Protocol.Message.html#WaitingForOpponent"><span class="hs-identifier hs-var">WaitingForOpponent</span></a></span></span><span>                        </span><span class="annot"><span class="hs-comment">-- ^ dang cho nguoi choi thu hai</span></span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="GameStarted"><span class="annot"><a href="Protocol.Message.html#GameStarted"><span class="hs-identifier hs-var">GameStarted</span></a></span></span><span> </span><span class="annot"><a href="Game.View.html#PlayerView"><span class="hs-identifier hs-type">PlayerView</span></a></span><span>                    </span><span class="annot"><span class="hs-comment">-- ^ tran bat dau</span></span><span>
+</span><span id="line-21"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ActionAccepted"><span class="annot"><a href="Protocol.Message.html#ActionAccepted"><span class="hs-identifier hs-var">ActionAccepted</span></a></span></span><span> </span><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-type">ActionReport</span></a></span><span> </span><span class="annot"><a href="Game.View.html#PlayerView"><span class="hs-identifier hs-type">PlayerView</span></a></span><span>    </span><span class="annot"><span class="hs-comment">-- ^ action cua minh duoc chap nhan</span></span><span>
+</span><span id="line-22"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ActionRejected"><span class="annot"><a href="Protocol.Message.html#ActionRejected"><span class="hs-identifier hs-var">ActionRejected</span></a></span></span><span> </span><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier hs-type">GameError</span></a></span><span>                  </span><span class="annot"><span class="hs-comment">-- ^ action cua minh bi tu choi</span></span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="OpponentActed"><span class="annot"><a href="Protocol.Message.html#OpponentActed"><span class="hs-identifier hs-var">OpponentActed</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Game.Types.html#Notice"><span class="hs-identifier hs-type">Notice</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="Game.View.html#PlayerView"><span class="hs-identifier hs-type">PlayerView</span></a></span><span>   </span><span class="annot"><span class="hs-comment">-- ^ doi thu vua lam xong, kem thong bao neu co</span></span><span>
+</span><span id="line-24"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="GameOver"><span class="annot"><a href="Protocol.Message.html#GameOver"><span class="hs-identifier hs-var">GameOver</span></a></span></span><span> </span><span class="annot"><a href="Game.Types.html#GameResult"><span class="hs-identifier hs-type">GameResult</span></a></span><span> </span><span class="annot"><a href="Game.View.html#GameSummary"><span class="hs-identifier hs-type">GameSummary</span></a></span><span>           </span><span class="annot"><span class="hs-comment">-- ^ tran ket thuc</span></span><span>
+</span><span id="line-25"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ProtocolError"><span class="annot"><a href="Protocol.Message.html#ProtocolError"><span class="hs-identifier hs-var">ProtocolError</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>                      </span><span class="annot"><span class="hs-comment">-- ^ tin nhan gui len bi hong hoac khong hieu</span></span><span>
+</span><span id="line-26"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679111855"><span id="local-6989586621679111884"><span id="local-6989586621679111888"><span class="annot"><span class="annottext">Int -&gt; ServerMsg -&gt; ShowS
+[ServerMsg] -&gt; ShowS
+ServerMsg -&gt; String
+(Int -&gt; ServerMsg -&gt; ShowS)
+-&gt; (ServerMsg -&gt; String)
+-&gt; ([ServerMsg] -&gt; ShowS)
+-&gt; Show ServerMsg
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ServerMsg -&gt; ShowS
+showsPrec :: Int -&gt; ServerMsg -&gt; ShowS
+$cshow :: ServerMsg -&gt; String
+show :: ServerMsg -&gt; String
+$cshowList :: [ServerMsg] -&gt; ShowS
+showList :: [ServerMsg] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111893"><span id="local-6989586621679111917"><span class="annot"><span class="annottext">ServerMsg -&gt; ServerMsg -&gt; Bool
+(ServerMsg -&gt; ServerMsg -&gt; Bool)
+-&gt; (ServerMsg -&gt; ServerMsg -&gt; Bool) -&gt; Eq ServerMsg
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: ServerMsg -&gt; ServerMsg -&gt; Bool
+== :: ServerMsg -&gt; ServerMsg -&gt; Bool
+$c/= :: ServerMsg -&gt; ServerMsg -&gt; Bool
+/= :: ServerMsg -&gt; ServerMsg -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span></pre></body></html>

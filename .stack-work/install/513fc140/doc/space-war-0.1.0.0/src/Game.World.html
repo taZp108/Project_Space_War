@@ -1,0 +1,307 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | Cac ham thuan ve toa do: khoang cach, bien map, huong, di chuyen.</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.World.html"><span class="hs-identifier">Game.World</span></a></span><span>
+</span><span id="line-3"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Game.World.html#distance"><span class="hs-identifier">distance</span></a></span><span>
+</span><span id="line-4"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.World.html#inBounds"><span class="hs-identifier">inBounds</span></a></span><span>
+</span><span id="line-5"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.World.html#allCells"><span class="hs-identifier">allCells</span></a></span><span>
+</span><span id="line-6"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.World.html#movePos"><span class="hs-identifier">movePos</span></a></span><span>
+</span><span id="line-7"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.World.html#compassFrom"><span class="hs-identifier">compassFrom</span></a></span><span>
+</span><span id="line-8"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.World.html#withinRadius"><span class="hs-identifier">withinRadius</span></a></span><span>
+</span><span id="line-9"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.World.html#ringCells"><span class="hs-identifier">ringCells</span></a></span><span>
+</span><span id="line-10"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Config.html"><span class="hs-identifier">Game.Config</span></a></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Types.html"><span class="hs-identifier">Game.Types</span></a></span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- | Khoang cach Manhattan giua hai o (bang so buoc phai di).</span><span>
+</span><span id="line-16"></span><span class="hs-comment">--</span><span>
+</span><span id="line-17"></span><span class="hs-comment">-- &gt;&gt;&gt; distance (Pos 0 0) (Pos 3 4)</span><span>
+</span><span id="line-18"></span><span class="hs-comment">-- 7</span><span>
+</span><span id="line-19"></span><span class="annot"><a href="Game.World.html#distance"><span class="hs-identifier hs-type">distance</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-20"></span><span id="distance"><span class="annot"><span class="annottext">distance :: Pos -&gt; Pos -&gt; Int
+</span><a href="Game.World.html#distance"><span class="hs-identifier hs-var hs-var">distance</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span id="local-6989586621679110900"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110900"><span class="hs-identifier hs-var">x1</span></a></span></span><span> </span><span id="local-6989586621679110901"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110901"><span class="hs-identifier hs-var">y1</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span id="local-6989586621679110902"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110902"><span class="hs-identifier hs-var">x2</span></a></span></span><span> </span><span id="local-6989586621679110903"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110903"><span class="hs-identifier hs-var">y2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">abs</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110900"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110902"><span class="hs-identifier hs-var">x2</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">abs</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110901"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110903"><span class="hs-identifier hs-var">y2</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="annot"><span class="hs-comment">-- | O co nam trong map khong (toa do tu 0 den kich thuoc tru 1).</span></span><span>
+</span><span id="line-23"></span><span class="annot"><a href="Game.World.html#inBounds"><span class="hs-identifier hs-type">inBounds</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-24"></span><span id="inBounds"><span class="annot"><span class="annottext">inBounds :: Config -&gt; Pos -&gt; Bool
+</span><a href="Game.World.html#inBounds"><span class="hs-identifier hs-var hs-var">inBounds</span></a></span></span><span> </span><span id="local-6989586621679110906"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110906"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span id="local-6989586621679110907"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110907"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679110908"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110908"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110907"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110908"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110907"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgMapWidth"><span class="hs-identifier hs-var">cfgMapWidth</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110906"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110908"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgMapHeight"><span class="hs-identifier hs-var">cfgMapHeight</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110906"><span class="hs-identifier hs-var">cfg</span></a></span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="annot"><span class="hs-comment">-- | Moi o cua map.</span></span><span>
+</span><span id="line-28"></span><span class="annot"><a href="Game.World.html#allCells"><span class="hs-identifier hs-type">allCells</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-29"></span><span id="allCells"><span class="annot"><span class="annottext">allCells :: Config -&gt; [Pos]
+</span><a href="Game.World.html#allCells"><span class="hs-identifier hs-var hs-var">allCells</span></a></span></span><span> </span><span id="local-6989586621679110913"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110913"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Pos
+</span><a href="Game.Types.html#Pos"><span class="hs-identifier hs-var">Pos</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110914"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110915"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679110915"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110915"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">..</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgMapHeight"><span class="hs-identifier hs-var">cfgMapHeight</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110913"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110914"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110914"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">..</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgMapWidth"><span class="hs-identifier hs-var">cfgMapWidth</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110913"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">]</span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="annot"><span class="hs-comment">-- | Di mot buoc theo huong. Ham nay khong kiem tra bien map.</span></span><span>
+</span><span id="line-33"></span><span class="annot"><a href="Game.World.html#movePos"><span class="hs-identifier hs-type">movePos</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Direction"><span class="hs-identifier hs-type">Direction</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span>
+</span><span id="line-34"></span><span id="movePos"><span class="annot"><span class="annottext">movePos :: Direction -&gt; Pos -&gt; Pos
+</span><a href="Game.World.html#movePos"><span class="hs-identifier hs-var hs-var">movePos</span></a></span></span><span> </span><span class="annot"><span class="annottext">Direction
+</span><a href="Game.Types.html#DirUp"><span class="hs-identifier hs-var">DirUp</span></a></span><span>    </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span id="local-6989586621679110917"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110917"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679110918"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110918"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Pos
+</span><a href="Game.Types.html#Pos"><span class="hs-identifier hs-var">Pos</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110917"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110918"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span class="annot"><a href="Game.World.html#movePos"><span class="hs-identifier hs-var">movePos</span></a></span><span> </span><span class="annot"><span class="annottext">Direction
+</span><a href="Game.Types.html#DirDown"><span class="hs-identifier hs-var">DirDown</span></a></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span id="local-6989586621679110920"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110920"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679110921"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110921"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Pos
+</span><a href="Game.Types.html#Pos"><span class="hs-identifier hs-var">Pos</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110920"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110921"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span class="annot"><a href="Game.World.html#movePos"><span class="hs-identifier hs-var">movePos</span></a></span><span> </span><span class="annot"><span class="annottext">Direction
+</span><a href="Game.Types.html#DirLeft"><span class="hs-identifier hs-var">DirLeft</span></a></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span id="local-6989586621679110923"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110923"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679110924"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110924"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Pos
+</span><a href="Game.Types.html#Pos"><span class="hs-identifier hs-var">Pos</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110923"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110924"><span class="hs-identifier hs-var">y</span></a></span><span>
+</span><span id="line-37"></span><span class="annot"><a href="Game.World.html#movePos"><span class="hs-identifier hs-var">movePos</span></a></span><span> </span><span class="annot"><span class="annottext">Direction
+</span><a href="Game.Types.html#DirRight"><span class="hs-identifier hs-var">DirRight</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span id="local-6989586621679110926"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110926"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679110927"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110927"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Pos
+</span><a href="Game.Types.html#Pos"><span class="hs-identifier hs-var">Pos</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110926"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110927"><span class="hs-identifier hs-var">y</span></a></span><span>
+</span><span id="line-38"></span><span>
+</span><span id="line-39"></span><span class="hs-comment">-- | Huong (8 phia) tu o thu nhat toi o thu hai.</span><span>
+</span><span id="line-40"></span><span class="hs-comment">--</span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- Neu doc lech &gt;= 2 lan ngang lech thi chi tinh Bac/Nam (va nguoc lai cho</span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- Dong/Tay), con lai la huong cheo. Cung o thi tra ve 'Here'.</span><span>
+</span><span id="line-43"></span><span class="annot"><a href="Game.World.html#compassFrom"><span class="hs-identifier hs-type">compassFrom</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Compass"><span class="hs-identifier hs-type">Compass</span></a></span><span>
+</span><span id="line-44"></span><span id="compassFrom"><span class="annot"><span class="annottext">compassFrom :: Pos -&gt; Pos -&gt; Compass
+</span><a href="Game.World.html#compassFrom"><span class="hs-identifier hs-var hs-var">compassFrom</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span id="local-6989586621679110929"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110929"><span class="hs-identifier hs-var">fx</span></a></span></span><span> </span><span id="local-6989586621679110930"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110930"><span class="hs-identifier hs-var">fy</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span id="local-6989586621679110931"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110931"><span class="hs-identifier hs-var">tx</span></a></span></span><span> </span><span id="local-6989586621679110932"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110932"><span class="hs-identifier hs-var">ty</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-45"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110933"><span class="hs-identifier hs-var">dx</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110934"><span class="hs-identifier hs-var">dy</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#Here"><span class="hs-identifier hs-var">Here</span></a></span><span>
+</span><span id="line-46"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">abs</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110933"><span class="hs-identifier hs-var">dx</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">abs</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110934"><span class="hs-identifier hs-var">dy</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110933"><span class="hs-identifier hs-var">dx</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#East"><span class="hs-identifier hs-var">East</span></a></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#West"><span class="hs-identifier hs-var">West</span></a></span><span>
+</span><span id="line-47"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">abs</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110934"><span class="hs-identifier hs-var">dy</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">abs</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110933"><span class="hs-identifier hs-var">dx</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110934"><span class="hs-identifier hs-var">dy</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#South"><span class="hs-identifier hs-var">South</span></a></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#North"><span class="hs-identifier hs-var">North</span></a></span><span>
+</span><span id="line-48"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110933"><span class="hs-identifier hs-var">dx</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110934"><span class="hs-identifier hs-var">dy</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#SouthEast"><span class="hs-identifier hs-var">SouthEast</span></a></span><span>
+</span><span id="line-49"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110933"><span class="hs-identifier hs-var">dx</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span>                 </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#NorthEast"><span class="hs-identifier hs-var">NorthEast</span></a></span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110934"><span class="hs-identifier hs-var">dy</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span>                 </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#SouthWest"><span class="hs-identifier hs-var">SouthWest</span></a></span><span>
+</span><span id="line-51"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>              </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#NorthWest"><span class="hs-identifier hs-var">NorthWest</span></a></span><span>
+</span><span id="line-52"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-53"></span><span>    </span><span id="local-6989586621679110933"><span class="annot"><span class="annottext">dx :: Int
+</span><a href="#local-6989586621679110933"><span class="hs-identifier hs-var hs-var">dx</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110931"><span class="hs-identifier hs-var">tx</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110929"><span class="hs-identifier hs-var">fx</span></a></span><span>
+</span><span id="line-54"></span><span>    </span><span id="local-6989586621679110934"><span class="annot"><span class="annottext">dy :: Int
+</span><a href="#local-6989586621679110934"><span class="hs-identifier hs-var hs-var">dy</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110932"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110930"><span class="hs-identifier hs-var">fy</span></a></span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span class="annot"><span class="hs-comment">-- | O thu hai co nam trong ban kinh (Manhattan) quanh o thu nhat khong.</span></span><span>
+</span><span id="line-57"></span><span class="annot"><a href="Game.World.html#withinRadius"><span class="hs-identifier hs-type">withinRadius</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-58"></span><span id="withinRadius"><span class="annot"><span class="annottext">withinRadius :: Int -&gt; Pos -&gt; Pos -&gt; Bool
+</span><a href="Game.World.html#withinRadius"><span class="hs-identifier hs-var hs-var">withinRadius</span></a></span></span><span> </span><span id="local-6989586621679110947"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110947"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679110948"><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679110948"><span class="hs-identifier hs-var">center</span></a></span></span><span> </span><span id="local-6989586621679110949"><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679110949"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Pos -&gt; Pos -&gt; Int
+</span><a href="Game.World.html#distance"><span class="hs-identifier hs-var">distance</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679110948"><span class="hs-identifier hs-var">center</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679110949"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110947"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span class="annot"><span class="hs-comment">-- | Cac o trong map cach o trung tam tu @lo@ den @hi@ buoc (Manhattan).</span></span><span>
+</span><span id="line-61"></span><span class="annot"><a href="Game.World.html#ringCells"><span class="hs-identifier hs-type">ringCells</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-62"></span><span id="ringCells"><span class="annot"><span class="annottext">ringCells :: Config -&gt; Pos -&gt; Int -&gt; Int -&gt; [Pos]
+</span><a href="Game.World.html#ringCells"><span class="hs-identifier hs-var hs-var">ringCells</span></a></span></span><span> </span><span id="local-6989586621679110951"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110951"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679110952"><span class="annot"><span class="annottext">center :: Pos
+</span><a href="#local-6989586621679110952"><span class="hs-identifier hs-var">center</span></a></span></span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span id="local-6989586621679110953"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110953"><span class="hs-identifier hs-var">cx</span></a></span></span><span> </span><span id="local-6989586621679110954"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110954"><span class="hs-identifier hs-var">cy</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679110955"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110955"><span class="hs-identifier hs-var">lo</span></a></span></span><span> </span><span id="local-6989586621679110956"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110956"><span class="hs-identifier hs-var">hi</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-63"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679110957"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><span id="line-64"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679110958"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110958"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110954"><span class="hs-identifier hs-var">cy</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110956"><span class="hs-identifier hs-var">hi</span></a></span><span> </span><span class="hs-glyph">..</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110954"><span class="hs-identifier hs-var">cy</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110956"><span class="hs-identifier hs-var">hi</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-65"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110959"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110959"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110953"><span class="hs-identifier hs-var">cx</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110956"><span class="hs-identifier hs-var">hi</span></a></span><span> </span><span class="hs-glyph">..</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110953"><span class="hs-identifier hs-var">cx</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110956"><span class="hs-identifier hs-var">hi</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-66"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679110957"><span class="annot"><span class="annottext">p :: Pos
+</span><a href="#local-6989586621679110957"><span class="hs-identifier hs-var hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Pos
+</span><a href="Game.Types.html#Pos"><span class="hs-identifier hs-var">Pos</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110959"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110958"><span class="hs-identifier hs-var">y</span></a></span><span>
+</span><span id="line-67"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Pos -&gt; Bool
+</span><a href="Game.World.html#inBounds"><span class="hs-identifier hs-var">inBounds</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110951"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679110957"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><span id="line-68"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679110960"><span class="annot"><span class="annottext">d :: Int
+</span><a href="#local-6989586621679110960"><span class="hs-identifier hs-var hs-var">d</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Pos -&gt; Pos -&gt; Int
+</span><a href="Game.World.html#distance"><span class="hs-identifier hs-var">distance</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679110952"><span class="hs-identifier hs-var">center</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679110957"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><span id="line-69"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110960"><span class="hs-identifier hs-var">d</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110955"><span class="hs-identifier hs-var">lo</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110960"><span class="hs-identifier hs-var">d</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110956"><span class="hs-identifier hs-var">hi</span></a></span><span>
+</span><span id="line-70"></span><span>    </span><span class="hs-special">]</span></pre></body></html>
