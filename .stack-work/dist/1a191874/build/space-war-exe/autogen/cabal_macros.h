@@ -10,6 +10,26 @@
   (major1) == 0 && (major2) <  1 || \
   (major1) == 0 && (major2) == 1 && (minor) <= 0)
 #endif /* MIN_VERSION_space_war */
+/* package aeson-2.2.5.1 */
+#ifndef VERSION_aeson
+#define VERSION_aeson "2.2.5.1"
+#endif /* VERSION_aeson */
+#ifndef MIN_VERSION_aeson
+#define MIN_VERSION_aeson(major1,major2,minor) (\
+  (major1) <  2 || \
+  (major1) == 2 && (major2) <  2 || \
+  (major1) == 2 && (major2) == 2 && (minor) <= 5)
+#endif /* MIN_VERSION_aeson */
+/* package async-2.2.6 */
+#ifndef VERSION_async
+#define VERSION_async "2.2.6"
+#endif /* VERSION_async */
+#ifndef MIN_VERSION_async
+#define MIN_VERSION_async(major1,major2,minor) (\
+  (major1) <  2 || \
+  (major1) == 2 && (major2) <  2 || \
+  (major1) == 2 && (major2) == 2 && (minor) <= 6)
+#endif /* MIN_VERSION_async */
 /* package base-4.20.2.0 */
 #ifndef VERSION_base
 #define VERSION_base "4.20.2.0"
@@ -20,6 +40,36 @@
   (major1) == 4 && (major2) <  20 || \
   (major1) == 4 && (major2) == 20 && (minor) <= 2)
 #endif /* MIN_VERSION_base */
+/* package bytestring-0.12.2.0 */
+#ifndef VERSION_bytestring
+#define VERSION_bytestring "0.12.2.0"
+#endif /* VERSION_bytestring */
+#ifndef MIN_VERSION_bytestring
+#define MIN_VERSION_bytestring(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  12 || \
+  (major1) == 0 && (major2) == 12 && (minor) <= 2)
+#endif /* MIN_VERSION_bytestring */
+/* package containers-0.7 */
+#ifndef VERSION_containers
+#define VERSION_containers "0.7"
+#endif /* VERSION_containers */
+#ifndef MIN_VERSION_containers
+#define MIN_VERSION_containers(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  7 || \
+  (major1) == 0 && (major2) == 7 && (minor) <= 0)
+#endif /* MIN_VERSION_containers */
+/* package random-1.2.1.3 */
+#ifndef VERSION_random
+#define VERSION_random "1.2.1.3"
+#endif /* VERSION_random */
+#ifndef MIN_VERSION_random
+#define MIN_VERSION_random(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  2 || \
+  (major1) == 1 && (major2) == 2 && (minor) <= 1)
+#endif /* MIN_VERSION_random */
 /* package space-war-0.1.0.0 */
 #ifndef VERSION_space_war
 #define VERSION_space_war "0.1.0.0"
@@ -30,6 +80,46 @@
   (major1) == 0 && (major2) <  1 || \
   (major1) == 0 && (major2) == 1 && (minor) <= 0)
 #endif /* MIN_VERSION_space_war */
+/* package stm-2.5.3.1 */
+#ifndef VERSION_stm
+#define VERSION_stm "2.5.3.1"
+#endif /* VERSION_stm */
+#ifndef MIN_VERSION_stm
+#define MIN_VERSION_stm(major1,major2,minor) (\
+  (major1) <  2 || \
+  (major1) == 2 && (major2) <  5 || \
+  (major1) == 2 && (major2) == 5 && (minor) <= 3)
+#endif /* MIN_VERSION_stm */
+/* package text-2.1.3 */
+#ifndef VERSION_text
+#define VERSION_text "2.1.3"
+#endif /* VERSION_text */
+#ifndef MIN_VERSION_text
+#define MIN_VERSION_text(major1,major2,minor) (\
+  (major1) <  2 || \
+  (major1) == 2 && (major2) <  1 || \
+  (major1) == 2 && (major2) == 1 && (minor) <= 3)
+#endif /* MIN_VERSION_text */
+/* package time-1.12.2 */
+#ifndef VERSION_time
+#define VERSION_time "1.12.2"
+#endif /* VERSION_time */
+#ifndef MIN_VERSION_time
+#define MIN_VERSION_time(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  12 || \
+  (major1) == 1 && (major2) == 12 && (minor) <= 2)
+#endif /* MIN_VERSION_time */
+/* package websockets-0.13.0.0 */
+#ifndef VERSION_websockets
+#define VERSION_websockets "0.13.0.0"
+#endif /* VERSION_websockets */
+#ifndef MIN_VERSION_websockets
+#define MIN_VERSION_websockets(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  13 || \
+  (major1) == 0 && (major2) == 13 && (minor) <= 0)
+#endif /* MIN_VERSION_websockets */
 
 /* tool gcc-14.0.6 */
 #ifndef TOOL_VERSION_gcc
@@ -103,7 +193,7 @@
 #endif /* MIN_TOOL_VERSION_runghc */
 
 #ifndef CURRENT_COMPONENT_ID
-#define CURRENT_COMPONENT_ID "space-war-0.1.0.0-68mAQBx3JSsFXw7Xn0nMAk-space-war-exe"
+#define CURRENT_COMPONENT_ID "space-war-0.1.0.0-1UCIrn5SB4DFx9m1h5WrX6-space-war-exe"
 #endif /* CURRENT_COMPONENT_ID */
 #ifndef CURRENT_PACKAGE_VERSION
 #define CURRENT_PACKAGE_VERSION "0.1.0.0"

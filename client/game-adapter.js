@@ -4,6 +4,7 @@
 (() => {
   const actions = window.mockActions;
   const lobby = window.mockLobby;
+  const viewListeners = new Set();
 
   function errorFrom(raw = {}) {
     return {
@@ -37,7 +38,11 @@
   }
 
   window.gameAdapter = Object.freeze({
-    startMatch: async () => ({ ok: true, playerView: actions.resetMatch() }),
+    startMatch: async () => {
+      const playerView = actions.resetMatch();
+      window.setTimeout(() => viewListeners.forEach((listener) => listener(playerView)), 0);
+      return { ok: true, playerView };
+    },
     submitAction,
     createRoom: async () => lobbyReply(await lobby.createRoom(), ["roomCode"]),
     joinRoom: async (roomCode) => lobbyReply(await lobby.joinRoom(roomCode), ["roomCode", "playersConnected"]),
@@ -47,7 +52,7 @@
       const raw = await actions.checkResultAfterDisconnect();
       return raw?.ok ? { ok: true, data: { result: raw.result } } : { ok: false, error: errorFrom(raw?.error) };
     },
-    subscribePlayerViews: (_listener) => () => {},
+    subscribePlayerViews: (listener) => { viewListeners.add(listener); return () => viewListeners.delete(listener); },
     subscribeNotifications: (_listener) => () => {},
     subscribeMatchResults: (_listener) => () => {},
     resourceValue: (resourceType) => actions.resourceValues[resourceType] || 0,

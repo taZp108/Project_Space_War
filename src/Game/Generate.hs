@@ -26,6 +26,9 @@ newGame cfg seed = GameState
     , gsRound     = 1
     , gsPhase     = InProgress
     , gsRng       = g3
+    , gsActiveCanonEvent = Nothing
+    , gsPendingAugments = Nothing
+    , gsAugmentChoices = Map.empty
     }
   where
     earth = earthPosition cfg
@@ -43,22 +46,34 @@ newPlayer cfg pos = Player
     , playerCargo   = Map.empty
     , playerStorage = Map.empty
     , playerKnown   = Map.empty
+    , playerInventory = Inventory Map.empty []
+    , playerLuck = 0
+    , playerActiveSlotPenalty = 0
+    , playerNextTurnAPPenalty = 0
+    , playerCargoJam         = 0
+    , playerTotalDeposited   = Map.empty
+    , playerAugments = []
     }
 
 -- | Sinh cac hanh tinh: dung so luong tung loai, o khac nhau,
 -- khong nam gan Earth hon 'cfgPlanetMinEarthDist'.
 generatePlanets :: Config -> StdGen -> (Map.Map PlanetId Planet, StdGen)
-generatePlanets cfg g0 = (Map.fromList [ (planetId p, p) | p <- planets ], g2)
+generatePlanets cfg g0 = (Map.fromList [ (planetId p, p) | p <- finalPlanets ], g3)
   where
     earth = earthPosition cfg
     typeList = concat [ replicate n t | (t, n) <- Map.toList (cfgPlanetCounts cfg) ]
     candidates = [ p | p <- allCells cfg, distance p earth >= cfgPlanetMinEarthDist cfg ]
     (shuffledTypes, g1) = pickDistinct (length typeList) typeList g0
     (cells, g2) = pickDistinct (length typeList) candidates g1
-    planets =
-        [ Planet i c t (Map.findWithDefault Map.empty t (cfgPlanetStock cfg))
+    
+    -- Sinh danh sách Planet ban đầu (chưa có Event)
+    rawPlanets =
+        [ Planet i c t (Map.findWithDefault Map.empty t (cfgPlanetStock cfg)) False Nothing
         | (i, c, t) <- zip3 [1 ..] cells shuffledTypes
         ]
+        
+    -- Gán ngẫu nhiên Event cho từng Planet
+    (finalPlanets, g3) = assignEvents rawPlanets g2
 
 -- | Boc ngau nhien @k@ phan tu khac nhau (khong lap) tu danh sach.
 -- Neu @k@ bang do dai danh sach thi ket qua la mot hoan vi ngau nhien.
@@ -78,3 +93,14 @@ pickOne :: a -> [a] -> StdGen -> (a, StdGen)
 pickOne def xs g = case pickDistinct 1 xs g of
     (x : _, g') -> (x, g')
     ([], g')    -> (def, g')
+
+
+-- | Gán ngẫu nhiên một PlanetEvent cho mỗi hành tinh.
+assignEvents :: [Planet] -> StdGen -> ([Planet], StdGen)
+assignEvents [] g = ([], g)
+assignEvents (p:ps) g =
+    let (evIdx, g1) = randomR (0, fromEnum (maxBound :: PlanetEvent)) g
+        ev = toEnum evIdx
+        p' = p { planetEventType = Just ev }
+        (rest, g2) = assignEvents ps g1
+    in (p' : rest, g2)

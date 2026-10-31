@@ -2,6 +2,7 @@
 --
 -- Luat choi nam o cac module khac (@Game.World@, @Game.Action@, ...).
 
+{-# LANGUAGE PatternSynonyms #-}
 module Game.Types
     ( -- * Vi tri va huong
       Pos (..)
@@ -9,7 +10,21 @@ module Game.Types
     , Compass (..)
       -- * Tai nguyen
     , ResourceType (..)
+    , pattern Iron
+    , pattern Crystal
+    , pattern EnergyCore
+    , pattern RareOre
+    , pattern ExoticMatter
     , Resources
+    , ItemId (..)
+    , ItemType (..)
+    , Inventory (..)
+    , Rarity (..)
+    , AugmentType (..)
+    , AugmentOffer (..)
+    , PlanetEvent (..)
+    , CanonEvent (..)
+    , EventNotification (..)
       -- * Hanh tinh
     , PlanetType (..)
     , PlanetId
@@ -52,8 +67,16 @@ data Compass
     deriving (Show, Eq, Ord, Enum, Bounded)
 
 -- | Nam loai tai nguyen.
-data ResourceType = Iron | Crystal | EnergyCore | RareOre | ExoticMatter
+data ResourceType = PinkDiamond | Spinel | HollyBlueAgate | Peridot
+                  | Topaz | Carnelian | Jasper | Amethyst
     deriving (Show, Eq, Ord, Enum, Bounded)
+
+pattern Iron, Crystal, EnergyCore, RareOre, ExoticMatter :: ResourceType
+pattern Iron = Spinel
+pattern Crystal = HollyBlueAgate
+pattern EnergyCore = Peridot
+pattern RareOre = Topaz
+pattern ExoticMatter = Carnelian
 
 -- | So luong tung loai tai nguyen (loai khong co trong bang nghia la 0).
 type Resources = Map.Map ResourceType Int
@@ -71,12 +94,16 @@ data Planet = Planet
     , planetPos   :: Pos
     , planetType  :: PlanetType
     , planetStock :: Resources
+    , planetEventTriggered :: Bool
+    , planetEventType :: Maybe PlanetEvent
     } deriving (Show, Eq)
 
 -- | Thong tin ve mot hanh tinh ma nguoi choi da kham pha (vi tri va loai).
 data KnownPlanet = KnownPlanet
     { knownPos  :: Pos
     , knownType :: PlanetType
+    , knownStock :: Maybe Resources
+    , knownEvent :: Maybe PlanetEvent
     } deriving (Show, Eq)
 
 -- | Hai nguoi choi.
@@ -91,6 +118,13 @@ data Player = Player
     , playerCargo   :: Resources                      -- ^ kho tren tau
     , playerStorage :: Resources                      -- ^ kho rieng tai Earth
     , playerKnown   :: Map.Map PlanetId KnownPlanet   -- ^ hanh tinh da kham pha
+    , playerInventory :: Inventory
+    , playerLuck :: Int
+    , playerActiveSlotPenalty :: Int
+    , playerNextTurnAPPenalty :: Int
+    , playerCargoJam         :: Int      
+    , playerTotalDeposited   :: Resources 
+    , playerAugments :: [AugmentOffer]
     } deriving (Show, Eq)
 
 -- | Ly do thang.
@@ -126,17 +160,24 @@ data GameState = GameState
     , gsRound     :: Int          -- ^ vong hien tai (1 vong = luot P1 roi luot P2)
     , gsPhase     :: GamePhase
     , gsRng       :: StdGen       -- ^ bo sinh so ngau nhien
+    , gsActiveCanonEvent :: Maybe CanonEvent
+    , gsPendingAugments :: Maybe [AugmentOffer]
+    , gsAugmentChoices :: Map.Map PlayerId Int
     } deriving (Show, Eq)
 
 
     -- | Cac hanh dong nguoi choi co the lam trong luot cua minh.
 data Action
     = Move Direction
+    | MoveTo Pos
     | Observe
     | ScanArea
     | ScanNearest
     | ScanOpponent
     | Mine ResourceType
+    | MineRandom
+    | Craft ItemId
+    | UseItem ItemId
     | Deposit
     | Recharge ResourceType Int   -- ^ loai tai nguyen va so luong dung de nap
     | EndTurn
@@ -158,6 +199,8 @@ data GameError
     | BatteryFull             -- ^ Recharge khi battery da day
     | NotEnoughResources      -- ^ kho Earth khong du tai nguyen de nap
     | InvalidAmount           -- ^ so luong khong hop le (<= 0)
+    | ItemUnavailable
+    | InventoryFull
     deriving (Show, Eq)
 
 -- | Thong bao gui cho doi thu khi ban lam mot action.
@@ -171,13 +214,63 @@ data ActionResult
     | NearestPlanet (Maybe (Compass, Int))   -- ^ huong va khoang cach, hoac khong con hanh tinh
     | OpponentDirection Compass
     | Mined ResourceType Int
+    | MinedAll Resources     
     | Deposited Resources
     | Recharged Int                          -- ^ so battery thuc su nhan duoc
     | TurnEnded
+    | PlanetEventOccurred PlanetEvent ActionResult Bool
+    | CanonEventOccurred CanonEvent ActionResult
+    | ItemCrafted ItemId
+    | ItemUsed ItemId
     deriving (Show, Eq)
 
 -- | Bao cao cua mot action thanh cong.
 data ActionReport = ActionReport
     { reportResult :: ActionResult
     , reportNotice :: Maybe Notice   -- ^ thong bao cho doi thu, neu co
+    } deriving (Show, Eq)
+
+data ItemId = IT_Teleport | IT_Battery | IT_AP | IT_CargoUp | IT_BatteryMax
+            | IT_EcoEngine | IT_LuckUp | IT_BlackHole | IT_SwapPos
+            | IT_Scarecrow | IT_Steal | IT_APBoost | IT_Magnet
+    deriving (Show, Eq, Ord, Enum, Bounded)
+
+data ItemType = Passive | Active deriving (Show, Eq, Ord)
+
+data Inventory = Inventory
+    { invPassives :: Map.Map ItemId Int
+    , invActives :: [ItemId]
+    } deriving (Show, Eq)
+
+data PlanetEvent = EV_LavaCore | EV_Radiation | EV_GreedyPlanet
+                 | EV_SpaceAnchor | EV_Parasite | EV_Mirage
+                 | EV_CargoJam  
+                 | EV_Surge  
+    deriving (Show, Eq, Ord, Enum, Bounded)
+
+data CanonEvent = CE_BlackHole | CE_Tax | CE_ReverseGravity
+                | CE_GalacticFair | CE_SolarStorm | CE_TwinPlanet
+                | CE_Homecoming   
+                | CE_GiftItem    
+                | CE_TheftItem    
+                | CE_SupplyDrop  
+                | CE_Plunder    
+    deriving (Show, Eq, Ord, Enum, Bounded)
+
+data Rarity = Silver | Gold | Diamond deriving (Show, Eq, Ord, Enum, Bounded)
+
+data AugmentType = Aug_BatteryMax | Aug_MoveCost | Aug_CargoMax | Aug_APMax 
+                 | Aug_Midas | Aug_Luck | Aug_ScanRadius | Aug_CraftDiscount
+  deriving (Show, Eq, Ord, Enum, Bounded)
+
+data AugmentOffer = AugmentOffer 
+    { offerId :: Int 
+    , augType :: AugmentType 
+    , augRarity :: Rarity
+    } deriving (Show, Eq)
+
+data EventNotification = EventNotification
+    { eventName :: String
+    , effectDesc :: String
+    , eventKind :: String
     } deriving (Show, Eq)

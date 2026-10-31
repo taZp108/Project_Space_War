@@ -40,12 +40,21 @@ data PlayerView = PlayerView
     , viewScoreTarget   :: Int
     , viewKnown         :: Map.Map PlanetId KnownPlanet
     , viewHere          :: Maybe Planet  -- ^ hanh tinh dang dung tren (kem ton kho)
+    , viewInventory     :: Inventory
+    , viewLuck          :: Int
+    , viewMaxCargo      :: Int
+    , viewMaxBattery    :: Int
+    , viewActiveEvent   :: Maybe CanonEvent
+   , viewCanCraft      :: [ItemId]
+    , viewTurnEndTime   :: Maybe Integer
+    , viewAugments      :: [AugmentOffer] 
     } deriving (Show, Eq)
 
 -- | Thong tin cuoi cung cua mot nguoi choi, lo ra khi tran ket thuc.
 data PlayerFinal = PlayerFinal
     { finalPos   :: Pos
     , finalScore :: Int
+    , finalDeposited :: Int  
     } deriving (Show, Eq)
 
 -- | Ban tong ket cua hai nguoi choi khi tran ket thuc.
@@ -67,22 +76,34 @@ viewFor cfg pid gs = PlayerView
     , viewPhase         = gsPhase gs
     , viewPos           = playerPos me
     , viewBattery       = playerBattery me
-    , viewBatteryMax    = cfgBatteryMax cfg
+    , viewBatteryMax    = playerMaxBattery cfg me
     , viewAP            = playerAP me
     , viewApMax         = cfgApMax cfg
     , viewCargo         = playerCargo me
-    , viewCargoCapacity = cfgCargoCapacity cfg
+    , viewCargoCapacity = playerMaxCargo cfg me
     , viewStorage       = playerStorage me
     , viewScore         = playerScore cfg me
     , viewScoreTarget   = cfgScoreTarget cfg
     , viewKnown         = playerKnown me
     , viewHere          = planetAt (playerPos me) gs
+    , viewInventory     = playerInventory me
+    , viewLuck          = playerLuck me
+    , viewMaxCargo      = playerMaxCargo cfg me
+    , viewMaxBattery    = playerMaxBattery cfg me
+    , viewActiveEvent   = gsActiveCanonEvent gs
+    , viewCanCraft      = [item | item <- [minBound .. maxBound], canAfford item]
+    , viewTurnEndTime   = Nothing
+    , viewAugments      = playerAugments me
     }
   where
     me = getPlayer pid gs
+    canAfford item = maybe False (const True) (removeResources (playerCargo me) (Map.findWithDefault Map.empty item (cfgItemRecipes cfg)))
 
 -- | Ban tong ket: vi tri va diem cuoi cua ca hai nguoi choi.
 summaryOf :: Config -> GameState -> GameSummary
 summaryOf cfg gs = GameSummary (final (gsPlayer1 gs)) (final (gsPlayer2 gs))
   where
-    final p = PlayerFinal (playerPos p) (playerScore cfg p)
+    final p = PlayerFinal
+        (playerPos p)
+        (playerScore cfg p)
+        (totalUnits (playerTotalDeposited p))

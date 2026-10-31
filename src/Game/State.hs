@@ -10,6 +10,14 @@ module Game.State
     , totalUnits
     , resourcesValue
     , playerScore
+    , playerMaxCargo
+    , playerMaxBattery
+    , playerMaxAP
+    , playerMoveCost
+    , playerObserveRadius
+    , playerScanRadius
+    , augmentBonus
+    , itemType
     ) where
 
 import Data.List (find)
@@ -66,3 +74,64 @@ resourcesValue cfg rs = sum
 -- | Diem cua nguoi choi (chi tinh kho Earth, khong tinh cargo).
 playerScore :: Config -> Player -> Int
 playerScore cfg = resourcesValue cfg . playerStorage
+
+
+
+
+augmentBonus :: Player -> AugmentType -> Int
+augmentBonus p t = sum [ bonus o | o <- playerAugments p, augType o == t ]
+  where
+    bonus o = case (t, augRarity o) of
+      (Aug_BatteryMax, Silver) -> 20
+      (Aug_BatteryMax, Gold)   -> 35
+      (Aug_BatteryMax, Diamond)-> 50
+      (Aug_CargoMax, Silver) -> 10
+      (Aug_CargoMax, Gold)   -> 20
+      (Aug_CargoMax, Diamond)-> 30
+      (Aug_APMax, Silver) -> 1
+      (Aug_APMax, Gold)   -> 2
+      (Aug_APMax, Diamond)-> 3
+      (Aug_MoveCost, Silver) -> 1
+      (Aug_MoveCost, Gold)   -> 2
+      (Aug_MoveCost, Diamond)-> 3
+      (Aug_Luck, Silver) -> 10
+      (Aug_Luck, Gold)   -> 20
+      (Aug_Luck, Diamond)-> 30
+      (Aug_CraftDiscount, Silver) -> 1
+      (Aug_CraftDiscount, Gold)   -> 2
+      (Aug_CraftDiscount, Diamond)-> 3
+      _ -> 0
+
+playerMaxCargo :: Config -> Player -> Int
+playerMaxCargo cfg p = 
+    max 10 (cfgCargoCapacity cfg 
+        + 20 * Map.findWithDefault 0 IT_CargoUp (invPassives (playerInventory p))
+        - playerCargoJam p
+        + augmentBonus p Aug_CargoMax)
+
+playerMaxBattery :: Config -> Player -> Int
+playerMaxBattery cfg p = cfgBatteryMax cfg + 20 * Map.findWithDefault 0 IT_BatteryMax (invPassives (playerInventory p)) + augmentBonus p Aug_BatteryMax
+
+playerMaxAP :: Config -> Player -> Int
+playerMaxAP cfg p = cfgApMax cfg + augmentBonus p Aug_APMax
+
+playerMoveCost :: Config -> Player -> Cost
+playerMoveCost cfg p = 
+    let Cost ap bat = cfgCostMove cfg
+        engine = Map.findWithDefault 0 IT_EcoEngine (invPassives (playerInventory p))
+        ecoDiscount = if engine > 0 then engine else augmentBonus p Aug_MoveCost
+    in Cost ap (max 0 (bat - ecoDiscount))
+
+playerScanRadius :: Config -> Player -> Int
+playerScanRadius cfg p = cfgScanRadius cfg + augmentBonus p Aug_ScanRadius
+
+playerObserveRadius :: Config -> Player -> Int
+playerObserveRadius cfg p = cfgObserveRadius cfg + augmentBonus p Aug_ScanRadius
+
+ 
+itemType :: ItemId -> ItemType
+itemType IT_CargoUp = Passive
+itemType IT_BatteryMax = Passive
+itemType IT_EcoEngine = Passive
+itemType IT_LuckUp = Passive
+itemType _ = Active

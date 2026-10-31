@@ -11,16 +11,20 @@ import Game.View
 data ClientMsg
     = Join                -- ^ xin vao tran
     | DoAction Action     -- ^ lam mot action
+    | PickAugment Int     -- ^ chon augment (0, 1, 2)
     deriving (Show, Eq)
 
 -- | Tin nhan server gui xuong nguoi choi.
 data ServerMsg
-    = Welcome PlayerId                          -- ^ chao mung, cho biet minh la ai
-    | WaitingForOpponent                        -- ^ dang cho nguoi choi thu hai
-    | GameStarted PlayerView                    -- ^ tran bat dau
-    | ActionAccepted ActionReport PlayerView    -- ^ action cua minh duoc chap nhan
-    | ActionRejected GameError                  -- ^ action cua minh bi tu choi
-    | OpponentActed (Maybe Notice) PlayerView   -- ^ doi thu vua lam xong, kem thong bao neu co
-    | GameOver GameResult GameSummary           -- ^ tran ket thuc
-    | ProtocolError String                      -- ^ tin nhan gui len bi hong hoac khong hieu
+    = Welcome PlayerId
+    | WaitingForOpponent
+    | GameStarted PlayerView
+    | ActionAccepted ActionReport PlayerView
+    | ActionRejected GameError
+    | OpponentActed (Maybe Notice) PlayerView
+    | GameOver GameResult GameSummary
+    | EventTriggered EventNotification PlayerView
+    | AugmentOfferMsg [AugmentOffer] Integer  -- ^ 3 offers, deadline (unix)
+    | AugmentResultMsg Int Int PlayerView     -- ^ your choice, opponent choice, view
+    | ProtocolError String
     deriving (Show, Eq)

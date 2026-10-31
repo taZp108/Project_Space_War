@@ -5,6 +5,7 @@ module Game.Config
     ( Cost (..)
     , Config (..)
     , defaultConfig
+    , configV2
     , earthPosition
     ) where
 
@@ -36,6 +37,9 @@ data Config = Config
     , cfgDepositRange     :: Int                      -- ^ tam gui hang ve Earth
     , cfgRechargeRate     :: Int                      -- ^ battery nhan duoc cho 1 diem tai nguyen
     , cfgResourceValue    :: Map.Map ResourceType Int -- ^ diem moi don vi
+    , cfgResourceRarity   :: Map.Map ResourceType Int
+    , cfgItemRecipes      :: Map.Map ItemId Resources
+    , cfgMaxActiveSlots   :: Int
     , cfgScoreTarget      :: Int
     , cfgMaxRounds        :: Int
     , cfgCostMove         :: Cost
@@ -47,6 +51,7 @@ data Config = Config
     , cfgCostDepositAtEarth :: Cost
     , cfgCostDepositRemote  :: Cost
     , cfgCostRecharge     :: Cost
+    , cfgAugmentInterval :: Int
     } deriving (Show, Eq)
 
 -- | Cau hinh mac dinh theo spec v1.0.
@@ -57,8 +62,8 @@ defaultConfig = Config
     , cfgPlanetCounts     = Map.fromList [(Mining, 40), (Energy, 24), (Rare, 16)]
     , cfgPlanetStock      = Map.fromList
         [ (Mining, Map.fromList [(Iron, 80), (Crystal, 30)])
-        , (Energy, Map.fromList [(EnergyCore, 30), (Iron, 20)])
-        , (Rare,   Map.fromList [(RareOre, 8), (ExoticMatter, 2)])
+        , (Energy, Map.fromList [(EnergyCore, 30), (Iron, 20), (Jasper, 10), (Amethyst, 20)])
+        , (Rare,   Map.fromList [(RareOre, 8), (ExoticMatter, 2), (PinkDiamond, 2), (Topaz, 8)])
         ]
     , cfgPlanetMinEarthDist = 4
     , cfgSpawnMinDist     = 1
@@ -72,7 +77,27 @@ defaultConfig = Config
     , cfgDepositRange     = 5
     , cfgRechargeRate     = 2
     , cfgResourceValue    = Map.fromList
-        [(Iron, 1), (Crystal, 3), (EnergyCore, 5), (RareOre, 10), (ExoticMatter, 25)]
+        [(PinkDiamond, 50), (Spinel, 1), (HollyBlueAgate, 3), (Peridot, 5),
+         (Topaz, 10), (Carnelian, 25), (Jasper, 15), (Amethyst, 2)]
+    , cfgResourceRarity = Map.fromList
+        [(PinkDiamond, 1), (Spinel, 6), (HollyBlueAgate, 5), (Peridot, 4),
+         (Topaz, 3), (Carnelian, 2), (Jasper, 7), (Amethyst, 8)]
+    , cfgItemRecipes = Map.fromList
+        [ (IT_Teleport, Map.fromList [(PinkDiamond, 1), (Amethyst, 3)])
+        , (IT_Battery, Map.fromList [(Peridot, 2), (Amethyst, 2)])
+        , (IT_AP, Map.fromList [(Jasper, 2), (Amethyst, 2)])
+        , (IT_CargoUp, Map.fromList [(HollyBlueAgate, 5), (Spinel, 5)])
+        , (IT_BatteryMax, Map.fromList [(Peridot, 4), (HollyBlueAgate, 3)])
+        , (IT_EcoEngine, Map.fromList [(Jasper, 3), (Topaz, 1)])
+        , (IT_LuckUp, Map.fromList [(Carnelian, 2), (PinkDiamond, 1)])
+        , (IT_BlackHole, Map.fromList [(PinkDiamond, 2), (Topaz, 3)])
+        , (IT_SwapPos, Map.fromList [(Jasper, 2), (Topaz, 2)])
+        , (IT_Scarecrow, Map.fromList [(Carnelian, 2), (Amethyst, 4)])
+        , (IT_Steal, Map.fromList [(PinkDiamond, 1), (Jasper, 2)])
+        , (IT_APBoost, Map.fromList [(Peridot, 2), (Topaz, 1)])
+        , (IT_Magnet, Map.fromList [(Spinel, 5), (HollyBlueAgate, 2)])
+        ]
+    , cfgMaxActiveSlots = 3
     , cfgScoreTarget      = 500
     , cfgMaxRounds        = 100
     , cfgCostMove         = Cost 1 2
@@ -84,7 +109,17 @@ defaultConfig = Config
     , cfgCostDepositAtEarth = Cost 1 0
     , cfgCostDepositRemote  = Cost 1 2
     , cfgCostRecharge     = Cost 1 0
+    , cfgAugmentInterval = 3
     }
+
+-- | Cau hinh v2: AP toi da tang len 10 de cho phep di chuyen xa hon trong 1 luot.
+-- Cac thong so khac giu nguyen nhu 'defaultConfig'.
+--
+-- Dung bang cach doi 'defaultConfig' thanh 'configV2' trong app/Main.hs.
+configV2 :: Config
+configV2 = defaultConfig { cfgApMax = 15 }
+
+
 
 -- | Vi tri Earth: giua map (rong chia 2, cao chia 2). Mac dinh la (50, 50).
 earthPosition :: Config -> Pos

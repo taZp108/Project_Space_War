@@ -1,0 +1,1070 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span id="local-6989586621679109366"><span id="local-6989586621679109367"><span id="local-6989586621679109368"><span id="local-6989586621679109369"><span id="local-6989586621679109370"><span id="local-6989586621679109371"><span id="local-6989586621679109372"><span id="local-6989586621679109373"><span id="local-6989586621679109374"><span id="local-6989586621679109375"></span></span></span></span></span></span></span></span></span></span><span class="hs-comment">-- | Cac kieu du lieu cot loi cua game (chi la du lieu, chua co luat choi).</span><span>
+</span><span id="line-2"></span><span class="hs-comment">--</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Luat choi nam o cac module khac (@Game.World@, @Game.Action@, ...).</span><span>
+</span><span id="line-4"></span><span>
+</span><span id="line-5"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.Types.html"><span class="hs-identifier">Game.Types</span></a></span><span>
+</span><span id="line-6"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Vi tri va huong</span></span><span>
+</span><span id="line-7"></span><span>      </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier">Pos</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#Direction"><span class="hs-identifier">Direction</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#Compass"><span class="hs-identifier">Compass</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span>      </span><span class="annot"><span class="hs-comment">-- * Tai nguyen</span></span><span>
+</span><span id="line-11"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#ResourceType"><span class="hs-identifier">ResourceType</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier">Resources</span></a></span><span>
+</span><span id="line-13"></span><span>      </span><span class="annot"><span class="hs-comment">-- * Hanh tinh</span></span><span>
+</span><span id="line-14"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#PlanetType"><span class="hs-identifier">PlanetType</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#PlanetId"><span class="hs-identifier">PlanetId</span></a></span><span>
+</span><span id="line-16"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#Planet"><span class="hs-identifier">Planet</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#KnownPlanet"><span class="hs-identifier">KnownPlanet</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span>      </span><span class="annot"><span class="hs-comment">-- * Nguoi choi</span></span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier">PlayerId</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier">Player</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span>      </span><span class="annot"><span class="hs-comment">-- * Trang thai game</span></span><span>
+</span><span id="line-22"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#WinReason"><span class="hs-identifier">WinReason</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#GameResult"><span class="hs-identifier">GameResult</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#GamePhase"><span class="hs-identifier">GamePhase</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier">GameState</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span>      </span><span class="annot"><span class="hs-comment">-- * Hanh dong</span></span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#Action"><span class="hs-identifier">Action</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier">GameError</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#Notice"><span class="hs-identifier">Notice</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#ActionResult"><span class="hs-identifier">ActionResult</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier">ActionReport</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Random</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">StdGen</span></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span class="annot"><span class="hs-comment">-- | Toa do tren map. @posX@ tang sang phai, @posY@ tang xuong duoi.</span></span><span>
+</span><span id="line-38"></span><span class="hs-keyword">data</span><span> </span><span id="Pos"><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-var">Pos</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Pos"><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-var">Pos</span></a></span></span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="posX"><span class="annot"><span class="annottext">Pos -&gt; Int
+</span><a href="Game.Types.html#posX"><span class="hs-identifier hs-var hs-var">posX</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="posY"><span class="annot"><span class="annottext">Pos -&gt; Int
+</span><a href="Game.Types.html#posY"><span class="hs-identifier hs-var hs-var">posY</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679109381"><span id="local-6989586621679109388"><span id="local-6989586621679109392"><span class="annot"><span class="annottext">Int -&gt; Pos -&gt; ShowS
+[Pos] -&gt; ShowS
+Pos -&gt; String
+(Int -&gt; Pos -&gt; ShowS)
+-&gt; (Pos -&gt; String) -&gt; ([Pos] -&gt; ShowS) -&gt; Show Pos
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Pos -&gt; ShowS
+showsPrec :: Int -&gt; Pos -&gt; ShowS
+$cshow :: Pos -&gt; String
+show :: Pos -&gt; String
+$cshowList :: [Pos] -&gt; ShowS
+showList :: [Pos] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109397"><span id="local-6989586621679109402"><span class="annot"><span class="annottext">Pos -&gt; Pos -&gt; Bool
+(Pos -&gt; Pos -&gt; Bool) -&gt; (Pos -&gt; Pos -&gt; Bool) -&gt; Eq Pos
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Pos -&gt; Pos -&gt; Bool
+== :: Pos -&gt; Pos -&gt; Bool
+$c/= :: Pos -&gt; Pos -&gt; Bool
+/= :: Pos -&gt; Pos -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109409"><span id="local-6989586621679109413"><span id="local-6989586621679109417"><span id="local-6989586621679109421"><span id="local-6989586621679109424"><span id="local-6989586621679109427"><span id="local-6989586621679109430"><span class="annot"><span class="annottext">Eq Pos
+Eq Pos =&gt;
+(Pos -&gt; Pos -&gt; Ordering)
+-&gt; (Pos -&gt; Pos -&gt; Bool)
+-&gt; (Pos -&gt; Pos -&gt; Bool)
+-&gt; (Pos -&gt; Pos -&gt; Bool)
+-&gt; (Pos -&gt; Pos -&gt; Bool)
+-&gt; (Pos -&gt; Pos -&gt; Pos)
+-&gt; (Pos -&gt; Pos -&gt; Pos)
+-&gt; Ord Pos
+Pos -&gt; Pos -&gt; Bool
+Pos -&gt; Pos -&gt; Ordering
+Pos -&gt; Pos -&gt; Pos
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: Pos -&gt; Pos -&gt; Ordering
+compare :: Pos -&gt; Pos -&gt; Ordering
+$c&lt; :: Pos -&gt; Pos -&gt; Bool
+&lt; :: Pos -&gt; Pos -&gt; Bool
+$c&lt;= :: Pos -&gt; Pos -&gt; Bool
+&lt;= :: Pos -&gt; Pos -&gt; Bool
+$c&gt; :: Pos -&gt; Pos -&gt; Bool
+&gt; :: Pos -&gt; Pos -&gt; Bool
+$c&gt;= :: Pos -&gt; Pos -&gt; Bool
+&gt;= :: Pos -&gt; Pos -&gt; Bool
+$cmax :: Pos -&gt; Pos -&gt; Pos
+max :: Pos -&gt; Pos -&gt; Pos
+$cmin :: Pos -&gt; Pos -&gt; Pos
+min :: Pos -&gt; Pos -&gt; Pos
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="annot"><span class="hs-comment">-- | Bon huong di chuyen. 'DirUp' lam giam @posY@ di 1.</span></span><span>
+</span><span id="line-44"></span><span class="hs-keyword">data</span><span> </span><span id="Direction"><span class="annot"><a href="Game.Types.html#Direction"><span class="hs-identifier hs-var">Direction</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="DirUp"><span class="annot"><a href="Game.Types.html#DirUp"><span class="hs-identifier hs-var">DirUp</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="DirDown"><span class="annot"><a href="Game.Types.html#DirDown"><span class="hs-identifier hs-var">DirDown</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="DirLeft"><span class="annot"><a href="Game.Types.html#DirLeft"><span class="hs-identifier hs-var">DirLeft</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="DirRight"><span class="annot"><a href="Game.Types.html#DirRight"><span class="hs-identifier hs-var">DirRight</span></a></span></span><span>
+</span><span id="line-45"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679109442"><span id="local-6989586621679109444"><span id="local-6989586621679109448"><span class="annot"><span class="annottext">Int -&gt; Direction -&gt; ShowS
+[Direction] -&gt; ShowS
+Direction -&gt; String
+(Int -&gt; Direction -&gt; ShowS)
+-&gt; (Direction -&gt; String)
+-&gt; ([Direction] -&gt; ShowS)
+-&gt; Show Direction
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Direction -&gt; ShowS
+showsPrec :: Int -&gt; Direction -&gt; ShowS
+$cshow :: Direction -&gt; String
+show :: Direction -&gt; String
+$cshowList :: [Direction] -&gt; ShowS
+showList :: [Direction] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109451"><span id="local-6989586621679109456"><span class="annot"><span class="annottext">Direction -&gt; Direction -&gt; Bool
+(Direction -&gt; Direction -&gt; Bool)
+-&gt; (Direction -&gt; Direction -&gt; Bool) -&gt; Eq Direction
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Direction -&gt; Direction -&gt; Bool
+== :: Direction -&gt; Direction -&gt; Bool
+$c/= :: Direction -&gt; Direction -&gt; Bool
+/= :: Direction -&gt; Direction -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109462"><span id="local-6989586621679109466"><span id="local-6989586621679109470"><span id="local-6989586621679109474"><span id="local-6989586621679109477"><span id="local-6989586621679109480"><span id="local-6989586621679109483"><span class="annot"><span class="annottext">Eq Direction
+Eq Direction =&gt;
+(Direction -&gt; Direction -&gt; Ordering)
+-&gt; (Direction -&gt; Direction -&gt; Bool)
+-&gt; (Direction -&gt; Direction -&gt; Bool)
+-&gt; (Direction -&gt; Direction -&gt; Bool)
+-&gt; (Direction -&gt; Direction -&gt; Bool)
+-&gt; (Direction -&gt; Direction -&gt; Direction)
+-&gt; (Direction -&gt; Direction -&gt; Direction)
+-&gt; Ord Direction
+Direction -&gt; Direction -&gt; Bool
+Direction -&gt; Direction -&gt; Ordering
+Direction -&gt; Direction -&gt; Direction
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: Direction -&gt; Direction -&gt; Ordering
+compare :: Direction -&gt; Direction -&gt; Ordering
+$c&lt; :: Direction -&gt; Direction -&gt; Bool
+&lt; :: Direction -&gt; Direction -&gt; Bool
+$c&lt;= :: Direction -&gt; Direction -&gt; Bool
+&lt;= :: Direction -&gt; Direction -&gt; Bool
+$c&gt; :: Direction -&gt; Direction -&gt; Bool
+&gt; :: Direction -&gt; Direction -&gt; Bool
+$c&gt;= :: Direction -&gt; Direction -&gt; Bool
+&gt;= :: Direction -&gt; Direction -&gt; Bool
+$cmax :: Direction -&gt; Direction -&gt; Direction
+max :: Direction -&gt; Direction -&gt; Direction
+$cmin :: Direction -&gt; Direction -&gt; Direction
+min :: Direction -&gt; Direction -&gt; Direction
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109486"><span id="local-6989586621679109494"><span id="local-6989586621679109501"><span id="local-6989586621679109509"><span id="local-6989586621679109512"><span id="local-6989586621679109517"><span id="local-6989586621679109523"><span id="local-6989586621679109527"><span class="annot"><span class="annottext">Int -&gt; Direction
+Direction -&gt; Int
+Direction -&gt; [Direction]
+Direction -&gt; Direction
+Direction -&gt; Direction -&gt; [Direction]
+Direction -&gt; Direction -&gt; Direction -&gt; [Direction]
+(Direction -&gt; Direction)
+-&gt; (Direction -&gt; Direction)
+-&gt; (Int -&gt; Direction)
+-&gt; (Direction -&gt; Int)
+-&gt; (Direction -&gt; [Direction])
+-&gt; (Direction -&gt; Direction -&gt; [Direction])
+-&gt; (Direction -&gt; Direction -&gt; [Direction])
+-&gt; (Direction -&gt; Direction -&gt; Direction -&gt; [Direction])
+-&gt; Enum Direction
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: Direction -&gt; Direction
+succ :: Direction -&gt; Direction
+$cpred :: Direction -&gt; Direction
+pred :: Direction -&gt; Direction
+$ctoEnum :: Int -&gt; Direction
+toEnum :: Int -&gt; Direction
+$cfromEnum :: Direction -&gt; Int
+fromEnum :: Direction -&gt; Int
+$cenumFrom :: Direction -&gt; [Direction]
+enumFrom :: Direction -&gt; [Direction]
+$cenumFromThen :: Direction -&gt; Direction -&gt; [Direction]
+enumFromThen :: Direction -&gt; Direction -&gt; [Direction]
+$cenumFromTo :: Direction -&gt; Direction -&gt; [Direction]
+enumFromTo :: Direction -&gt; Direction -&gt; [Direction]
+$cenumFromThenTo :: Direction -&gt; Direction -&gt; Direction -&gt; [Direction]
+enumFromThenTo :: Direction -&gt; Direction -&gt; Direction -&gt; [Direction]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109535"><span id="local-6989586621679109537"><span class="annot"><span class="annottext">Direction
+Direction -&gt; Direction -&gt; Bounded Direction
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: Direction
+minBound :: Direction
+$cmaxBound :: Direction
+maxBound :: Direction
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span class="annot"><span class="hs-comment">-- | Tam huong (8 phia) dung cho ket qua scan. 'Here' nghia la cung o.</span></span><span>
+</span><span id="line-48"></span><span class="hs-keyword">data</span><span> </span><span id="Compass"><span class="annot"><a href="Game.Types.html#Compass"><span class="hs-identifier hs-var">Compass</span></a></span></span><span>
+</span><span id="line-49"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="North"><span class="annot"><a href="Game.Types.html#North"><span class="hs-identifier hs-var">North</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="NorthEast"><span class="annot"><a href="Game.Types.html#NorthEast"><span class="hs-identifier hs-var">NorthEast</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="East"><span class="annot"><a href="Game.Types.html#East"><span class="hs-identifier hs-var">East</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="SouthEast"><span class="annot"><a href="Game.Types.html#SouthEast"><span class="hs-identifier hs-var">SouthEast</span></a></span></span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="South"><span class="annot"><a href="Game.Types.html#South"><span class="hs-identifier hs-var">South</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="SouthWest"><span class="annot"><a href="Game.Types.html#SouthWest"><span class="hs-identifier hs-var">SouthWest</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="West"><span class="annot"><a href="Game.Types.html#West"><span class="hs-identifier hs-var">West</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="NorthWest"><span class="annot"><a href="Game.Types.html#NorthWest"><span class="hs-identifier hs-var">NorthWest</span></a></span></span><span>
+</span><span id="line-51"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="Here"><span class="annot"><a href="Game.Types.html#Here"><span class="hs-identifier hs-var">Here</span></a></span></span><span>
+</span><span id="line-52"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679109552"><span id="local-6989586621679109554"><span id="local-6989586621679109558"><span class="annot"><span class="annottext">Int -&gt; Compass -&gt; ShowS
+[Compass] -&gt; ShowS
+Compass -&gt; String
+(Int -&gt; Compass -&gt; ShowS)
+-&gt; (Compass -&gt; String) -&gt; ([Compass] -&gt; ShowS) -&gt; Show Compass
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Compass -&gt; ShowS
+showsPrec :: Int -&gt; Compass -&gt; ShowS
+$cshow :: Compass -&gt; String
+show :: Compass -&gt; String
+$cshowList :: [Compass] -&gt; ShowS
+showList :: [Compass] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109561"><span id="local-6989586621679109565"><span class="annot"><span class="annottext">Compass -&gt; Compass -&gt; Bool
+(Compass -&gt; Compass -&gt; Bool)
+-&gt; (Compass -&gt; Compass -&gt; Bool) -&gt; Eq Compass
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Compass -&gt; Compass -&gt; Bool
+== :: Compass -&gt; Compass -&gt; Bool
+$c/= :: Compass -&gt; Compass -&gt; Bool
+/= :: Compass -&gt; Compass -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109571"><span id="local-6989586621679109575"><span id="local-6989586621679109579"><span id="local-6989586621679109583"><span id="local-6989586621679109586"><span id="local-6989586621679109589"><span id="local-6989586621679109592"><span class="annot"><span class="annottext">Eq Compass
+Eq Compass =&gt;
+(Compass -&gt; Compass -&gt; Ordering)
+-&gt; (Compass -&gt; Compass -&gt; Bool)
+-&gt; (Compass -&gt; Compass -&gt; Bool)
+-&gt; (Compass -&gt; Compass -&gt; Bool)
+-&gt; (Compass -&gt; Compass -&gt; Bool)
+-&gt; (Compass -&gt; Compass -&gt; Compass)
+-&gt; (Compass -&gt; Compass -&gt; Compass)
+-&gt; Ord Compass
+Compass -&gt; Compass -&gt; Bool
+Compass -&gt; Compass -&gt; Ordering
+Compass -&gt; Compass -&gt; Compass
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: Compass -&gt; Compass -&gt; Ordering
+compare :: Compass -&gt; Compass -&gt; Ordering
+$c&lt; :: Compass -&gt; Compass -&gt; Bool
+&lt; :: Compass -&gt; Compass -&gt; Bool
+$c&lt;= :: Compass -&gt; Compass -&gt; Bool
+&lt;= :: Compass -&gt; Compass -&gt; Bool
+$c&gt; :: Compass -&gt; Compass -&gt; Bool
+&gt; :: Compass -&gt; Compass -&gt; Bool
+$c&gt;= :: Compass -&gt; Compass -&gt; Bool
+&gt;= :: Compass -&gt; Compass -&gt; Bool
+$cmax :: Compass -&gt; Compass -&gt; Compass
+max :: Compass -&gt; Compass -&gt; Compass
+$cmin :: Compass -&gt; Compass -&gt; Compass
+min :: Compass -&gt; Compass -&gt; Compass
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109595"><span id="local-6989586621679109602"><span id="local-6989586621679109609"><span id="local-6989586621679109617"><span id="local-6989586621679109620"><span id="local-6989586621679109624"><span id="local-6989586621679109630"><span id="local-6989586621679109634"><span class="annot"><span class="annottext">Int -&gt; Compass
+Compass -&gt; Int
+Compass -&gt; [Compass]
+Compass -&gt; Compass
+Compass -&gt; Compass -&gt; [Compass]
+Compass -&gt; Compass -&gt; Compass -&gt; [Compass]
+(Compass -&gt; Compass)
+-&gt; (Compass -&gt; Compass)
+-&gt; (Int -&gt; Compass)
+-&gt; (Compass -&gt; Int)
+-&gt; (Compass -&gt; [Compass])
+-&gt; (Compass -&gt; Compass -&gt; [Compass])
+-&gt; (Compass -&gt; Compass -&gt; [Compass])
+-&gt; (Compass -&gt; Compass -&gt; Compass -&gt; [Compass])
+-&gt; Enum Compass
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: Compass -&gt; Compass
+succ :: Compass -&gt; Compass
+$cpred :: Compass -&gt; Compass
+pred :: Compass -&gt; Compass
+$ctoEnum :: Int -&gt; Compass
+toEnum :: Int -&gt; Compass
+$cfromEnum :: Compass -&gt; Int
+fromEnum :: Compass -&gt; Int
+$cenumFrom :: Compass -&gt; [Compass]
+enumFrom :: Compass -&gt; [Compass]
+$cenumFromThen :: Compass -&gt; Compass -&gt; [Compass]
+enumFromThen :: Compass -&gt; Compass -&gt; [Compass]
+$cenumFromTo :: Compass -&gt; Compass -&gt; [Compass]
+enumFromTo :: Compass -&gt; Compass -&gt; [Compass]
+$cenumFromThenTo :: Compass -&gt; Compass -&gt; Compass -&gt; [Compass]
+enumFromThenTo :: Compass -&gt; Compass -&gt; Compass -&gt; [Compass]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109637"><span id="local-6989586621679109639"><span class="annot"><span class="annottext">Compass
+Compass -&gt; Compass -&gt; Bounded Compass
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: Compass
+minBound :: Compass
+$cmaxBound :: Compass
+maxBound :: Compass
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="annot"><span class="hs-comment">-- | Nam loai tai nguyen.</span></span><span>
+</span><span id="line-55"></span><span class="hs-keyword">data</span><span> </span><span id="ResourceType"><span class="annot"><a href="Game.Types.html#ResourceType"><span class="hs-identifier hs-var">ResourceType</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Iron"><span class="annot"><a href="Game.Types.html#Iron"><span class="hs-identifier hs-var">Iron</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Crystal"><span class="annot"><a href="Game.Types.html#Crystal"><span class="hs-identifier hs-var">Crystal</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="EnergyCore"><span class="annot"><a href="Game.Types.html#EnergyCore"><span class="hs-identifier hs-var">EnergyCore</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="RareOre"><span class="annot"><a href="Game.Types.html#RareOre"><span class="hs-identifier hs-var">RareOre</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="ExoticMatter"><span class="annot"><a href="Game.Types.html#ExoticMatter"><span class="hs-identifier hs-var">ExoticMatter</span></a></span></span><span>
+</span><span id="line-56"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679109647"><span id="local-6989586621679109649"><span id="local-6989586621679109653"><span class="annot"><span class="annottext">Int -&gt; ResourceType -&gt; ShowS
+[ResourceType] -&gt; ShowS
+ResourceType -&gt; String
+(Int -&gt; ResourceType -&gt; ShowS)
+-&gt; (ResourceType -&gt; String)
+-&gt; ([ResourceType] -&gt; ShowS)
+-&gt; Show ResourceType
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ResourceType -&gt; ShowS
+showsPrec :: Int -&gt; ResourceType -&gt; ShowS
+$cshow :: ResourceType -&gt; String
+show :: ResourceType -&gt; String
+$cshowList :: [ResourceType] -&gt; ShowS
+showList :: [ResourceType] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109656"><span id="local-6989586621679109660"><span class="annot"><span class="annottext">ResourceType -&gt; ResourceType -&gt; Bool
+(ResourceType -&gt; ResourceType -&gt; Bool)
+-&gt; (ResourceType -&gt; ResourceType -&gt; Bool) -&gt; Eq ResourceType
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: ResourceType -&gt; ResourceType -&gt; Bool
+== :: ResourceType -&gt; ResourceType -&gt; Bool
+$c/= :: ResourceType -&gt; ResourceType -&gt; Bool
+/= :: ResourceType -&gt; ResourceType -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109666"><span id="local-6989586621679109670"><span id="local-6989586621679109674"><span id="local-6989586621679109678"><span id="local-6989586621679109681"><span id="local-6989586621679109684"><span id="local-6989586621679109687"><span class="annot"><span class="annottext">Eq ResourceType
+Eq ResourceType =&gt;
+(ResourceType -&gt; ResourceType -&gt; Ordering)
+-&gt; (ResourceType -&gt; ResourceType -&gt; Bool)
+-&gt; (ResourceType -&gt; ResourceType -&gt; Bool)
+-&gt; (ResourceType -&gt; ResourceType -&gt; Bool)
+-&gt; (ResourceType -&gt; ResourceType -&gt; Bool)
+-&gt; (ResourceType -&gt; ResourceType -&gt; ResourceType)
+-&gt; (ResourceType -&gt; ResourceType -&gt; ResourceType)
+-&gt; Ord ResourceType
+ResourceType -&gt; ResourceType -&gt; Bool
+ResourceType -&gt; ResourceType -&gt; Ordering
+ResourceType -&gt; ResourceType -&gt; ResourceType
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: ResourceType -&gt; ResourceType -&gt; Ordering
+compare :: ResourceType -&gt; ResourceType -&gt; Ordering
+$c&lt; :: ResourceType -&gt; ResourceType -&gt; Bool
+&lt; :: ResourceType -&gt; ResourceType -&gt; Bool
+$c&lt;= :: ResourceType -&gt; ResourceType -&gt; Bool
+&lt;= :: ResourceType -&gt; ResourceType -&gt; Bool
+$c&gt; :: ResourceType -&gt; ResourceType -&gt; Bool
+&gt; :: ResourceType -&gt; ResourceType -&gt; Bool
+$c&gt;= :: ResourceType -&gt; ResourceType -&gt; Bool
+&gt;= :: ResourceType -&gt; ResourceType -&gt; Bool
+$cmax :: ResourceType -&gt; ResourceType -&gt; ResourceType
+max :: ResourceType -&gt; ResourceType -&gt; ResourceType
+$cmin :: ResourceType -&gt; ResourceType -&gt; ResourceType
+min :: ResourceType -&gt; ResourceType -&gt; ResourceType
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109690"><span id="local-6989586621679109697"><span id="local-6989586621679109704"><span id="local-6989586621679109712"><span id="local-6989586621679109715"><span id="local-6989586621679109719"><span id="local-6989586621679109725"><span id="local-6989586621679109729"><span class="annot"><span class="annottext">Int -&gt; ResourceType
+ResourceType -&gt; Int
+ResourceType -&gt; [ResourceType]
+ResourceType -&gt; ResourceType
+ResourceType -&gt; ResourceType -&gt; [ResourceType]
+ResourceType -&gt; ResourceType -&gt; ResourceType -&gt; [ResourceType]
+(ResourceType -&gt; ResourceType)
+-&gt; (ResourceType -&gt; ResourceType)
+-&gt; (Int -&gt; ResourceType)
+-&gt; (ResourceType -&gt; Int)
+-&gt; (ResourceType -&gt; [ResourceType])
+-&gt; (ResourceType -&gt; ResourceType -&gt; [ResourceType])
+-&gt; (ResourceType -&gt; ResourceType -&gt; [ResourceType])
+-&gt; (ResourceType -&gt; ResourceType -&gt; ResourceType -&gt; [ResourceType])
+-&gt; Enum ResourceType
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: ResourceType -&gt; ResourceType
+succ :: ResourceType -&gt; ResourceType
+$cpred :: ResourceType -&gt; ResourceType
+pred :: ResourceType -&gt; ResourceType
+$ctoEnum :: Int -&gt; ResourceType
+toEnum :: Int -&gt; ResourceType
+$cfromEnum :: ResourceType -&gt; Int
+fromEnum :: ResourceType -&gt; Int
+$cenumFrom :: ResourceType -&gt; [ResourceType]
+enumFrom :: ResourceType -&gt; [ResourceType]
+$cenumFromThen :: ResourceType -&gt; ResourceType -&gt; [ResourceType]
+enumFromThen :: ResourceType -&gt; ResourceType -&gt; [ResourceType]
+$cenumFromTo :: ResourceType -&gt; ResourceType -&gt; [ResourceType]
+enumFromTo :: ResourceType -&gt; ResourceType -&gt; [ResourceType]
+$cenumFromThenTo :: ResourceType -&gt; ResourceType -&gt; ResourceType -&gt; [ResourceType]
+enumFromThenTo :: ResourceType -&gt; ResourceType -&gt; ResourceType -&gt; [ResourceType]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109732"><span id="local-6989586621679109734"><span class="annot"><span class="annottext">ResourceType
+ResourceType -&gt; ResourceType -&gt; Bounded ResourceType
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: ResourceType
+minBound :: ResourceType
+$cmaxBound :: ResourceType
+maxBound :: ResourceType
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span class="annot"><span class="hs-comment">-- | So luong tung loai tai nguyen (loai khong co trong bang nghia la 0).</span></span><span>
+</span><span id="line-59"></span><span class="hs-keyword">type</span><span> </span><span id="Resources"><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-var">Resources</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.Map</span></span><span> </span><span class="annot"><a href="Game.Types.html#ResourceType"><span class="hs-identifier hs-type">ResourceType</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-60"></span><span>
+</span><span id="line-61"></span><span class="annot"><span class="hs-comment">-- | Ba loai hanh tinh cua ban MVP.</span></span><span>
+</span><span id="line-62"></span><span class="hs-keyword">data</span><span> </span><span id="PlanetType"><span class="annot"><a href="Game.Types.html#PlanetType"><span class="hs-identifier hs-var">PlanetType</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Mining"><span class="annot"><a href="Game.Types.html#Mining"><span class="hs-identifier hs-var">Mining</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Energy"><span class="annot"><a href="Game.Types.html#Energy"><span class="hs-identifier hs-var">Energy</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Rare"><span class="annot"><a href="Game.Types.html#Rare"><span class="hs-identifier hs-var">Rare</span></a></span></span><span>
+</span><span id="line-63"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679109740"><span id="local-6989586621679109742"><span id="local-6989586621679109746"><span class="annot"><span class="annottext">Int -&gt; PlanetType -&gt; ShowS
+[PlanetType] -&gt; ShowS
+PlanetType -&gt; String
+(Int -&gt; PlanetType -&gt; ShowS)
+-&gt; (PlanetType -&gt; String)
+-&gt; ([PlanetType] -&gt; ShowS)
+-&gt; Show PlanetType
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; PlanetType -&gt; ShowS
+showsPrec :: Int -&gt; PlanetType -&gt; ShowS
+$cshow :: PlanetType -&gt; String
+show :: PlanetType -&gt; String
+$cshowList :: [PlanetType] -&gt; ShowS
+showList :: [PlanetType] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109749"><span id="local-6989586621679109753"><span class="annot"><span class="annottext">PlanetType -&gt; PlanetType -&gt; Bool
+(PlanetType -&gt; PlanetType -&gt; Bool)
+-&gt; (PlanetType -&gt; PlanetType -&gt; Bool) -&gt; Eq PlanetType
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: PlanetType -&gt; PlanetType -&gt; Bool
+== :: PlanetType -&gt; PlanetType -&gt; Bool
+$c/= :: PlanetType -&gt; PlanetType -&gt; Bool
+/= :: PlanetType -&gt; PlanetType -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109759"><span id="local-6989586621679109763"><span id="local-6989586621679109767"><span id="local-6989586621679109771"><span id="local-6989586621679109774"><span id="local-6989586621679109777"><span id="local-6989586621679109780"><span class="annot"><span class="annottext">Eq PlanetType
+Eq PlanetType =&gt;
+(PlanetType -&gt; PlanetType -&gt; Ordering)
+-&gt; (PlanetType -&gt; PlanetType -&gt; Bool)
+-&gt; (PlanetType -&gt; PlanetType -&gt; Bool)
+-&gt; (PlanetType -&gt; PlanetType -&gt; Bool)
+-&gt; (PlanetType -&gt; PlanetType -&gt; Bool)
+-&gt; (PlanetType -&gt; PlanetType -&gt; PlanetType)
+-&gt; (PlanetType -&gt; PlanetType -&gt; PlanetType)
+-&gt; Ord PlanetType
+PlanetType -&gt; PlanetType -&gt; Bool
+PlanetType -&gt; PlanetType -&gt; Ordering
+PlanetType -&gt; PlanetType -&gt; PlanetType
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: PlanetType -&gt; PlanetType -&gt; Ordering
+compare :: PlanetType -&gt; PlanetType -&gt; Ordering
+$c&lt; :: PlanetType -&gt; PlanetType -&gt; Bool
+&lt; :: PlanetType -&gt; PlanetType -&gt; Bool
+$c&lt;= :: PlanetType -&gt; PlanetType -&gt; Bool
+&lt;= :: PlanetType -&gt; PlanetType -&gt; Bool
+$c&gt; :: PlanetType -&gt; PlanetType -&gt; Bool
+&gt; :: PlanetType -&gt; PlanetType -&gt; Bool
+$c&gt;= :: PlanetType -&gt; PlanetType -&gt; Bool
+&gt;= :: PlanetType -&gt; PlanetType -&gt; Bool
+$cmax :: PlanetType -&gt; PlanetType -&gt; PlanetType
+max :: PlanetType -&gt; PlanetType -&gt; PlanetType
+$cmin :: PlanetType -&gt; PlanetType -&gt; PlanetType
+min :: PlanetType -&gt; PlanetType -&gt; PlanetType
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109783"><span id="local-6989586621679109790"><span id="local-6989586621679109797"><span id="local-6989586621679109805"><span id="local-6989586621679109808"><span id="local-6989586621679109812"><span id="local-6989586621679109818"><span id="local-6989586621679109822"><span class="annot"><span class="annottext">Int -&gt; PlanetType
+PlanetType -&gt; Int
+PlanetType -&gt; [PlanetType]
+PlanetType -&gt; PlanetType
+PlanetType -&gt; PlanetType -&gt; [PlanetType]
+PlanetType -&gt; PlanetType -&gt; PlanetType -&gt; [PlanetType]
+(PlanetType -&gt; PlanetType)
+-&gt; (PlanetType -&gt; PlanetType)
+-&gt; (Int -&gt; PlanetType)
+-&gt; (PlanetType -&gt; Int)
+-&gt; (PlanetType -&gt; [PlanetType])
+-&gt; (PlanetType -&gt; PlanetType -&gt; [PlanetType])
+-&gt; (PlanetType -&gt; PlanetType -&gt; [PlanetType])
+-&gt; (PlanetType -&gt; PlanetType -&gt; PlanetType -&gt; [PlanetType])
+-&gt; Enum PlanetType
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: PlanetType -&gt; PlanetType
+succ :: PlanetType -&gt; PlanetType
+$cpred :: PlanetType -&gt; PlanetType
+pred :: PlanetType -&gt; PlanetType
+$ctoEnum :: Int -&gt; PlanetType
+toEnum :: Int -&gt; PlanetType
+$cfromEnum :: PlanetType -&gt; Int
+fromEnum :: PlanetType -&gt; Int
+$cenumFrom :: PlanetType -&gt; [PlanetType]
+enumFrom :: PlanetType -&gt; [PlanetType]
+$cenumFromThen :: PlanetType -&gt; PlanetType -&gt; [PlanetType]
+enumFromThen :: PlanetType -&gt; PlanetType -&gt; [PlanetType]
+$cenumFromTo :: PlanetType -&gt; PlanetType -&gt; [PlanetType]
+enumFromTo :: PlanetType -&gt; PlanetType -&gt; [PlanetType]
+$cenumFromThenTo :: PlanetType -&gt; PlanetType -&gt; PlanetType -&gt; [PlanetType]
+enumFromThenTo :: PlanetType -&gt; PlanetType -&gt; PlanetType -&gt; [PlanetType]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109825"><span id="local-6989586621679109827"><span class="annot"><span class="annottext">PlanetType
+PlanetType -&gt; PlanetType -&gt; Bounded PlanetType
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: PlanetType
+minBound :: PlanetType
+$cmaxBound :: PlanetType
+maxBound :: PlanetType
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span>
+</span><span id="line-65"></span><span class="annot"><span class="hs-comment">-- | Ma so cua hanh tinh (1, 2, 3, ...).</span></span><span>
+</span><span id="line-66"></span><span class="hs-keyword">type</span><span> </span><span id="PlanetId"><span class="annot"><a href="Game.Types.html#PlanetId"><span class="hs-identifier hs-var">PlanetId</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span class="annot"><span class="hs-comment">-- | Mot hanh tinh. 'planetStock' la ton kho con lai, dung chung cho hai nguoi.</span></span><span>
+</span><span id="line-69"></span><span class="hs-keyword">data</span><span> </span><span id="Planet"><span class="annot"><a href="Game.Types.html#Planet"><span class="hs-identifier hs-var">Planet</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Planet"><span class="annot"><a href="Game.Types.html#Planet"><span class="hs-identifier hs-var">Planet</span></a></span></span><span>
+</span><span id="line-70"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="planetId"><span class="annot"><span class="annottext">Planet -&gt; Int
+</span><a href="Game.Types.html#planetId"><span class="hs-identifier hs-var hs-var">planetId</span></a></span></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#PlanetId"><span class="hs-identifier hs-type">PlanetId</span></a></span><span>
+</span><span id="line-71"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="planetPos"><span class="annot"><span class="annottext">Planet -&gt; Pos
+</span><a href="Game.Types.html#planetPos"><span class="hs-identifier hs-var hs-var">planetPos</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span>
+</span><span id="line-72"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="planetType"><span class="annot"><span class="annottext">Planet -&gt; PlanetType
+</span><a href="Game.Types.html#planetType"><span class="hs-identifier hs-var hs-var">planetType</span></a></span></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#PlanetType"><span class="hs-identifier hs-type">PlanetType</span></a></span><span>
+</span><span id="line-73"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="planetStock"><span class="annot"><span class="annottext">Planet -&gt; Resources
+</span><a href="Game.Types.html#planetStock"><span class="hs-identifier hs-var hs-var">planetStock</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span>
+</span><span id="line-74"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679109835"><span id="local-6989586621679109844"><span id="local-6989586621679109848"><span class="annot"><span class="annottext">Int -&gt; Planet -&gt; ShowS
+[Planet] -&gt; ShowS
+Planet -&gt; String
+(Int -&gt; Planet -&gt; ShowS)
+-&gt; (Planet -&gt; String) -&gt; ([Planet] -&gt; ShowS) -&gt; Show Planet
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Planet -&gt; ShowS
+showsPrec :: Int -&gt; Planet -&gt; ShowS
+$cshow :: Planet -&gt; String
+show :: Planet -&gt; String
+$cshowList :: [Planet] -&gt; ShowS
+showList :: [Planet] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109851"><span id="local-6989586621679109859"><span class="annot"><span class="annottext">Planet -&gt; Planet -&gt; Bool
+(Planet -&gt; Planet -&gt; Bool)
+-&gt; (Planet -&gt; Planet -&gt; Bool) -&gt; Eq Planet
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Planet -&gt; Planet -&gt; Bool
+== :: Planet -&gt; Planet -&gt; Bool
+$c/= :: Planet -&gt; Planet -&gt; Bool
+/= :: Planet -&gt; Planet -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span class="annot"><span class="hs-comment">-- | Thong tin ve mot hanh tinh ma nguoi choi da kham pha (vi tri va loai).</span></span><span>
+</span><span id="line-77"></span><span class="hs-keyword">data</span><span> </span><span id="KnownPlanet"><span class="annot"><a href="Game.Types.html#KnownPlanet"><span class="hs-identifier hs-var">KnownPlanet</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="KnownPlanet"><span class="annot"><a href="Game.Types.html#KnownPlanet"><span class="hs-identifier hs-var">KnownPlanet</span></a></span></span><span>
+</span><span id="line-78"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="knownPos"><span class="annot"><span class="annottext">KnownPlanet -&gt; Pos
+</span><a href="Game.Types.html#knownPos"><span class="hs-identifier hs-var hs-var">knownPos</span></a></span></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span>
+</span><span id="line-79"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="knownType"><span class="annot"><span class="annottext">KnownPlanet -&gt; PlanetType
+</span><a href="Game.Types.html#knownType"><span class="hs-identifier hs-var hs-var">knownType</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#PlanetType"><span class="hs-identifier hs-type">PlanetType</span></a></span><span>
+</span><span id="line-80"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679109866"><span id="local-6989586621679109871"><span id="local-6989586621679109875"><span class="annot"><span class="annottext">Int -&gt; KnownPlanet -&gt; ShowS
+[KnownPlanet] -&gt; ShowS
+KnownPlanet -&gt; String
+(Int -&gt; KnownPlanet -&gt; ShowS)
+-&gt; (KnownPlanet -&gt; String)
+-&gt; ([KnownPlanet] -&gt; ShowS)
+-&gt; Show KnownPlanet
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; KnownPlanet -&gt; ShowS
+showsPrec :: Int -&gt; KnownPlanet -&gt; ShowS
+$cshow :: KnownPlanet -&gt; String
+show :: KnownPlanet -&gt; String
+$cshowList :: [KnownPlanet] -&gt; ShowS
+showList :: [KnownPlanet] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109878"><span id="local-6989586621679109882"><span class="annot"><span class="annottext">KnownPlanet -&gt; KnownPlanet -&gt; Bool
+(KnownPlanet -&gt; KnownPlanet -&gt; Bool)
+-&gt; (KnownPlanet -&gt; KnownPlanet -&gt; Bool) -&gt; Eq KnownPlanet
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: KnownPlanet -&gt; KnownPlanet -&gt; Bool
+== :: KnownPlanet -&gt; KnownPlanet -&gt; Bool
+$c/= :: KnownPlanet -&gt; KnownPlanet -&gt; Bool
+/= :: KnownPlanet -&gt; KnownPlanet -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-81"></span><span>
+</span><span id="line-82"></span><span class="annot"><span class="hs-comment">-- | Hai nguoi choi.</span></span><span>
+</span><span id="line-83"></span><span class="hs-keyword">data</span><span> </span><span id="PlayerId"><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-var">PlayerId</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Player1"><span class="annot"><a href="Game.Types.html#Player1"><span class="hs-identifier hs-var">Player1</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Player2"><span class="annot"><a href="Game.Types.html#Player2"><span class="hs-identifier hs-var">Player2</span></a></span></span><span>
+</span><span id="line-84"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679109888"><span id="local-6989586621679109890"><span id="local-6989586621679109894"><span class="annot"><span class="annottext">Int -&gt; PlayerId -&gt; ShowS
+[PlayerId] -&gt; ShowS
+PlayerId -&gt; String
+(Int -&gt; PlayerId -&gt; ShowS)
+-&gt; (PlayerId -&gt; String) -&gt; ([PlayerId] -&gt; ShowS) -&gt; Show PlayerId
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; PlayerId -&gt; ShowS
+showsPrec :: Int -&gt; PlayerId -&gt; ShowS
+$cshow :: PlayerId -&gt; String
+show :: PlayerId -&gt; String
+$cshowList :: [PlayerId] -&gt; ShowS
+showList :: [PlayerId] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109897"><span id="local-6989586621679109901"><span class="annot"><span class="annottext">PlayerId -&gt; PlayerId -&gt; Bool
+(PlayerId -&gt; PlayerId -&gt; Bool)
+-&gt; (PlayerId -&gt; PlayerId -&gt; Bool) -&gt; Eq PlayerId
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: PlayerId -&gt; PlayerId -&gt; Bool
+== :: PlayerId -&gt; PlayerId -&gt; Bool
+$c/= :: PlayerId -&gt; PlayerId -&gt; Bool
+/= :: PlayerId -&gt; PlayerId -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109907"><span id="local-6989586621679109909"><span id="local-6989586621679109911"><span id="local-6989586621679109915"><span id="local-6989586621679109918"><span id="local-6989586621679109921"><span id="local-6989586621679109924"><span class="annot"><span class="annottext">Eq PlayerId
+Eq PlayerId =&gt;
+(PlayerId -&gt; PlayerId -&gt; Ordering)
+-&gt; (PlayerId -&gt; PlayerId -&gt; Bool)
+-&gt; (PlayerId -&gt; PlayerId -&gt; Bool)
+-&gt; (PlayerId -&gt; PlayerId -&gt; Bool)
+-&gt; (PlayerId -&gt; PlayerId -&gt; Bool)
+-&gt; (PlayerId -&gt; PlayerId -&gt; PlayerId)
+-&gt; (PlayerId -&gt; PlayerId -&gt; PlayerId)
+-&gt; Ord PlayerId
+PlayerId -&gt; PlayerId -&gt; Bool
+PlayerId -&gt; PlayerId -&gt; Ordering
+PlayerId -&gt; PlayerId -&gt; PlayerId
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: PlayerId -&gt; PlayerId -&gt; Ordering
+compare :: PlayerId -&gt; PlayerId -&gt; Ordering
+$c&lt; :: PlayerId -&gt; PlayerId -&gt; Bool
+&lt; :: PlayerId -&gt; PlayerId -&gt; Bool
+$c&lt;= :: PlayerId -&gt; PlayerId -&gt; Bool
+&lt;= :: PlayerId -&gt; PlayerId -&gt; Bool
+$c&gt; :: PlayerId -&gt; PlayerId -&gt; Bool
+&gt; :: PlayerId -&gt; PlayerId -&gt; Bool
+$c&gt;= :: PlayerId -&gt; PlayerId -&gt; Bool
+&gt;= :: PlayerId -&gt; PlayerId -&gt; Bool
+$cmax :: PlayerId -&gt; PlayerId -&gt; PlayerId
+max :: PlayerId -&gt; PlayerId -&gt; PlayerId
+$cmin :: PlayerId -&gt; PlayerId -&gt; PlayerId
+min :: PlayerId -&gt; PlayerId -&gt; PlayerId
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109927"><span id="local-6989586621679109934"><span id="local-6989586621679109941"><span id="local-6989586621679109949"><span id="local-6989586621679109952"><span id="local-6989586621679109956"><span id="local-6989586621679109962"><span id="local-6989586621679109966"><span class="annot"><span class="annottext">Int -&gt; PlayerId
+PlayerId -&gt; Int
+PlayerId -&gt; [PlayerId]
+PlayerId -&gt; PlayerId
+PlayerId -&gt; PlayerId -&gt; [PlayerId]
+PlayerId -&gt; PlayerId -&gt; PlayerId -&gt; [PlayerId]
+(PlayerId -&gt; PlayerId)
+-&gt; (PlayerId -&gt; PlayerId)
+-&gt; (Int -&gt; PlayerId)
+-&gt; (PlayerId -&gt; Int)
+-&gt; (PlayerId -&gt; [PlayerId])
+-&gt; (PlayerId -&gt; PlayerId -&gt; [PlayerId])
+-&gt; (PlayerId -&gt; PlayerId -&gt; [PlayerId])
+-&gt; (PlayerId -&gt; PlayerId -&gt; PlayerId -&gt; [PlayerId])
+-&gt; Enum PlayerId
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: PlayerId -&gt; PlayerId
+succ :: PlayerId -&gt; PlayerId
+$cpred :: PlayerId -&gt; PlayerId
+pred :: PlayerId -&gt; PlayerId
+$ctoEnum :: Int -&gt; PlayerId
+toEnum :: Int -&gt; PlayerId
+$cfromEnum :: PlayerId -&gt; Int
+fromEnum :: PlayerId -&gt; Int
+$cenumFrom :: PlayerId -&gt; [PlayerId]
+enumFrom :: PlayerId -&gt; [PlayerId]
+$cenumFromThen :: PlayerId -&gt; PlayerId -&gt; [PlayerId]
+enumFromThen :: PlayerId -&gt; PlayerId -&gt; [PlayerId]
+$cenumFromTo :: PlayerId -&gt; PlayerId -&gt; [PlayerId]
+enumFromTo :: PlayerId -&gt; PlayerId -&gt; [PlayerId]
+$cenumFromThenTo :: PlayerId -&gt; PlayerId -&gt; PlayerId -&gt; [PlayerId]
+enumFromThenTo :: PlayerId -&gt; PlayerId -&gt; PlayerId -&gt; [PlayerId]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109969"><span id="local-6989586621679109971"><span class="annot"><span class="annottext">PlayerId
+PlayerId -&gt; PlayerId -&gt; Bounded PlayerId
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: PlayerId
+minBound :: PlayerId
+$cmaxBound :: PlayerId
+maxBound :: PlayerId
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="annot"><span class="hs-comment">-- | Trang thai cua mot nguoi choi.</span></span><span>
+</span><span id="line-87"></span><span class="hs-keyword">data</span><span> </span><span id="Player"><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-var">Player</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Player"><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-var">Player</span></a></span></span><span>
+</span><span id="line-88"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="playerPos"><span class="annot"><span class="annottext">Player -&gt; Pos
+</span><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var hs-var">playerPos</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span>
+</span><span id="line-89"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="playerBattery"><span class="annot"><span class="annottext">Player -&gt; Int
+</span><a href="Game.Types.html#playerBattery"><span class="hs-identifier hs-var hs-var">playerBattery</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-90"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="playerAP"><span class="annot"><span class="annottext">Player -&gt; Int
+</span><a href="Game.Types.html#playerAP"><span class="hs-identifier hs-var hs-var">playerAP</span></a></span></span><span>      </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-91"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="playerCargo"><span class="annot"><span class="annottext">Player -&gt; Resources
+</span><a href="Game.Types.html#playerCargo"><span class="hs-identifier hs-var hs-var">playerCargo</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span>                      </span><span class="annot"><span class="hs-comment">-- ^ kho tren tau</span></span><span>
+</span><span id="line-92"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="playerStorage"><span class="annot"><span class="annottext">Player -&gt; Resources
+</span><a href="Game.Types.html#playerStorage"><span class="hs-identifier hs-var hs-var">playerStorage</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span>                      </span><span class="annot"><span class="hs-comment">-- ^ kho rieng tai Earth</span></span><span>
+</span><span id="line-93"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="playerKnown"><span class="annot"><span class="annottext">Player -&gt; Map Int KnownPlanet
+</span><a href="Game.Types.html#playerKnown"><span class="hs-identifier hs-var hs-var">playerKnown</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.Map</span></span><span> </span><span class="annot"><a href="Game.Types.html#PlanetId"><span class="hs-identifier hs-type">PlanetId</span></a></span><span> </span><span class="annot"><a href="Game.Types.html#KnownPlanet"><span class="hs-identifier hs-type">KnownPlanet</span></a></span><span>   </span><span class="annot"><span class="hs-comment">-- ^ hanh tinh da kham pha</span></span><span>
+</span><span id="line-94"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679109981"><span id="local-6989586621679109992"><span id="local-6989586621679109996"><span class="annot"><span class="annottext">Int -&gt; Player -&gt; ShowS
+[Player] -&gt; ShowS
+Player -&gt; String
+(Int -&gt; Player -&gt; ShowS)
+-&gt; (Player -&gt; String) -&gt; ([Player] -&gt; ShowS) -&gt; Show Player
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Player -&gt; ShowS
+showsPrec :: Int -&gt; Player -&gt; ShowS
+$cshow :: Player -&gt; String
+show :: Player -&gt; String
+$cshowList :: [Player] -&gt; ShowS
+showList :: [Player] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679109999"><span id="local-6989586621679110009"><span class="annot"><span class="annottext">Player -&gt; Player -&gt; Bool
+(Player -&gt; Player -&gt; Bool)
+-&gt; (Player -&gt; Player -&gt; Bool) -&gt; Eq Player
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Player -&gt; Player -&gt; Bool
+== :: Player -&gt; Player -&gt; Bool
+$c/= :: Player -&gt; Player -&gt; Bool
+/= :: Player -&gt; Player -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span><span class="annot"><span class="hs-comment">-- | Ly do thang.</span></span><span>
+</span><span id="line-97"></span><span class="hs-keyword">data</span><span> </span><span id="WinReason"><span class="annot"><a href="Game.Types.html#WinReason"><span class="hs-identifier hs-var">WinReason</span></a></span></span><span>
+</span><span id="line-98"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="ReachedTarget"><span class="annot"><a href="Game.Types.html#ReachedTarget"><span class="hs-identifier hs-var">ReachedTarget</span></a></span></span><span>          </span><span class="annot"><span class="hs-comment">-- ^ du diem o kho Earth</span></span><span>
+</span><span id="line-99"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="OpponentOutOfBattery"><span class="annot"><a href="Game.Types.html#OpponentOutOfBattery"><span class="hs-identifier hs-var">OpponentOutOfBattery</span></a></span></span><span>   </span><span class="annot"><span class="hs-comment">-- ^ doi thu het battery</span></span><span>
+</span><span id="line-100"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="OpponentDisconnected"><span class="annot"><a href="Game.Types.html#OpponentDisconnected"><span class="hs-identifier hs-var">OpponentDisconnected</span></a></span></span><span>   </span><span class="annot"><span class="hs-comment">-- ^ doi thu mat ket noi</span></span><span>
+</span><span id="line-101"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="HigherScoreAtLimit"><span class="annot"><a href="Game.Types.html#HigherScoreAtLimit"><span class="hs-identifier hs-var">HigherScoreAtLimit</span></a></span></span><span>     </span><span class="annot"><span class="hs-comment">-- ^ het so vong, diem Earth cao hon</span></span><span>
+</span><span id="line-102"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110017"><span id="local-6989586621679110019"><span id="local-6989586621679110023"><span class="annot"><span class="annottext">Int -&gt; WinReason -&gt; ShowS
+[WinReason] -&gt; ShowS
+WinReason -&gt; String
+(Int -&gt; WinReason -&gt; ShowS)
+-&gt; (WinReason -&gt; String)
+-&gt; ([WinReason] -&gt; ShowS)
+-&gt; Show WinReason
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; WinReason -&gt; ShowS
+showsPrec :: Int -&gt; WinReason -&gt; ShowS
+$cshow :: WinReason -&gt; String
+show :: WinReason -&gt; String
+$cshowList :: [WinReason] -&gt; ShowS
+showList :: [WinReason] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110026"><span id="local-6989586621679110030"><span class="annot"><span class="annottext">WinReason -&gt; WinReason -&gt; Bool
+(WinReason -&gt; WinReason -&gt; Bool)
+-&gt; (WinReason -&gt; WinReason -&gt; Bool) -&gt; Eq WinReason
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: WinReason -&gt; WinReason -&gt; Bool
+== :: WinReason -&gt; WinReason -&gt; Bool
+$c/= :: WinReason -&gt; WinReason -&gt; Bool
+/= :: WinReason -&gt; WinReason -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-103"></span><span>
+</span><span id="line-104"></span><span class="annot"><span class="hs-comment">-- | Ket qua cua mot tran.</span></span><span>
+</span><span id="line-105"></span><span class="hs-keyword">data</span><span> </span><span id="GameResult"><span class="annot"><a href="Game.Types.html#GameResult"><span class="hs-identifier hs-var">GameResult</span></a></span></span><span>
+</span><span id="line-106"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="Winner"><span class="annot"><a href="Game.Types.html#Winner"><span class="hs-identifier hs-var">Winner</span></a></span></span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="annot"><a href="Game.Types.html#WinReason"><span class="hs-identifier hs-type">WinReason</span></a></span><span>
+</span><span id="line-107"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="Draw"><span class="annot"><a href="Game.Types.html#Draw"><span class="hs-identifier hs-var">Draw</span></a></span></span><span>
+</span><span id="line-108"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110036"><span id="local-6989586621679110041"><span id="local-6989586621679110045"><span class="annot"><span class="annottext">Int -&gt; GameResult -&gt; ShowS
+[GameResult] -&gt; ShowS
+GameResult -&gt; String
+(Int -&gt; GameResult -&gt; ShowS)
+-&gt; (GameResult -&gt; String)
+-&gt; ([GameResult] -&gt; ShowS)
+-&gt; Show GameResult
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; GameResult -&gt; ShowS
+showsPrec :: Int -&gt; GameResult -&gt; ShowS
+$cshow :: GameResult -&gt; String
+show :: GameResult -&gt; String
+$cshowList :: [GameResult] -&gt; ShowS
+showList :: [GameResult] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110048"><span id="local-6989586621679110054"><span class="annot"><span class="annottext">GameResult -&gt; GameResult -&gt; Bool
+(GameResult -&gt; GameResult -&gt; Bool)
+-&gt; (GameResult -&gt; GameResult -&gt; Bool) -&gt; Eq GameResult
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: GameResult -&gt; GameResult -&gt; Bool
+== :: GameResult -&gt; GameResult -&gt; Bool
+$c/= :: GameResult -&gt; GameResult -&gt; Bool
+/= :: GameResult -&gt; GameResult -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-109"></span><span>
+</span><span id="line-110"></span><span class="annot"><span class="hs-comment">-- | Giai doan cua tran dau.</span></span><span>
+</span><span id="line-111"></span><span class="hs-keyword">data</span><span> </span><span id="GamePhase"><span class="annot"><a href="Game.Types.html#GamePhase"><span class="hs-identifier hs-var">GamePhase</span></a></span></span><span>
+</span><span id="line-112"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="WaitingForPlayers"><span class="annot"><a href="Game.Types.html#WaitingForPlayers"><span class="hs-identifier hs-var">WaitingForPlayers</span></a></span></span><span>
+</span><span id="line-113"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="InProgress"><span class="annot"><a href="Game.Types.html#InProgress"><span class="hs-identifier hs-var">InProgress</span></a></span></span><span>
+</span><span id="line-114"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="Finished"><span class="annot"><a href="Game.Types.html#Finished"><span class="hs-identifier hs-var">Finished</span></a></span></span><span> </span><span class="annot"><a href="Game.Types.html#GameResult"><span class="hs-identifier hs-type">GameResult</span></a></span><span>
+</span><span id="line-115"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110061"><span id="local-6989586621679110065"><span id="local-6989586621679110069"><span class="annot"><span class="annottext">Int -&gt; GamePhase -&gt; ShowS
+[GamePhase] -&gt; ShowS
+GamePhase -&gt; String
+(Int -&gt; GamePhase -&gt; ShowS)
+-&gt; (GamePhase -&gt; String)
+-&gt; ([GamePhase] -&gt; ShowS)
+-&gt; Show GamePhase
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; GamePhase -&gt; ShowS
+showsPrec :: Int -&gt; GamePhase -&gt; ShowS
+$cshow :: GamePhase -&gt; String
+show :: GamePhase -&gt; String
+$cshowList :: [GamePhase] -&gt; ShowS
+showList :: [GamePhase] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110072"><span id="local-6989586621679110077"><span class="annot"><span class="annottext">GamePhase -&gt; GamePhase -&gt; Bool
+(GamePhase -&gt; GamePhase -&gt; Bool)
+-&gt; (GamePhase -&gt; GamePhase -&gt; Bool) -&gt; Eq GamePhase
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: GamePhase -&gt; GamePhase -&gt; Bool
+== :: GamePhase -&gt; GamePhase -&gt; Bool
+$c/= :: GamePhase -&gt; GamePhase -&gt; Bool
+/= :: GamePhase -&gt; GamePhase -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-116"></span><span>
+</span><span id="line-117"></span><span class="annot"><span class="hs-comment">-- | Toan bo trang thai cua mot tran. Server giu ban day du nay.</span></span><span>
+</span><span id="line-118"></span><span class="hs-keyword">data</span><span> </span><span id="GameState"><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-var">GameState</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="GameState"><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-var">GameState</span></a></span></span><span>
+</span><span id="line-119"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="gsMapWidth"><span class="annot"><span class="annottext">GameState -&gt; Int
+</span><a href="Game.Types.html#gsMapWidth"><span class="hs-identifier hs-var hs-var">gsMapWidth</span></a></span></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-120"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="gsMapHeight"><span class="annot"><span class="annottext">GameState -&gt; Int
+</span><a href="Game.Types.html#gsMapHeight"><span class="hs-identifier hs-var hs-var">gsMapHeight</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-121"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="gsEarth"><span class="annot"><span class="annottext">GameState -&gt; Pos
+</span><a href="Game.Types.html#gsEarth"><span class="hs-identifier hs-var hs-var">gsEarth</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span>
+</span><span id="line-122"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="gsPlanets"><span class="annot"><span class="annottext">GameState -&gt; Map Int Planet
+</span><a href="Game.Types.html#gsPlanets"><span class="hs-identifier hs-var hs-var">gsPlanets</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.Map</span></span><span> </span><span class="annot"><a href="Game.Types.html#PlanetId"><span class="hs-identifier hs-type">PlanetId</span></a></span><span> </span><span class="annot"><a href="Game.Types.html#Planet"><span class="hs-identifier hs-type">Planet</span></a></span><span>
+</span><span id="line-123"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="gsPlayer1"><span class="annot"><span class="annottext">GameState -&gt; Player
+</span><a href="Game.Types.html#gsPlayer1"><span class="hs-identifier hs-var hs-var">gsPlayer1</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span>
+</span><span id="line-124"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="gsPlayer2"><span class="annot"><span class="annottext">GameState -&gt; Player
+</span><a href="Game.Types.html#gsPlayer2"><span class="hs-identifier hs-var hs-var">gsPlayer2</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span>
+</span><span id="line-125"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="gsCurrent"><span class="annot"><span class="annottext">GameState -&gt; PlayerId
+</span><a href="Game.Types.html#gsCurrent"><span class="hs-identifier hs-var hs-var">gsCurrent</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span>     </span><span class="annot"><span class="hs-comment">-- ^ nguoi dang co luot</span></span><span>
+</span><span id="line-126"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="gsRound"><span class="annot"><span class="annottext">GameState -&gt; Int
+</span><a href="Game.Types.html#gsRound"><span class="hs-identifier hs-var hs-var">gsRound</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>          </span><span class="annot"><span class="hs-comment">-- ^ vong hien tai (1 vong = luot P1 roi luot P2)</span></span><span>
+</span><span id="line-127"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="gsPhase"><span class="annot"><span class="annottext">GameState -&gt; GamePhase
+</span><a href="Game.Types.html#gsPhase"><span class="hs-identifier hs-var hs-var">gsPhase</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#GamePhase"><span class="hs-identifier hs-type">GamePhase</span></a></span><span>
+</span><span id="line-128"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="gsRng"><span class="annot"><span class="annottext">GameState -&gt; StdGen
+</span><a href="Game.Types.html#gsRng"><span class="hs-identifier hs-var hs-var">gsRng</span></a></span></span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StdGen</span></span><span>       </span><span class="annot"><span class="hs-comment">-- ^ bo sinh so ngau nhien</span></span><span>
+</span><span id="line-129"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110092"><span id="local-6989586621679110107"><span id="local-6989586621679110111"><span class="annot"><span class="annottext">Int -&gt; GameState -&gt; ShowS
+[GameState] -&gt; ShowS
+GameState -&gt; String
+(Int -&gt; GameState -&gt; ShowS)
+-&gt; (GameState -&gt; String)
+-&gt; ([GameState] -&gt; ShowS)
+-&gt; Show GameState
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; GameState -&gt; ShowS
+showsPrec :: Int -&gt; GameState -&gt; ShowS
+$cshow :: GameState -&gt; String
+show :: GameState -&gt; String
+$cshowList :: [GameState] -&gt; ShowS
+showList :: [GameState] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110114"><span id="local-6989586621679110128"><span class="annot"><span class="annottext">GameState -&gt; GameState -&gt; Bool
+(GameState -&gt; GameState -&gt; Bool)
+-&gt; (GameState -&gt; GameState -&gt; Bool) -&gt; Eq GameState
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: GameState -&gt; GameState -&gt; Bool
+== :: GameState -&gt; GameState -&gt; Bool
+$c/= :: GameState -&gt; GameState -&gt; Bool
+/= :: GameState -&gt; GameState -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-130"></span><span>
+</span><span id="line-131"></span><span>
+</span><span id="line-132"></span><span>    </span><span class="hs-comment">-- | Cac hanh dong nguoi choi co the lam trong luot cua minh.</span><span>
+</span><span id="line-133"></span><span class="hs-keyword">data</span><span> </span><span id="Action"><span class="annot"><a href="Game.Types.html#Action"><span class="hs-identifier hs-var">Action</span></a></span></span><span>
+</span><span id="line-134"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="Move"><span class="annot"><a href="Game.Types.html#Move"><span class="hs-identifier hs-var">Move</span></a></span></span><span> </span><span class="annot"><a href="Game.Types.html#Direction"><span class="hs-identifier hs-type">Direction</span></a></span><span>
+</span><span id="line-135"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="Observe"><span class="annot"><a href="Game.Types.html#Observe"><span class="hs-identifier hs-var">Observe</span></a></span></span><span>
+</span><span id="line-136"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ScanArea"><span class="annot"><a href="Game.Types.html#ScanArea"><span class="hs-identifier hs-var">ScanArea</span></a></span></span><span>
+</span><span id="line-137"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ScanNearest"><span class="annot"><a href="Game.Types.html#ScanNearest"><span class="hs-identifier hs-var">ScanNearest</span></a></span></span><span>
+</span><span id="line-138"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ScanOpponent"><span class="annot"><a href="Game.Types.html#ScanOpponent"><span class="hs-identifier hs-var">ScanOpponent</span></a></span></span><span>
+</span><span id="line-139"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="Mine"><span class="annot"><a href="Game.Types.html#Mine"><span class="hs-identifier hs-var">Mine</span></a></span></span><span> </span><span class="annot"><a href="Game.Types.html#ResourceType"><span class="hs-identifier hs-type">ResourceType</span></a></span><span>
+</span><span id="line-140"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="Deposit"><span class="annot"><a href="Game.Types.html#Deposit"><span class="hs-identifier hs-var">Deposit</span></a></span></span><span>
+</span><span id="line-141"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="Recharge"><span class="annot"><a href="Game.Types.html#Recharge"><span class="hs-identifier hs-var">Recharge</span></a></span></span><span> </span><span class="annot"><a href="Game.Types.html#ResourceType"><span class="hs-identifier hs-type">ResourceType</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>   </span><span class="annot"><span class="hs-comment">-- ^ loai tai nguyen va so luong dung de nap</span></span><span>
+</span><span id="line-142"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="EndTurn"><span class="annot"><a href="Game.Types.html#EndTurn"><span class="hs-identifier hs-var">EndTurn</span></a></span></span><span>
+</span><span id="line-143"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110141"><span id="local-6989586621679110150"><span id="local-6989586621679110154"><span class="annot"><span class="annottext">Int -&gt; Action -&gt; ShowS
+[Action] -&gt; ShowS
+Action -&gt; String
+(Int -&gt; Action -&gt; ShowS)
+-&gt; (Action -&gt; String) -&gt; ([Action] -&gt; ShowS) -&gt; Show Action
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Action -&gt; ShowS
+showsPrec :: Int -&gt; Action -&gt; ShowS
+$cshow :: Action -&gt; String
+show :: Action -&gt; String
+$cshowList :: [Action] -&gt; ShowS
+showList :: [Action] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110157"><span id="local-6989586621679110165"><span class="annot"><span class="annottext">Action -&gt; Action -&gt; Bool
+(Action -&gt; Action -&gt; Bool)
+-&gt; (Action -&gt; Action -&gt; Bool) -&gt; Eq Action
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Action -&gt; Action -&gt; Bool
+== :: Action -&gt; Action -&gt; Bool
+$c/= :: Action -&gt; Action -&gt; Bool
+/= :: Action -&gt; Action -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-144"></span><span>
+</span><span id="line-145"></span><span class="annot"><span class="hs-comment">-- | Ly do mot action bi tu choi (khi bi tu choi thi khong mat gi).</span></span><span>
+</span><span id="line-146"></span><span class="hs-keyword">data</span><span> </span><span id="GameError"><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier hs-var">GameError</span></a></span></span><span>
+</span><span id="line-147"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="GameNotInProgress"><span class="annot"><a href="Game.Types.html#GameNotInProgress"><span class="hs-identifier hs-var">GameNotInProgress</span></a></span></span><span>       </span><span class="annot"><span class="hs-comment">-- ^ tran chua bat dau hoac da ket thuc</span></span><span>
+</span><span id="line-148"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="NotYourTurn"><span class="annot"><a href="Game.Types.html#NotYourTurn"><span class="hs-identifier hs-var">NotYourTurn</span></a></span></span><span>
+</span><span id="line-149"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="NotEnoughAP"><span class="annot"><a href="Game.Types.html#NotEnoughAP"><span class="hs-identifier hs-var">NotEnoughAP</span></a></span></span><span>
+</span><span id="line-150"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="NotEnoughBattery"><span class="annot"><a href="Game.Types.html#NotEnoughBattery"><span class="hs-identifier hs-var">NotEnoughBattery</span></a></span></span><span>
+</span><span id="line-151"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="OutOfBounds"><span class="annot"><a href="Game.Types.html#OutOfBounds"><span class="hs-identifier hs-var">OutOfBounds</span></a></span></span><span>             </span><span class="annot"><span class="hs-comment">-- ^ di ra ngoai map</span></span><span>
+</span><span id="line-152"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="NotOnPlanet"><span class="annot"><a href="Game.Types.html#NotOnPlanet"><span class="hs-identifier hs-var">NotOnPlanet</span></a></span></span><span>             </span><span class="annot"><span class="hs-comment">-- ^ Mine khi khong dung tren hanh tinh</span></span><span>
+</span><span id="line-153"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="PlanetHasNoSuchResource"><span class="annot"><a href="Game.Types.html#PlanetHasNoSuchResource"><span class="hs-identifier hs-var">PlanetHasNoSuchResource</span></a></span></span><span> </span><span class="annot"><span class="hs-comment">-- ^ hanh tinh khong con loai tai nguyen do</span></span><span>
+</span><span id="line-154"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="CargoFull"><span class="annot"><a href="Game.Types.html#CargoFull"><span class="hs-identifier hs-var">CargoFull</span></a></span></span><span>
+</span><span id="line-155"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="CargoEmpty"><span class="annot"><a href="Game.Types.html#CargoEmpty"><span class="hs-identifier hs-var">CargoEmpty</span></a></span></span><span>              </span><span class="annot"><span class="hs-comment">-- ^ Deposit khi cargo rong</span></span><span>
+</span><span id="line-156"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="NotAtEarth"><span class="annot"><a href="Game.Types.html#NotAtEarth"><span class="hs-identifier hs-var">NotAtEarth</span></a></span></span><span>              </span><span class="annot"><span class="hs-comment">-- ^ Recharge khi khong dung o Earth</span></span><span>
+</span><span id="line-157"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="OutOfDepositRange"><span class="annot"><a href="Game.Types.html#OutOfDepositRange"><span class="hs-identifier hs-var">OutOfDepositRange</span></a></span></span><span>       </span><span class="annot"><span class="hs-comment">-- ^ Deposit khi qua xa Earth</span></span><span>
+</span><span id="line-158"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="BatteryFull"><span class="annot"><a href="Game.Types.html#BatteryFull"><span class="hs-identifier hs-var">BatteryFull</span></a></span></span><span>             </span><span class="annot"><span class="hs-comment">-- ^ Recharge khi battery da day</span></span><span>
+</span><span id="line-159"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="NotEnoughResources"><span class="annot"><a href="Game.Types.html#NotEnoughResources"><span class="hs-identifier hs-var">NotEnoughResources</span></a></span></span><span>      </span><span class="annot"><span class="hs-comment">-- ^ kho Earth khong du tai nguyen de nap</span></span><span>
+</span><span id="line-160"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="InvalidAmount"><span class="annot"><a href="Game.Types.html#InvalidAmount"><span class="hs-identifier hs-var">InvalidAmount</span></a></span></span><span>           </span><span class="annot"><span class="hs-comment">-- ^ so luong khong hop le (&lt;= 0)</span></span><span>
+</span><span id="line-161"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110183"><span id="local-6989586621679110185"><span id="local-6989586621679110189"><span class="annot"><span class="annottext">Int -&gt; GameError -&gt; ShowS
+[GameError] -&gt; ShowS
+GameError -&gt; String
+(Int -&gt; GameError -&gt; ShowS)
+-&gt; (GameError -&gt; String)
+-&gt; ([GameError] -&gt; ShowS)
+-&gt; Show GameError
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; GameError -&gt; ShowS
+showsPrec :: Int -&gt; GameError -&gt; ShowS
+$cshow :: GameError -&gt; String
+show :: GameError -&gt; String
+$cshowList :: [GameError] -&gt; ShowS
+showList :: [GameError] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110192"><span id="local-6989586621679110196"><span class="annot"><span class="annottext">GameError -&gt; GameError -&gt; Bool
+(GameError -&gt; GameError -&gt; Bool)
+-&gt; (GameError -&gt; GameError -&gt; Bool) -&gt; Eq GameError
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: GameError -&gt; GameError -&gt; Bool
+== :: GameError -&gt; GameError -&gt; Bool
+$c/= :: GameError -&gt; GameError -&gt; Bool
+/= :: GameError -&gt; GameError -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-162"></span><span>
+</span><span id="line-163"></span><span class="annot"><span class="hs-comment">-- | Thong bao gui cho doi thu khi ban lam mot action.</span></span><span>
+</span><span id="line-164"></span><span class="hs-keyword">data</span><span> </span><span id="Notice"><span class="annot"><a href="Game.Types.html#Notice"><span class="hs-identifier hs-var">Notice</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="YouWereScanned"><span class="annot"><a href="Game.Types.html#YouWereScanned"><span class="hs-identifier hs-var">YouWereScanned</span></a></span></span><span>
+</span><span id="line-165"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110201"><span id="local-6989586621679110203"><span id="local-6989586621679110207"><span class="annot"><span class="annottext">Int -&gt; Notice -&gt; ShowS
+[Notice] -&gt; ShowS
+Notice -&gt; String
+(Int -&gt; Notice -&gt; ShowS)
+-&gt; (Notice -&gt; String) -&gt; ([Notice] -&gt; ShowS) -&gt; Show Notice
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Notice -&gt; ShowS
+showsPrec :: Int -&gt; Notice -&gt; ShowS
+$cshow :: Notice -&gt; String
+show :: Notice -&gt; String
+$cshowList :: [Notice] -&gt; ShowS
+showList :: [Notice] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110210"><span id="local-6989586621679110212"><span class="annot"><span class="annottext">Notice -&gt; Notice -&gt; Bool
+(Notice -&gt; Notice -&gt; Bool)
+-&gt; (Notice -&gt; Notice -&gt; Bool) -&gt; Eq Notice
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Notice -&gt; Notice -&gt; Bool
+== :: Notice -&gt; Notice -&gt; Bool
+$c/= :: Notice -&gt; Notice -&gt; Bool
+/= :: Notice -&gt; Notice -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-166"></span><span>
+</span><span id="line-167"></span><span class="annot"><span class="hs-comment">-- | Ket qua rieng cua tung action danh cho nguoi hanh dong.</span></span><span>
+</span><span id="line-168"></span><span class="hs-keyword">data</span><span> </span><span id="ActionResult"><span class="annot"><a href="Game.Types.html#ActionResult"><span class="hs-identifier hs-var">ActionResult</span></a></span></span><span>
+</span><span id="line-169"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="Moved"><span class="annot"><a href="Game.Types.html#Moved"><span class="hs-identifier hs-var">Moved</span></a></span></span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span>
+</span><span id="line-170"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="PlanetsFound"><span class="annot"><a href="Game.Types.html#PlanetsFound"><span class="hs-identifier hs-var">PlanetsFound</span></a></span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Game.Types.html#KnownPlanet"><span class="hs-identifier hs-type">KnownPlanet</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-171"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="NearestPlanet"><span class="annot"><a href="Game.Types.html#NearestPlanet"><span class="hs-identifier hs-var">NearestPlanet</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Compass"><span class="hs-identifier hs-type">Compass</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>   </span><span class="annot"><span class="hs-comment">-- ^ huong va khoang cach, hoac khong con hanh tinh</span></span><span>
+</span><span id="line-172"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="OpponentDirection"><span class="annot"><a href="Game.Types.html#OpponentDirection"><span class="hs-identifier hs-var">OpponentDirection</span></a></span></span><span> </span><span class="annot"><a href="Game.Types.html#Compass"><span class="hs-identifier hs-type">Compass</span></a></span><span>
+</span><span id="line-173"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="Mined"><span class="annot"><a href="Game.Types.html#Mined"><span class="hs-identifier hs-var">Mined</span></a></span></span><span> </span><span class="annot"><a href="Game.Types.html#ResourceType"><span class="hs-identifier hs-type">ResourceType</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-174"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="Deposited"><span class="annot"><a href="Game.Types.html#Deposited"><span class="hs-identifier hs-var">Deposited</span></a></span></span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span>
+</span><span id="line-175"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="Recharged"><span class="annot"><a href="Game.Types.html#Recharged"><span class="hs-identifier hs-var">Recharged</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>                          </span><span class="annot"><span class="hs-comment">-- ^ so battery thuc su nhan duoc</span></span><span>
+</span><span id="line-176"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="TurnEnded"><span class="annot"><a href="Game.Types.html#TurnEnded"><span class="hs-identifier hs-var">TurnEnded</span></a></span></span><span>
+</span><span id="line-177"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110224"><span id="local-6989586621679110247"><span id="local-6989586621679110251"><span class="annot"><span class="annottext">Int -&gt; ActionResult -&gt; ShowS
+[ActionResult] -&gt; ShowS
+ActionResult -&gt; String
+(Int -&gt; ActionResult -&gt; ShowS)
+-&gt; (ActionResult -&gt; String)
+-&gt; ([ActionResult] -&gt; ShowS)
+-&gt; Show ActionResult
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ActionResult -&gt; ShowS
+showsPrec :: Int -&gt; ActionResult -&gt; ShowS
+$cshow :: ActionResult -&gt; String
+show :: ActionResult -&gt; String
+$cshowList :: [ActionResult] -&gt; ShowS
+showList :: [ActionResult] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110255"><span id="local-6989586621679110273"><span class="annot"><span class="annottext">ActionResult -&gt; ActionResult -&gt; Bool
+(ActionResult -&gt; ActionResult -&gt; Bool)
+-&gt; (ActionResult -&gt; ActionResult -&gt; Bool) -&gt; Eq ActionResult
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: ActionResult -&gt; ActionResult -&gt; Bool
+== :: ActionResult -&gt; ActionResult -&gt; Bool
+$c/= :: ActionResult -&gt; ActionResult -&gt; Bool
+/= :: ActionResult -&gt; ActionResult -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-178"></span><span>
+</span><span id="line-179"></span><span class="annot"><span class="hs-comment">-- | Bao cao cua mot action thanh cong.</span></span><span>
+</span><span id="line-180"></span><span class="hs-keyword">data</span><span> </span><span id="ActionReport"><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-var">ActionReport</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="ActionReport"><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-var">ActionReport</span></a></span></span><span>
+</span><span id="line-181"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="reportResult"><span class="annot"><span class="annottext">ActionReport -&gt; ActionResult
+</span><a href="Game.Types.html#reportResult"><span class="hs-identifier hs-var hs-var">reportResult</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#ActionResult"><span class="hs-identifier hs-type">ActionResult</span></a></span><span>
+</span><span id="line-182"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="reportNotice"><span class="annot"><span class="annottext">ActionReport -&gt; Maybe Notice
+</span><a href="Game.Types.html#reportNotice"><span class="hs-identifier hs-var hs-var">reportNotice</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Game.Types.html#Notice"><span class="hs-identifier hs-type">Notice</span></a></span><span>   </span><span class="annot"><span class="hs-comment">-- ^ thong bao cho doi thu, neu co</span></span><span>
+</span><span id="line-183"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110281"><span id="local-6989586621679110287"><span id="local-6989586621679110291"><span class="annot"><span class="annottext">Int -&gt; ActionReport -&gt; ShowS
+[ActionReport] -&gt; ShowS
+ActionReport -&gt; String
+(Int -&gt; ActionReport -&gt; ShowS)
+-&gt; (ActionReport -&gt; String)
+-&gt; ([ActionReport] -&gt; ShowS)
+-&gt; Show ActionReport
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ActionReport -&gt; ShowS
+showsPrec :: Int -&gt; ActionReport -&gt; ShowS
+$cshow :: ActionReport -&gt; String
+show :: ActionReport -&gt; String
+$cshowList :: [ActionReport] -&gt; ShowS
+showList :: [ActionReport] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110294"><span id="local-6989586621679110299"><span class="annot"><span class="annottext">ActionReport -&gt; ActionReport -&gt; Bool
+(ActionReport -&gt; ActionReport -&gt; Bool)
+-&gt; (ActionReport -&gt; ActionReport -&gt; Bool) -&gt; Eq ActionReport
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: ActionReport -&gt; ActionReport -&gt; Bool
+== :: ActionReport -&gt; ActionReport -&gt; Bool
+$c/= :: ActionReport -&gt; ActionReport -&gt; Bool
+/= :: ActionReport -&gt; ActionReport -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span></pre></body></html>

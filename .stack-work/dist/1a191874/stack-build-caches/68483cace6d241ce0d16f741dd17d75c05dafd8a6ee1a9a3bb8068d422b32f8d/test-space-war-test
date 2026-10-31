@@ -1,28 +1,32 @@
 ? C:\Users\ASUS\AppData\Local\Programs\stack\x86_64-windows\ghc-9.10.3\lib\x86_64-windows-ghc-9.10.3\rts-1.0.2\include\ghcversion.h
 : hash: 7038bb968ecc358729edd5d1e72a638409aaf5ea6ab13ce6ec7f253daa3b6529
 D:\Dev\space-war\.stack-work\dist\1a191874\build\space-war-test\autogen\Paths_space_war.hs:
-  hash: b03012fb3bb79995c3fec44af31385ce0fa5c22e8ae21cb11752d453b002be4f
+  hash: 7bae280577668f2340a387a653f7f8b07109197d2d4869b0b1940f0815d87b64
 D:\Dev\space-war\.stack-work\dist\1a191874\build\space-war-test\autogen\cabal_macros.h:
-  hash: 4a99b877f2548b656fefaeb296209ef60324a5b1173efff802fde7be453840fb
+  hash: 04dea21f1a3e0eba4488a3bf379a0f08f9143102114a8f9bff64f8d5dbd91f85
+D:\Dev\space-war\README.md:
+  hash: a511a5ddddcd4e033b3197531470e0af2f99712bc70462b0c18d5a66de2f6fb6
 D:\Dev\space-war\package.yaml:
-  hash: ad512ed9b0b4c33db20a2423f0ff086d02f4714f2d22262009edb8a9034ef7f7
+  hash: be1ae6f997c55c9a0a3d57ba2c6a4378b8d0b0b73cbd9cba2141e7fedecf64f8
 D:\Dev\space-war\space-war.cabal:
-  hash: 5d81259aa579431e2e72a9d225296c40fe71e900edff86ea81e3b3087694db5a
+  hash: e9e5c47d0a452bc363f93bc2f0b5475b6a3c8ab2df83053f076326e69c4fd1cc
 D:\Dev\space-war\test\Game\ActionSpec.hs:
   hash: 15c608952d135912f736d7bf4075bcb05d173a9da2218b137416257344176938
 D:\Dev\space-war\test\Game\GenerateSpec.hs:
   hash: d241699d94bfa552e10b4dc2e8b3a900e6a29d89c00d1e4df2c73b5f44fb3fc8
+D:\Dev\space-war\test\Game\RoguelikeSpec.hs:
+  hash: 74bad3cdc3541fb599a0bc4dcda90aec804de4a59e092f7a16fda46811648299
 D:\Dev\space-war\test\Game\StateSpec.hs:
   hash: fda843ec3da2f26e73b0eff4699a9406a4f2c5b3f85555d6f7443a43f7a967d5
 D:\Dev\space-war\test\Game\TestUtil.hs:
-  hash: dba3e9ff981eb79e4c259b20e3713572f75dcd0af4dddc7cb4efb6ffd65b93af
+  hash: 03056e970918bff6f57d666a9b12c16f4d861f402addd65bb6176b56a4ce4804
 D:\Dev\space-war\test\Game\TurnSpec.hs:
-  hash: 1ab4c237730ad89bb59afac7866f08f32010797411b9c75517a4ef8a7bf25de6
+  hash: d8446402a32a3067cfab4d6a677d00ff0e9b3403f092b6288f26d14aac5b6404
 D:\Dev\space-war\test\Game\ViewSpec.hs:
-  hash: c306dfb6070204604849fc07488008209a82e63579c0d4c9b47cb6f88443487f
+  hash: 98ef81ce3ace9655b3689f033e866adbe78eec1ad62efc519c65f38a0db9bc77
 D:\Dev\space-war\test\Game\WorldSpec.hs:
   hash: a2acd0b17efa03fdf52cc1ee4e6d857662a0397d7dd86d2ac709f2aceb1beb4c
 D:\Dev\space-war\test\Protocol\JsonSpec.hs:
-  hash: 5a505a8c7ef301235060fb46dc52444bbabd6d7e6b549a84b72125ec5e4f74f1
+  hash: 19123ac830cae5260e7b0acd8a73a830130cf6ec4b1a4910f21fb1c7bbcd336b
 D:\Dev\space-war\test\Spec.hs:
-  hash: 73b81b175b17d96153b6b804845cf3a154bfd8685919ddcd17c5292e112f6c46
+  hash: 0e76024ecc0484c4ac2a18724a192e687cd22edd55b366fce9c0295e74923061

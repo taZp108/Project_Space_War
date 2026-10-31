@@ -18,8 +18,8 @@ version :: Version
 version = Version [0,1,0,0] []
 
 synopsis :: String
-synopsis = "Game 2 ng\432\7901i ch\417i theo l\432\7907t, client-server (Haskell + WebSocket)"
+synopsis = ""
 copyright :: String
-copyright = ""
+copyright = "2024 Author name here"
 homepage :: String
-homepage = ""
+homepage = "https://github.com/githubuser/space-war#readme"

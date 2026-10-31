@@ -16,6 +16,10 @@ window.mockPlayerView = Object.freeze({
     earthStorage: Object.freeze({ Crystal: 24 }),
     earthScore: 72,
     earthScoreTarget: 500,
+    augments: Object.freeze([
+      Object.freeze({ id: 0, type: "battery_max", rarity: "silver" }),
+      Object.freeze({ id: 1, type: "move_cost", rarity: "gold" })
+    ])
   }),
   earth: Object.freeze({ x: 50, y: 50 }),
   knownPlanets: Object.freeze([

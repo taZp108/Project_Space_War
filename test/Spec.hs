@@ -4,6 +4,7 @@ import Lib (projectName)
 
 import qualified Game.ActionSpec
 import qualified Game.GenerateSpec
+import qualified Game.RoguelikeSpec
 import qualified Game.StateSpec
 import qualified Game.TurnSpec
 import qualified Game.ViewSpec
@@ -22,6 +23,7 @@ main = hspec $ do
   describe "Game.Generate" Game.GenerateSpec.spec
   describe "Game.State" Game.StateSpec.spec
   describe "Game.Action" Game.ActionSpec.spec
+  describe "Game.Roguelike" Game.RoguelikeSpec.spec
   describe "Game.Turn" Game.TurnSpec.spec
   describe "Game.View" Game.ViewSpec.spec
   describe "Protocol.Json" Protocol.JsonSpec.spec

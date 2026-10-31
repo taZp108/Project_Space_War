@@ -6,6 +6,7 @@ import Data.Aeson (Value (..), decode, eitherDecode, encode, object, toJSON, (.=
 import qualified Data.Aeson.Key as K
 import qualified Data.Aeson.KeyMap as KM
 import qualified Data.ByteString.Lazy.Char8 as BL
+import qualified Data.Map.Strict as Map
 import Data.Either (isLeft)
 import Data.List (sort)
 import Data.Text (Text)
@@ -112,12 +113,18 @@ spec = do
     it "huong, tam huong, tai nguyen, loai hanh tinh, nguoi choi la chuoi" $ do
       toJSON DirRight `shouldBe` String "right"
       toJSON SouthEast `shouldBe` String "south_east"
-      toJSON ExoticMatter `shouldBe` String "exotic_matter"
+      toJSON ExoticMatter `shouldBe` String "carnelian"
       toJSON Mining `shouldBe` String "mining"
       toJSON Player2 `shouldBe` String "player2"
+    it "item ids dung snake_case moi" $ do
+      toJSON IT_BatteryMax `shouldBe` String "it_battery_max"
+      decode "\"it_eco_engine\"" `shouldBe` Just IT_EcoEngine
+    it "inventory mang du lieu passive va active" $
+      toJSON (Inventory (Map.fromList [(IT_CargoUp, 2)]) [IT_Teleport]) `shouldBe`
+        object ["passives" .= object ["it_cargo_up" .= (2 :: Int)], "actives" .= [typeOf "it_teleport"]]
     it "kho tai nguyen la doi tuong ten -> so luong" $
       resourcesToJSON (rs [(Iron, 5), (EnergyCore, 2)])
-        `shouldBe` object ["iron" .= (5 :: Int), "energy_core" .= (2 :: Int)]
+        `shouldBe` object ["spinel" .= (5 :: Int), "peridot" .= (2 :: Int)]
     it "loi la chuoi snake_case" $ do
       toJSON NotYourTurn `shouldBe` String "not_your_turn"
       toJSON PlanetHasNoSuchResource `shouldBe` String "planet_has_no_such_resource"
@@ -128,7 +135,7 @@ spec = do
         object ["type" .= typeOf "moved", "pos" .= object ["x" .= (1 :: Int), "y" .= (2 :: Int)]]
     it "Mined" $
       toJSON (Mined Iron 5) `shouldBe`
-        object ["type" .= typeOf "mined", "resource" .= typeOf "iron", "amount" .= (5 :: Int)]
+        object ["type" .= typeOf "mined", "resource" .= typeOf "spinel", "amount" .= (5 :: Int)]
     it "NearestPlanet co ket qua" $
       toJSON (NearestPlanet (Just (SouthEast, 20))) `shouldBe`
         object [ "type" .= typeOf "nearest_planet", "found" .= True
@@ -143,7 +150,7 @@ spec = do
                                        , "type" .= typeOf "mining" ] ] ]
     it "Deposited" $
       toJSON (Deposited (rs [(Crystal, 2)])) `shouldBe`
-        object ["type" .= typeOf "deposited", "resources" .= object ["crystal" .= (2 :: Int)]]
+        object ["type" .= typeOf "deposited", "resources" .= object ["holly_blue_agate" .= (2 :: Int)]]
     it "ActionReport khong co thong bao thi notice la null" $
       toJSON (ActionReport TurnEnded Nothing) `shouldBe`
         object ["result" .= object ["type" .= typeOf "turn_ended"], "notice" .= Null]
@@ -168,7 +175,7 @@ spec = do
         [ "you", "map_width", "map_height", "earth", "round", "max_rounds"
         , "current_player", "phase", "pos", "battery", "battery_max", "ap", "ap_max"
         , "cargo", "cargo_capacity", "storage", "score", "score_target"
-        , "known_planets", "planet_here" ]
+        , "known_planets", "planet_here", "inventory", "luck", "max_cargo", "max_battery", "active_event", "can_craft", "turn_end_time" ]
     it "mot so gia tri" $ do
       let v = toJSON viewP1
       field "you" v `shouldBe` Just (String "player1")
@@ -179,7 +186,7 @@ spec = do
       let gs = baseState
           here = Just testPlanet
           v = toJSON ((viewFor cfg Player1 gs) { viewHere = here })
-      fmap keysOf (field "planet_here" v) `shouldBe` Just (sort ["id", "pos", "type", "stock"])
+      fmap keysOf (field "planet_here" v) `shouldBe` Just (sort ["id", "pos", "type", "stock", "event_triggered"])
 
   describe "ServerMsg" $ do
     it "Welcome" $
@@ -203,14 +210,22 @@ spec = do
         `shouldBe` sort ["type", "report", "view"]
     it "GameStarted gom view" $
       keysOf (toJSON (GameStarted viewP1)) `shouldBe` sort ["type", "view"]
-    it "GameOver lo diem va vi tri cuoi cua ca hai ben" $
-      toJSON (GameOver Draw (GameSummary (PlayerFinal (Pos 1 2) 3) (PlayerFinal (Pos 4 5) 6)))
+    it "GameOver lo diem, vi tri cuoi, va tong da nop cua ca hai ben" $ do
+      toJSON (GameOver Draw (GameSummary (PlayerFinal (Pos 1 2) 3 10) (PlayerFinal (Pos 4 5) 6 7)))
         `shouldBe` object
           [ "type" .= typeOf "game_over"
           , "result" .= object ["type" .= typeOf "draw"]
           , "summary" .= object
-              [ "player1" .= object ["pos" .= object ["x" .= (1 :: Int), "y" .= (2 :: Int)], "score" .= (3 :: Int)]
-              , "player2" .= object ["pos" .= object ["x" .= (4 :: Int), "y" .= (5 :: Int)], "score" .= (6 :: Int)]
+              [ "player1" .= object
+                  [ "pos" .= object ["x" .= (1 :: Int), "y" .= (2 :: Int)]
+                  , "score" .= (3 :: Int)
+                  , "deposited" .= (10 :: Int)  -- ← THÊM
+                  ]
+              , "player2" .= object
+                  [ "pos" .= object ["x" .= (4 :: Int), "y" .= (5 :: Int)]
+                  , "score" .= (6 :: Int)
+                  , "deposited" .= (7 :: Int)   -- ← THÊM
+                  ]
               ]
           ]
     it "encodeServerMsg ra chuoi JSON giai ma lai ra dung gia tri" $ do

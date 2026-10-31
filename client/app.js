@@ -1,7 +1,6 @@
 "use strict";
 
 const root = document.querySelector("#main");
-const runtimeStatus = document.querySelector("#runtime-status");
 const preferenceKey = "space-war-ui-settings-v1";
 
 const defaultSettings = {
@@ -9,7 +8,6 @@ const defaultSettings = {
   sound: false,
   volume: 35,
   reducedMotion: false,
-  serverAddress: "ws://localhost:8080",
 };
 
 function loadSettings() {
@@ -23,11 +21,17 @@ function loadSettings() {
 
 let settings = loadSettings();
 let currentScreen = "home";
-let connectionNotice = "CHỈ THỬ NGHIỆM — không gửi yêu cầu kết nối.";
-let lobbyState = null;
-let joinCodeValue = "";
+let matchConnectStatus = "Đang kết nối với máy chủ…";
+let mineSelection = "Iron";
+let rpgTab = "Active";
+let turnDeadlineMs = null;
+let activeTurnToken = "";
+let countdownTimer = null;
+let augmentOffers = null;
+let augmentDeadline = 0;
+let augmentTimerInterval = null;
 let lobbyBusy = false;
-let lobbyError = null;
+let matchViewInitialized = false;
 let playerView = null;
 let matchResult = null;
 let matchLinkLost = false;
@@ -51,6 +55,27 @@ const recentToastKeys = new Map();
 let audioContext = null;
 const camera = { x: 50, y: 51, zoom: 1 };
 
+// Khai báo nhạc nền
+const menuBgm = new Audio("bgm-menu.mp3");
+menuBgm.loop = true;
+
+const gameBgmTracks = [
+  "bgm-game-1.mp3",
+  "bgm-game-2.mp3",
+  "bgm-game-3.mp3"
+];
+let currentGameBgmIndex = 0;
+const gameBgm = new Audio();
+
+// Tự động chuyển bài khi nhạc trận đấu hết
+gameBgm.addEventListener("ended", () => {
+  currentGameBgmIndex = (currentGameBgmIndex + 1) % gameBgmTracks.length;
+  gameBgm.src = gameBgmTracks[currentGameBgmIndex];
+  if (settings.sound) gameBgm.play().catch(() => {});
+});
+
+let activeBgm = null; // Biến giữ bài nhạc đang phát
+
 function saveSettings() {
   try {
     localStorage.setItem(preferenceKey, JSON.stringify(settings));
@@ -59,9 +84,35 @@ function saveSettings() {
   }
 }
 
+// Hàm chuyển đổi nhạc nền (Menu hoặc Game)
+function updateBgm(isGameScreen) {
+  const targetBgm = isGameScreen ? gameBgm : menuBgm;
+  
+  if (activeBgm && activeBgm !== targetBgm) {
+    activeBgm.pause();
+    activeBgm.currentTime = 0;
+  }
+  activeBgm = targetBgm;
+  
+  if (isGameScreen && !gameBgm.src) {
+    gameBgm.src = gameBgmTracks[currentGameBgmIndex];
+  }
+  
+  applySettings();
+}
+
 function applySettings() {
   document.documentElement.style.setProperty("--text-scale", String(settings.fontSize / 16));
   document.body.classList.toggle("reduced-motion", settings.reducedMotion);
+
+  if (activeBgm) {
+    activeBgm.volume = settings.volume / 100;
+    if (settings.sound) {
+      activeBgm.play().catch(() => {}); 
+    } else {
+      activeBgm.pause();
+    }
+  }
 }
 
 const actionLabels = {
@@ -70,86 +121,58 @@ const actionLabels = {
   MINE: "KHAI THÁC", DEPOSIT: "NỘP TÀI NGUYÊN", RECHARGE: "SẠC PIN", END_TURN: "KẾT THÚC LƯỢT",
 };
 const resourceLabels = { Iron: "Sắt", Crystal: "Pha lê", EnergyCore: "Lõi năng lượng", RareOre: "Quặng hiếm", ExoticMatter: "Vật chất lạ" };
-const planetLabels = { Mining: "Khai thác", Energy: "Năng lượng", Rare: "Hiếm", Observe: "Quan sát", ScanArea: "Quét khu vực" };
+
+const planetEventLabels = {
+  EV_LavaCore: "Lõi dung nham", EV_Radiation: "Bức xạ kỳ quặc",
+  EV_GreedyPlanet: "Hành tinh tham lam", EV_SpaceAnchor: "Mỏ neo không gian",
+  EV_Parasite: "Trứng ký sinh", EV_Mirage: "Ảo ảnh sa mạc",
+  EV_CargoJam: "Khoang hàng bị kẹt", EV_Surge: "Dòng điện ngầm"
+};
+function planetEventLabel(value) { return planetEventLabels[value] || "Chưa xác định"; }
+
+// Thêm dữ liệu chi tiết cho bảng Sự kiện
+const eventData = {
+  planet: [
+    { id: "EV_LavaCore", name: "Lõi dung nham", desc: "Nạp đầy pin, nhưng hành tinh mất sạch tài nguyên." },
+    { id: "EV_Radiation", name: "Bức xạ kỳ quặc", desc: "Trừ 20 pin, bù lại nhận 1 vật phẩm chủ động." },
+    { id: "EV_GreedyPlanet", name: "Hành tinh tham lam", desc: "Lấy đi một nửa số tài nguyên vừa khai thác." },
+    { id: "EV_SpaceAnchor", name: "Mỏ neo không gian", desc: "Bị kẹt, mất lượt ngay lập tức." },
+    { id: "EV_Parasite", name: "Trứng ký sinh", desc: "Nhận 1 Kim cương hồng, giảm 1 ô chứa vật phẩm chủ động." },
+    { id: "EV_Mirage", name: "Ảo ảnh sa mạc", desc: "Phát hiện thêm 3 hành tinh ảo (chứa Amethyst) quanh đây." },
+    { id: "EV_CargoJam", name: "Khoang hàng bị kẹt", desc: "Giảm 5-10 dung tích khoang hàng." },
+    { id: "EV_Surge", name: "Dòng điện ngầm", desc: "Được nạp thêm 10 pin." }
+  ],
+  canon: [
+    { id: "CE_BlackHole", name: "Lỗ đen tạm thời", desc: "Dịch chuyển ngẫu nhiên vị trí của cả 2 tàu." },
+    { id: "CE_Tax", name: "Thuế vũ trụ", desc: "Trừ 10% điểm Earth, biến thành Spinel rơi vào cargo." },
+    { id: "CE_ReverseGravity", name: "Đảo ngược trọng lực", desc: "Chi phí pin di chuyển (Move) tăng gấp đôi vòng này." },
+    { id: "CE_GalacticFair", name: "Hội chợ thiên hà", desc: "Mất 5 tài nguyên ngẫu nhiên, đổi lại 1 vật phẩm chủ động." },
+    { id: "CE_SolarStorm", name: "Bão mặt trời", desc: "Trừ 30 pin. Nếu pin < 30, giảm 1 AP lượt tới." },
+    { id: "CE_TwinPlanet", name: "Hành tinh sinh đôi", desc: "Nhân bản một hành tinh ngẫu nhiên." },
+    { id: "CE_Homecoming", name: "Hồi hương", desc: "Kéo cả 2 tàu về Trái Đất." },
+    { id: "CE_GiftItem", name: "Quà tặng vũ trụ", desc: "Tặng ngẫu nhiên 1 vật phẩm cho mỗi người." },
+    { id: "CE_TheftItem", name: "Kẻ trộm không gian", desc: "Đánh cắp 1 vật phẩm chủ động của mỗi người." },
+    { id: "CE_SupplyDrop", name: "Tiếp tế khẩn cấp", desc: "Tặng 3-5 tài nguyên ngẫu nhiên cho mỗi người." },
+    { id: "CE_Plunder", name: "Cướp biển vũ trụ", desc: "Lấy 2-5 tài nguyên trong khoang hàng của mỗi người." }
+  ]
+};
+let eventTab = "planet"; // Lưu trạng thái tab hiện tại
+
 const cellStatusLabels = { EARTH: "TRÁI ĐẤT", "OWN SHIP": "TÀU CỦA BẠN", "KNOWN PLANET": "HÀNH TINH ĐÃ BIẾT", UNKNOWN: "CHƯA KHÁM PHÁ" };
 const statusLabels = { connected: "ĐÃ KẾT NỐI", waiting: "ĐANG CHỜ", active: "ĐANG HOẠT ĐỘNG", lost: "MẤT KẾT NỐI", restored: "ĐÃ KẾT NỐI LẠI", unknown: "CHƯA RÕ" };
+function actionLabel(value) { return actionLabels[value] || String(value || "LỆNH"); }
+function resourceLabel(value) { return resourceLabels[value] || String(value || "TÀI NGUYÊN"); }
+Object.assign(resourceLabels, { PinkDiamond: "Kim cương hồng", Spinel: "Spinel", HollyBlueAgate: "Agate xanh", Peridot: "Peridot", Topaz: "Topaz", Carnelian: "Carnelian", Jasper: "Jasper", Amethyst: "Amethyst" });
+const resourceGlyphs = { PinkDiamond: "◆", Spinel: "●", HollyBlueAgate: "⬟", Peridot: "▲", Topaz: "✦", Carnelian: "■", Jasper: "⬢", Amethyst: "✧" };
+function planetLabel(value) { return planetLabels[value] || String(value || "CHƯA RÕ"); }
+function cellStatusLabel(value) { return cellStatusLabels[value] || cellStatusLabels.UNKNOWN; }
+function resultLabel(value) { return resultLabels[value] || String(value || resultLabels["Outcome unavailable"]); }
+function reasonLabel(value) { return reasonLabels[value] || String(value || "CHƯA RÕ"); }
+function statusLabel(value) { return statusLabels[value] || statusLabels.unknown; }
 const eventKindLabels = { INFO: "TIN", SCAN: "QUÉT", MOVE: "DI CHUYỂN", WARN: "CẢNH BÁO", ERROR: "LỖI" };
 const resultLabels = { Victory: "CHIẾN THẮNG", Defeat: "THẤT BẠI", Draw: "HÒA", "Outcome unavailable": "CHƯA CÓ KẾT QUẢ", "Result unverified": "KẾT QUẢ CHƯA XÁC MINH" };
-const reasonLabels = { REACHED_TARGET: "ĐẠT ĐIỂM MỤC TIÊU", EARTH_SCORE_TARGET_REACHED: "ĐẠT ĐIỂM TRÁI ĐẤT MỤC TIÊU", ReachedTarget: "ĐẠT ĐIỂM MỤC TIÊU", BATTERY_DEPLETED: "CẠN PIN", OpponentOutOfBattery: "ĐỐI THỦ CẠN PIN", ROUND_LIMIT_REACHED: "HẾT GIỚI HẠN VÒNG", HigherScoreAtLimit: "ĐIỂM CAO HƠN KHI HẾT VÒNG", OPPONENT_DISCONNECTED: "ĐỐI THỦ MẤT KẾT NỐI", OpponentDisconnected: "ĐỐI THỦ MẤT KẾT NỐI", RESULT_UNAVAILABLE: "CHƯA CÓ KẾT QUẢ" };
-const uiText = {
-  "Your turn is active.": "Đến lượt của bạn.", "Cargo manifest received.": "Đã cập nhật hàng hóa.",
-  "The mock server accepted the command.": "Lệnh đã được chấp nhận.", "The mock opponent turn ended. Your turn is active.": "Đối thủ đã kết thúc lượt. Đến lượt của bạn.",
-  "This mock match is not active.": "Trận đấu hiện không hoạt động.", "Wait for your turn before sending a command.": "Hãy chờ đến lượt của bạn rồi gửi lệnh.",
-  "The mock adapter does not recognize this command.": "Không nhận diện được lệnh này.", "Not enough AP for this command.": "Không đủ AP cho lệnh này.",
-  "Not enough battery for this command.": "Không đủ pin cho lệnh này.", "Choose a cell inside the 0–99 map.": "Chọn một ô trong bản đồ từ 0 đến 99.",
-  "Move requires one adjacent cell in a cardinal direction.": "Di chuyển cần đến một ô kề theo hướng ngang hoặc dọc.",
-  "Observe scan complete.": "Đã quan sát xong.", "Area scan complete.": "Đã quét khu vực xong.",
-  "Nearest-planet scan complete; no exact coordinates returned.": "Đã tìm hướng đến hành tinh gần nhất; không hiển thị tọa độ chính xác.",
-  "Opponent scan complete; coordinates remain hidden.": "Đã quét đối thủ; tọa độ vẫn được giữ kín.",
-  "Mining requires the ship to stand on a known planet.": "Tàu phải ở trên hành tinh đã biết để khai thác.",
-  "No mock stock remains on this planet.": "Hành tinh này không còn tài nguyên.", "Cargo hold is full.": "Khoang hàng đã đầy.",
-  "Earth is outside the 5-cell deposit range.": "Trái Đất nằm ngoài tầm nộp hàng 5 ô.", "There is no cargo to deposit.": "Không có hàng hóa để nộp.",
-  "Recharge is available only while docked at Earth.": "Chỉ có thể sạc pin khi tàu ở Trái Đất.", "Battery is already at maximum.": "Pin đã đầy.",
-  "Choose a positive whole number of resource units.": "Chọn số nguyên dương cho lượng tài nguyên.",
-  "Earth storage does not contain that many units.": "Kho Trái Đất không có đủ lượng tài nguyên này.",
-  "Turn ended. Waiting for the opponent.": "Đã kết thúc lượt. Đang chờ đối thủ.",
-  "That code does not match the mock room format.": "Mã phòng không đúng định dạng.", "Enter a code such as MOCK-7K2Q.": "Nhập mã theo dạng MOCK-7K2Q.",
-  "This mock room already has two players.": "Phòng thử này đã đủ hai người chơi.", "Try another room code.": "Hãy thử mã phòng khác.",
-  "The mock connection was interrupted.": "Kết nối thử đã bị gián đoạn.", "Check the address in Settings or retry the demo.": "Kiểm tra địa chỉ trong Cài đặt hoặc thử kết nối lại.",
-  "No mock room uses that code.": "Không tìm thấy phòng thử với mã này.", "Check the code and try again.": "Kiểm tra mã rồi thử lại.",
-  "The mock room is no longer available.": "Phòng thử này không còn khả dụng.", "Return to the menu and create another mock room.": "Quay lại menu và tạo phòng thử khác.",
-  "Select a target cell first.": "Hãy chọn ô mục tiêu trước.", "Choose a positive whole number of units.": "Chọn số nguyên dương cho lượng tài nguyên.",
-  "The match result is unconfirmed. A lost local connection does not establish a winner.": "Kết quả trận chưa được xác nhận. Mất kết nối không đồng nghĩa với việc có người thắng.",
-  "No object information is available for this cell.": "Chưa có thông tin về ô này.",
-  "INVALID ROOM CODE": "MÃ PHÒNG KHÔNG HỢP LỆ", "ROOM FULL": "PHÒNG ĐÃ ĐẦY", "CONNECTION ERROR": "LỖI KẾT NỐI", "ROOM NOT FOUND": "KHÔNG TÌM THẤY PHÒNG",
-  "No cell selected": "Chưa chọn ô", "All cargo to Earth": "Toàn bộ hàng về Trái Đất", "Next player": "Người chơi tiếp theo",
-  "ACTION ACCEPTED": "ĐÃ CHẤP NHẬN", "ACTION REJECTED": "HÀNH ĐỘNG BỊ TỪ CHỐI", "SERVER NOTICE": "THÔNG BÁO MÁY CHỦ",
-  "PLANETARY SIGNAL ACQUIRED": "ĐÃ PHÁT HIỆN HÀNH TINH", "YOUR TURN ACTIVE": "ĐẾN LƯỢT CỦA BẠN",
-  "MOCK RESULT: no connection request was sent.": "KẾT QUẢ THỬ: không gửi yêu cầu kết nối.",
-  "MATCH RESULT RECEIVED": "ĐÃ NHẬN KẾT QUẢ TRẬN", "MOCK FIXTURE / RESULT RECEIVED": "ĐÃ NHẬN KẾT QUẢ THỬ",
-  "MATCH RESULT RESPONSE RECEIVED": "ĐÃ NHẬN PHẢN HỒI KẾT QUẢ TRẬN", "MOCK FIXTURE / VERIFIED RESULT": "KẾT QUẢ THỬ ĐÃ XÁC MINH",
-  "MOCK FIXTURE / OUTCOME UNKNOWN": "KẾT QUẢ THỬ CHƯA RÕ", "MATCH SUMMARY COPIED.": "ĐÃ SAO CHÉP TÓM TẮT TRẬN.",
-  "ROOM CODE COPIED TO CLIPBOARD.": "ĐÃ SAO CHÉP MÃ PHÒNG.",
-  "COPY FAILED. The match summary is selected below for manual copying.": "Sao chép thất bại. Tóm tắt trận đã được chọn bên dưới để sao chép thủ công.",
-  "COPY FAILED. Select the code above and copy it manually.": "Sao chép thất bại. Hãy chọn mã phía trên và sao chép thủ công.",
-};
-
-function actionLabel(action) { return actionLabels[action] || action.replaceAll("_", " "); }
-function resourceLabel(resource) { return resourceLabels[resource] || resource; }
-function planetLabel(planet) { return planetLabels[planet] || planet; }
-function cellStatusLabel(status) { return cellStatusLabels[status] || status; }
-function statusLabel(status) { return statusLabels[String(status).toLowerCase()] || String(status).toUpperCase(); }
-function resultLabel(result) { return resultLabels[result] || result; }
-function reasonLabel(reason) { return reasonLabels[reason] || reason; }
-function localizeText(text) {
-  if (uiText[text]) return uiText[text];
-  const patterns = [
-    [/^From \((\d+), (\d+)\)$/, (_, x, y) => `Từ (${x}, ${y})`],
-    [/^The mock match connection was lost\. No authoritative result is available, so the winner and score remain unknown\.$/, () => "Kết nối trận thử bị mất. Chưa có kết quả xác thực nên chưa rõ người thắng và điểm số."],
-    [/^No authoritative match result was returned\.$/, () => "Máy chủ chưa trả về kết quả xác thực của trận."],
-    [/^No verified MatchResult was included in the response\. The match outcome remains unknown\.$/, () => "Phản hồi không có kết quả trận đã xác minh. Kết quả vẫn chưa rõ."],
-    [/^(.+) · (\d+) units$/, (_, type, amount) => `${resourceLabel(type)} · ${amount} đơn vị`],
-    [/^(\w+) · (Mining|Energy|Rare) planet discovered\.$/, (_, id, type) => `${id} · đã phát hiện hành tinh ${planetLabel(type).toLowerCase()}.`],
-    [/^(Mining|Energy|Rare) planet discovered\.$/, (_, type) => `Đã phát hiện hành tinh ${planetLabel(type).toLowerCase()}.`],
-    [/^(.+) scan complete\.$/, (_, type) => `Đã quét xong: ${actionLabel(type.toUpperCase())}.`],
-    [/^(.+) complete\.$/, (_, action) => `Đã hoàn tất: ${actionLabel(action.toUpperCase())}.`],
-    [/^The mock match connection was lost\.(.*)$/, (_, rest) => `Kết nối trận thử bị mất.${rest}`],
-    [/^The mock lobby connection was lost\.(.*)$/, (_, rest) => `Kết nối phòng thử bị mất.${rest}`],
-    [/^The match outcome remains unknown\.$/, () => "Kết quả trận vẫn chưa rõ."],
-    [/^Mock opponent turn complete\.$/, () => "Đối thủ đã kết thúc lượt."],
-    [/^The mock opponent turn complete\. AP restored from the new view\.$/, () => "Đối thủ đã xong lượt. AP được cập nhật theo trạng thái mới."],
-    [/^(.+) complete; no new planets found\.$/, (_, action) => `Đã quét xong: ${actionLabel(action.toUpperCase())}; không tìm thấy hành tinh mới.`],
-    [/^The mock room connection was lost\.(.*)$/, (_, rest) => `Kết nối phòng thử bị mất.${rest}`],
-    [/^Ship moved to \((\d+), (\d+)\)\.$/, (_, x, y) => `Tàu đã di chuyển đến (${x}, ${y}).`],
-    [/^Recovered (\d+) (\w+)\.$/, (_, amount, type) => `Đã thu được ${amount} ${resourceLabel(type)}.`],
-    [/^Cargo deposited · \+(\d+) Earth score\.$/, (_, score) => `Đã nộp hàng · +${score} điểm Trái Đất.`],
-    [/^Battery recharged by (\d+); Earth storage consumed (\d+) (\w+)\.$/, (_, battery, amount, type) => `Đã sạc thêm ${battery} pin; đã dùng ${amount} ${resourceLabel(type)} từ kho Trái Đất.`],
-    [/^Battery \+(\d+); spent (\d+) (\w+)\.$/, (_, battery, amount, type) => `Pin +${battery}; đã dùng ${amount} ${resourceLabel(type)}.`],
-    [/^(\d+) new planet signal(s?) acquired\.$/, (_, count) => `Đã phát hiện ${count} hành tinh mới.`],
-  ];
-  for (const [pattern, replace] of patterns) { const match = text.match(pattern); if (match) return replace(...match); }
-  return text;
-}
+const reasonLabels = { reached_target: "ĐẠT ĐIỂM MỤC TIÊU", opponent_out_of_battery: "ĐỐI THỦ CẠN PIN", opponent_disconnected: "ĐỐI THỦ MẤT KẾT NỐI", higher_score_at_limit: "ĐIỂM CAO HƠN KHI HẾT VÒNG", REACHED_TARGET: "ĐẠT ĐIỂM MỤC TIÊU", EARTH_SCORE_TARGET_REACHED: "ĐẠT ĐIỂM TRÁI ĐẤT MỤC TIÊU", ReachedTarget: "ĐẠT ĐIỂM MỤC TIÊU", BATTERY_DEPLETED: "CẠN PIN", OpponentOutOfBattery: "ĐỐI THỦ CẠN PIN", ROUND_LIMIT_REACHED: "HẾT GIỚI HẠN VÒNG", HigherScoreAtLimit: "ĐIỂM CAO HƠN KHI HẾT VÒNG", OPPONENT_DISCONNECTED: "ĐỐI THỦ MẤT KẾT NỐI", OpponentDisconnected: "ĐỐI THỦ MẤT KẾT NỐI", RESULT_UNAVAILABLE: "CHƯA CÓ KẾT QUẢ" };
+function localizeText(text) { return String(text ?? ""); }
 
 const helpTopics = [
   {
@@ -250,24 +273,34 @@ function homeScreen() {
   return `
     <section class="home-screen">
       <div class="home-copy">
-        <span class="eyebrow amber-eyebrow">MẠNG CHIẾN THUẬT // ĐIỀU KHIỂN TRỰC TIẾP</span>
-        <h1>Chỉ huy<br /><span>khám phá.</span></h1>
-        <p class="welcome-copy">Cuộc viễn chinh hai người giữa vùng không gian chưa được lập bản đồ. Khám phá, thu thập tài nguyên và mang chúng về nhà.</p>
-        <div class="home-signature"><span class="signature-line"></span><span>SPACE WAR / CHIẾN THUẬT ĐỐI KHÁNG</span></div>
+        <h1 class="game-title">SPACE <span>War</span></h1>
       </div>
       <nav class="menu-panel panel" aria-label="Menu chính">
-        <div class="panel-heading"><div><span class="eyebrow">TRUNG TÂM ĐIỀU KHIỂN</span><h2>Chọn điểm đến</h2></div><span class="panel-code">MENU.01</span></div>
+        <div class="panel-heading"><h2>Bảng điều khiển</h2></div>
         <div class="menu-list">
-          <button class="menu-button menu-primary" data-screen="lobby"><span class="menu-index">01</span><span class="menu-label">NHIỀU NGƯỜI CHƠI</span><span class="menu-arrow" aria-hidden="true">→</span></button>
-          <button class="menu-button" data-screen="help"><span class="menu-index">02</span><span class="menu-label">HƯỚNG DẪN</span><span class="menu-arrow" aria-hidden="true">→</span></button>
-          <button class="menu-button" data-screen="settings"><span class="menu-index">03</span><span class="menu-label">CÀI ĐẶT</span><span class="menu-arrow" aria-hidden="true">→</span></button>
-          <button class="menu-button menu-exit" data-action="exit"><span class="menu-index">04</span><span class="menu-label">THOÁT</span><span class="menu-arrow" aria-hidden="true">↗</span></button>
+          <button class="menu-button menu-primary" data-screen="lobby"><span class="menu-label">NHIỀU NGƯỜI CHƠI</span></button>
+          <button class="menu-button" data-screen="help"><span class="menu-label">HƯỚNG DẪN</span></button>
+          <button class="menu-button" data-screen="settings"><span class="menu-label">CÀI ĐẶT</span></button>
+          <button class="menu-button menu-exit" data-action="exit"><span class="menu-label">THOÁT</span></button>
         </div>
-        <div class="menu-footnote"><span class="live-mark"></span> GIAO DIỆN SẴN SÀNG <span class="menu-footnote-right">BẢN THỬ / 0.2</span></div>
       </nav>
-      <div class="home-coordinate coordinate-top">KHU VỰC // CHƯA KHÁM PHÁ</div>
-      <div class="home-coordinate coordinate-bottom">CHƯA CÓ TÍN HIỆU / ĐANG CHỜ</div>
       <div class="home-orbit" aria-hidden="true"><span></span><i></i></div>
+    </section>`;
+}
+
+function lobbyHomeScreen() {
+  return `
+    <section class="content-screen lobby-home-screen" aria-labelledby="screen-title">
+      <div class="link-lost-card panel">
+        <span class="eyebrow amber-eyebrow">SPACE WAR</span>
+        <h1 id="screen-title">Sẵn sàng <span>vào trận?</span></h1>
+        <p>Kết nối máy chủ để tự động ghép trận với người chơi tiếp theo.</p>
+        <div class="link-lost-actions">
+          <button class="primary-button" data-action="real-match">VÀO TRẬN</button>
+          <button class="utility-button" data-action="mock-match">VÀO TRẬN GIẢ</button>
+          <button class="utility-button" data-screen="home">VỀ MENU</button>
+        </div>
+      </div>
     </section>`;
 }
 
@@ -309,90 +342,15 @@ function settingsScreen() {
           <div class="setting-row"><div class="setting-copy"><label for="volume">Âm lượng</label><p>Điều chỉnh âm báo giao diện.</p></div><div class="setting-control range-control"><input id="volume" type="range" min="0" max="100" step="1" value="${settings.volume}" /><output id="volume-output" for="volume">${settings.volume}%</output></div></div>
           <div class="setting-row"><div class="setting-copy"><label for="reduced-motion">Giảm chuyển động</label><p>Giảm hiệu ứng và chuyển cảnh trang trí.</p></div><label class="toggle"><input id="reduced-motion" type="checkbox" ${settings.reducedMotion ? "checked" : ""} /><span class="toggle-track" aria-hidden="true"></span><span class="toggle-value">${settings.reducedMotion ? "BẬT" : "TẮT"}</span></label></div>
         </section>
-        <section class="settings-group panel" aria-labelledby="network-title">
-          <div class="panel-heading"><div><span class="eyebrow">02 / KẾT NỐI</span><h2 id="network-title">Địa chỉ máy chủ</h2></div><span class="panel-code">THỬ NGHIỆM</span></div>
-          <div class="network-settings">
-            <label class="field-label" for="server-address">ĐỊA CHỈ MÁY CHỦ</label>
-            <input class="text-field" id="server-address" type="text" autocomplete="url" spellcheck="false" />
-            <button class="secondary-button" data-action="test-connection">KIỂM TRA KẾT NỐI <span aria-hidden="true">↗</span></button>
-            <p class="mock-callout"><span aria-hidden="true">i</span> CHỈ MÔ PHỎNG, KHÔNG GỬI YÊU CẦU ĐẾN MÁY CHỦ.</p>
-            <p class="connection-notice" id="connection-notice" role="status" aria-live="polite">${connectionNotice}</p>
-          </div>
-        </section>
       </div>
-      <p class="screen-footnote">TÙY CHỌN ĐƯỢC LƯU TRÊN TRÌNH DUYỆT NÀY. ĐỊA CHỈ MÁY CHỦ CHƯA ĐƯỢC SỬ DỤNG.</p>
-    </section>`;
-}
-
-function lobbyHomeScreen() {
-  return `
-    <section class="content-screen lobby-screen" aria-labelledby="screen-title">
-      <div class="screen-heading">
-        <div><span class="eyebrow amber-eyebrow">NHIỀU NGƯỜI CHƠI // VÀO PHÒNG</span><h1 id="screen-title">Thiết lập <span>kết nối.</span></h1><p>Tạo phòng và chia sẻ mã, hoặc nhập mã phòng của người chơi khác.</p></div>
-        <button class="utility-button" data-screen="home">← <span>VỀ MENU</span></button>
-      </div>
-      <div class="lobby-choice-grid">
-        <article class="lobby-action panel"><span class="panel-code">TẠO PHÒNG / 01</span><span class="lobby-symbol" aria-hidden="true">＋</span><h2>Tạo phòng</h2><p>Tạo mã phòng thử và chờ người chơi thứ hai.</p><button class="primary-button" data-action="create-room">TẠO PHÒNG <span aria-hidden="true">→</span></button></article>
-        <article class="lobby-action panel"><span class="panel-code">VÀO PHÒNG / 02</span><span class="lobby-symbol amber-symbol" aria-hidden="true">⌁</span><h2>Vào phòng</h2><p>Nhập mã phòng do chủ phòng chia sẻ.</p><button class="secondary-button" data-screen="join-room">NHẬP MÃ PHÒNG <span aria-hidden="true">→</span></button></article>
-      </div>
-      <div class="mock-banner"><span class="mock-banner-mark">THỬ</span><span>Phòng và kết nối được mô phỏng tại máy này.</span></div>
-    </section>`;
-}
-
-function joinRoomScreen(errorResult = null) {
-    const errorMarkup = errorResult ? `
-    <div class="room-error" role="alert">
-      <div class="error-heading"><span class="error-symbol" aria-hidden="true">!</span><div><strong>${escapeHtml(errorResult.details?.title || errorResult.code)}</strong><span>${escapeHtml(errorResult.code)}</span></div></div>
-      <p>${escapeHtml(localizeText(errorResult.message))}</p><p class="error-hint">${escapeHtml(localizeText(errorResult.details?.hint || "Kiểm tra mã phòng rồi thử lại."))}</p>
-    </div>` : "";
-  return `
-    <section class="content-screen join-screen" aria-labelledby="screen-title">
-      <div class="screen-heading">
-        <div><span class="eyebrow amber-eyebrow">NHIỀU NGƯỜI CHƠI // VÀO PHÒNG</span><h1 id="screen-title">Vào <span>phòng.</span></h1><p>Nhập mã phòng của chủ phòng để xin tham gia.</p></div>
-        <button class="utility-button" data-screen="lobby">← <span>QUAY LẠI</span></button>
-      </div>
-      <form class="join-form panel" id="join-form">
-        <label class="field-label" for="room-code">MÃ PHÒNG</label>
-        <input class="room-code-input" id="room-code" name="room-code" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Ví dụ: MOCK-7K2Q" value="${escapeHtml(joinCodeValue)}" ${lobbyBusy ? "disabled" : ""} />
-        <p class="field-note">Mã thử: MOCK-7K2Q vào phòng; FULL-0000 và LINK-0000 minh họa lỗi.</p>
-        ${errorMarkup}
-        <div class="join-actions"><button class="primary-button" type="submit" ${lobbyBusy ? "disabled" : ""}>${lobbyBusy ? "ĐANG KIỂM TRA PHÒNG…" : "VÀO PHÒNG"}<span aria-hidden="true">→</span></button><button class="utility-button" type="button" data-screen="lobby" ${lobbyBusy ? "disabled" : ""}>HỦY</button></div>
-      </form>
-      <p class="screen-footnote">MÃ PHÒNG VÀ LỖI TRÊN MÀN HÌNH NÀY LÀ DỮ LIỆU THỬ.</p>
-    </section>`;
-}
-
-function creatingRoomScreen() {
-  return `
-    <section class="content-screen initializing-screen" aria-live="polite"><div class="initializing-card panel"><span class="eyebrow amber-eyebrow">DỊCH VỤ PHÒNG // THỬ NGHIỆM</span><span class="initializing-mark" aria-hidden="true">⌁</span><h1>Đang tạo <span>phòng.</span></h1><p>Đang chờ phản hồi…</p></div></section>`;
-}
-
-function waitingRoomScreen() {
-  const status = lobbyBusy ? "ĐANG CHỜ PHẢN HỒI…" : "ĐANG CHỜ NGƯỜI CHƠI THỨ HAI";
-  return `
-    <section class="content-screen waiting-screen" aria-labelledby="screen-title">
-      <div class="waiting-layout panel">
-        <div class="waiting-main">
-          <span class="eyebrow amber-eyebrow">NHIỀU NGƯỜI CHƠI // CHỦ PHÒNG</span>
-          <h1 id="screen-title">Phòng đã <span>sẵn sàng.</span></h1>
-          <p class="waiting-description">Chia sẻ mã này với người chơi còn lại. Trận đấu bắt đầu khi cả hai đã kết nối.</p>
-          <span class="field-label">MÃ PHÒNG <span class="mock-inline">THỬ</span></span>
-          <div class="room-code-display" id="created-room-code">${lobbyState?.roomCode || "—"}</div>
-          <button class="copy-button" data-action="copy-room">▣ <span>SAO CHÉP MÃ</span></button>
-          <p class="copy-notice" id="copy-notice" role="status" aria-live="polite">Sao chép mã để chia sẻ phòng thử này.</p>
-          <div class="player-wait-state"><span class="wait-ring" aria-hidden="true"></span><div><strong>${status}</strong><span>Phòng sẽ hoạt động đến khi yêu cầu hủy được xác nhận.</span></div></div>
-          <div class="waiting-actions"><button class="utility-button" data-action="cancel-room" ${lobbyBusy ? "disabled" : ""}>${lobbyBusy ? "ĐANG CHỜ PHẢN HỒI…" : "HỦY PHÒNG"}</button></div>
-        </div>
-        ${window.mockDemoAdapter ? `<aside class="demo-controls"><span class="eyebrow">ĐIỀU KHIỂN THỬ</span><p>Mô phỏng sự kiện từ người chơi khác hoặc máy chủ.</p><button class="secondary-button" data-action="simulate-join" ${lobbyBusy ? "disabled" : ""}>MÔ PHỎNG NGƯỜI CHƠI VÀO <span aria-hidden="true">→</span></button><button class="utility-button demo-link-button" data-action="simulate-link-loss" ${lobbyBusy ? "disabled" : ""}>MÔ PHỎNG MẤT KẾT NỐI</button><span class="panel-code">CHỈ THỬ / NGOẠI TUYẾN</span></aside>` : ""}
-      </div>
-      <p class="screen-footnote">Không có nút sẵn sàng hoặc bắt đầu. Trận chuyển tiếp khi xác nhận đủ hai người chơi.</p>
+      <p class="screen-footnote">TÙY CHỌN ĐƯỢC LƯU TRÊN TRÌNH DUYỆT NÀY.</p>
     </section>`;
 }
 
 function linkLostScreen() {
   return `
     <section class="content-screen link-lost-screen" aria-labelledby="screen-title">
-      <div class="link-lost-card panel"><span class="eyebrow danger-eyebrow">NHIỀU NGƯỜI CHƠI // MẤT KẾT NỐI</span><span class="link-lost-icon" aria-hidden="true">×</span><h1 id="screen-title">Kết nối <span>bị gián đoạn.</span></h1><p>${localizeText(matchLinkLost ? matchLinkNotice : "Kết nối phòng thử bị mất. Trạng thái phòng chưa được xác nhận; màn hình này không khẳng định phòng đã được giải phóng.")}</p><div class="link-lost-actions">${matchLinkLost ? `<button class="primary-button" data-action="check-match-result" ${lobbyBusy ? "disabled" : ""}>${lobbyBusy ? "ĐANG KIỂM TRA KẾT QUẢ…" : "KIỂM TRA KẾT QUẢ TRẬN"}</button>` : `<button class="primary-button" data-action="retry-lobby" ${lobbyBusy ? "disabled" : ""}>${lobbyBusy ? "ĐANG CHỜ PHẢN HỒI…" : "THỬ LẠI"}</button>`}<button class="utility-button" data-screen="home" ${lobbyBusy ? "disabled" : ""}>VỀ MENU</button></div><p class="screen-footnote">${matchLinkLost ? "KẾT QUẢ TRẬN CHƯA XÁC MINH" : "CHƯA XÁC NHẬN ĐÃ HỦY PHÒNG"}</p></div>
+      <div class="link-lost-card panel"><span class="eyebrow danger-eyebrow">MẤT KẾT NỐI</span><span class="link-lost-icon" aria-hidden="true">×</span><h1 id="screen-title">Kết nối <span>bị gián đoạn.</span></h1><p>${escapeHtml(matchLinkNotice)}</p><div class="link-lost-actions"><button class="primary-button" data-screen="home">VỀ MENU</button></div></div>
     </section>`;
 }
 
@@ -406,12 +364,7 @@ function matchResultScreen() {
     ["SỐ VÒNG", result.rounds], ["TỔNG ĐÃ NỘP", result.totalDeposited],
   ].filter(([, value]) => value !== undefined && value !== null);
   const details = fields.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("");
-  return `<section class="content-screen result-screen" aria-labelledby="screen-title"><article class="match-result-card panel ${verified ? "result-verified" : "result-unverified"}"><span class="eyebrow ${verified ? "amber-eyebrow" : "danger-eyebrow"}">NHIỀU NGƯỜI CHƠI // ${verified ? "KẾT QUẢ MÁY CHỦ" : "TRẠNG THÁI KẾT QUẢ"}</span><span class="result-mark" aria-hidden="true">${verified ? "✦" : "?"}</span><h1 id="screen-title">${escapeHtml(outcome)}</h1><p>${verified ? "Kết quả thử này được đánh dấu xác minh." : "Chưa xác minh được kết quả. Không suy đoán người thắng hoặc điểm số."}</p>${details ? `<dl class="match-result-details">${details}</dl>` : ""}<div class="link-lost-actions"><button class="primary-button" data-action="copy-match-summary">SAO CHÉP TÓM TẮT TRẬN</button><button class="utility-button" data-screen="home">VỀ MENU</button></div><p class="summary-notice" role="status" aria-live="polite">${escapeHtml(localizeText(summaryNotice || (verified ? "KẾT QUẢ THỬ ĐÃ XÁC MINH" : "KẾT QUẢ THỬ CHƯA RÕ")))}</p></article></section>`;
-}
-
-function matchDemoControls() {
-  if (!window.mockDemoAdapter) return "";
-  return `<aside class="match-demo-controls panel"><span class="eyebrow">KẾT QUẢ / TÌNH HUỐNG KẾT NỐI</span><p>Dữ liệu thử để xem kết quả xác minh và tình huống mất kết nối.</p><div class="match-demo-buttons"><button data-action="result-fixture" data-outcome="victory">CHIẾN THẮNG</button><button data-action="result-fixture" data-outcome="defeat">THẤT BẠI</button><button data-action="result-fixture" data-outcome="draw">HÒA</button><button data-action="result-fixture" data-outcome="unknown">CHƯA XÁC MINH</button><button data-action="match-link-loss">MÔ PHỎNG MẤT KẾT NỐI</button></div></aside>`;
+  return `<section class="content-screen result-screen" aria-labelledby="screen-title"><article class="match-result-card panel ${verified ? "result-verified" : "result-unverified"}"><span class="eyebrow ${verified ? "amber-eyebrow" : "danger-eyebrow"}">NHIỀU NGƯỜI CHƠI // ${verified ? "KẾT QUẢ MÁY CHỦ" : "TRẠNG THÁI KẾT QUẢ"}</span><span class="result-mark" aria-hidden="true">${verified ? "✦" : "?"}</span><h1 id="screen-title">${escapeHtml(outcome)}</h1><p>${verified ? "Máy chủ đã xác nhận kết quả trận đấu." : "Chưa xác minh được kết quả. Không suy đoán người thắng hoặc điểm số."}</p>${details ? `<dl class="match-result-details">${details}</dl>` : ""}<div class="link-lost-actions"><button class="primary-button" data-action="copy-match-summary">SAO CHÉP TÓM TẮT TRẬN</button><button class="utility-button" data-screen="home">VỀ MENU</button></div><p class="summary-notice" role="status" aria-live="polite">${escapeHtml(localizeText(summaryNotice || (verified ? "ĐÃ NHẬN KẾT QUẢ TRẬN" : "KẾT QUẢ TRẬN CHƯA RÕ")))}</p></article></section>`;
 }
 
 function matchResultSummary(result) {
@@ -425,21 +378,19 @@ function matchResultSummary(result) {
 
 function initializingScreen() {
   return `
-    <section class="content-screen initializing-screen" aria-live="polite"><div class="initializing-card panel"><span class="eyebrow amber-eyebrow">BẮT TAY TRẬN ĐẤU // THỬ</span><span class="initializing-mark" aria-hidden="true">⊕</span><h1>Người chơi đã <span>kết nối.</span></h1><p>Đang khởi tạo giao diện trận đấu…</p></div></section>`;
+    <section class="content-screen initializing-screen" aria-live="polite"><div class="initializing-card panel"><span class="eyebrow amber-eyebrow">NHIỀU NGƯỜI CHƠI</span><span class="initializing-mark" aria-hidden="true">⊕</span><h1>Đang ghép <span>trận.</span></h1><p id="match-connect-status">${escapeHtml(matchConnectStatus)}</p></div></section>`;
 }
 
 function renderMapPreview(view) {
   return `
-    <div class="map-canvas-wrap"><canvas id="tactical-canvas" class="tactical-canvas" tabindex="0" role="img" aria-label="Bản đồ chiến thuật. Nhấp ô để chọn; kéo để di chuyển bản đồ; dùng con lăn để thu phóng. Khi đặt tiêu điểm bàn phím, dùng phím mũi tên để dịch chuyển và Enter để chọn ô giữa."></canvas></div>
-    <div class="map-legend" aria-label="Chú giải bản đồ"><span><b class="legend-earth">⊕</b> TRÁI ĐẤT</span><span><b class="legend-ship">▲</b> TÀU CỦA BẠN</span><span><b class="legend-mining">◆</b> KHAI THÁC</span><span><b class="legend-energy">◇</b> NĂNG LƯỢNG</span><span><b class="legend-rare">◈</b> HIẾM</span><span>Ô CHƯA BIẾT ĐỂ TRỐNG</span></div>`;
+    <div class="map-canvas-wrap"><canvas id="tactical-canvas" class="tactical-canvas" tabindex="0" role="img" aria-label="Bản đồ chiến thuật. Nhấp ô để chọn; kéo để di chuyển bản đồ; dùng con lăn để thu phóng. Khi đặt tiêu điểm bàn phím, dùng phím mũi tên để dịch chuyển và Enter để chọn ô giữa."></canvas></div>`;
 }
-
 function getCellInfo(view, cell) {
   if (!cell) return null;
   if (cell.x === view.earth.x && cell.y === view.earth.y) return { status: "EARTH", object: null };
-  if (cell.x === view.player.position.x && cell.y === view.player.position.y) return { status: "OWN SHIP", object: null };
   const planet = view.knownPlanets.find((item) => item.position.x === cell.x && item.position.y === cell.y);
   if (planet) return { status: "KNOWN PLANET", object: planet };
+  if (cell.x === view.player.position.x && cell.y === view.player.position.y) return { status: "OWN SHIP", object: null };
   return { status: "UNKNOWN", object: null };
 }
 
@@ -448,18 +399,29 @@ function targetPreviewPanel(view) {
     return `<div class="target-empty"><span class="target-crosshair" aria-hidden="true">＋</span><strong>CHỌN MỘT Ô</strong><span>Chưa chọn mục tiêu</span></div>`;
   }
   const info = getCellInfo(view, selectedCell);
+    
+
   if (info.status === "KNOWN PLANET") {
     const planet = info.object;
-    const stock = selectedCell.x === view.player.position.x && selectedCell.y === view.player.position.y
-      ? view.player.currentPlanetStock
-      : null;
+    const isHere = selectedCell.x === view.player.position.x && selectedCell.y === view.player.position.y;
+    
+    // Lấy dữ liệu từ KnownPlanet (do Observe tiết lộ) hoặc dựa vào vị trí hiện tại
+    const stock = planet.stock || (isHere ? view.player.currentPlanetStock : null);
     const stockValue = stock
       ? (Object.entries(stock).filter(([, amount]) => amount > 0).map(([type, amount]) => `${resourceLabel(type)} ${amount}`).join(" · ") || "HẾT")
-      : selectedCell.x === view.player.position.x && selectedCell.y === view.player.position.y
-        ? "CHƯA RÕ · không có trong dữ liệu lượt xem"
-        : "CHƯA RÕ · tàu không ở hành tinh";
-    return `<div class="target-state target-known"><span class="target-glyph" aria-hidden="true">◆</span><div><span class="field-label">TRẠNG THÁI Ô</span><strong>${cellStatusLabel(info.status)}</strong><span class="target-coordinate">(${selectedCell.x}, ${selectedCell.y}) · ${planet.id}</span></div></div><dl class="target-details"><div><dt>LOẠI</dt><dd>${planetLabel(planet.type)}</dd></div><div><dt>PHÁT HIỆN BẰNG</dt><dd>${planetLabel(planet.discoveredBy)}</dd></div><div><dt>TÀI NGUYÊN</dt><dd class="unknown-value">${stockValue}</dd></div></dl>`;
+      : "CHƯA RÕ · cần dùng Quan Sát để xem";
+
+    const ev = planet.eventType || (isHere ? view.player.currentPlanetEvent : null);
+    let eventName = "CHƯA RÕ · cần dùng Quan Sát để xem";
+    if (ev) {
+      eventName = planetEventLabel(ev);
+    } else if (isHere) {
+      eventName = "Không có sự kiện";
+    }
+
+    return `<div class="target-state target-known"><span class="target-glyph" aria-hidden="true">◆</span><div><span class="field-label">TRẠNG THÁI Ô</span><strong>${cellStatusLabel(info.status)}</strong><span class="target-coordinate">(${selectedCell.x}, ${selectedCell.y}) · ${planet.id}</span></div></div><dl class="target-details"><div><dt>SỰ KIỆN</dt><dd>${eventName}</dd></div><div><dt>TÀI NGUYÊN</dt><dd class="unknown-value">${stockValue}</dd></div></dl>`;
   }
+
   const glyph = info.status === "EARTH" ? "⊕" : info.status === "OWN SHIP" ? "▲" : "□";
   return `<div class="target-state ${info.status === "UNKNOWN" ? "target-unknown" : ""}"><span class="target-glyph" aria-hidden="true">${glyph}</span><div><span class="field-label">TRẠNG THÁI Ô</span><strong>${cellStatusLabel(info.status)}</strong><span class="target-coordinate">(${selectedCell.x}, ${selectedCell.y})</span></div></div>${info.status === "UNKNOWN" ? '<p class="target-note">Chưa có thông tin về ô này.</p>' : ""}`;
 }
@@ -475,6 +437,112 @@ const commandDefinitions = [
   ["RECHARGE", "1 AP · 0 PIN", ""],
   ["END_TURN", "0 AP · 0 PIN", ""],
 ];
+
+
+const rpgItems = [
+  { id: "it_teleport", name: "Dịch chuyển", kind: "Active", icon: "⌖", recipe: { PinkDiamond: 1, Amethyst: 3 }, desc: "Đưa tàu về thẳng Trái Đất." },
+  { id: "it_battery", name: "Pin dự phòng", kind: "Active", icon: "ϟ", recipe: { Peridot: 2, Amethyst: 2 }, desc: "Hồi 20 pin ở bất cứ đâu." },
+  { id: "it_ap", name: "Điểm hành động", kind: "Active", icon: "+", recipe: { Jasper: 2, Amethyst: 2 }, desc: "Cộng thêm 2 AP vào lượt hiện tại." },
+  { id: "it_cargo_up", name: "Khoang mở rộng", kind: "Passive", icon: "▣", recipe: { HollyBlueAgate: 5, Spinel: 5 }, desc: "Tăng thêm 20 dung tích khoang hàng." },
+  { id: "it_battery_max", name: "Pin nâng cấp", kind: "Passive", icon: "▤", recipe: { Peridot: 4, HollyBlueAgate: 3 }, desc: "Tăng thêm 20 pin tối đa." },
+  { id: "it_eco_engine", name: "Động cơ tiết kiệm", kind: "Passive", icon: "⌁", recipe: { Jasper: 3, Topaz: 1 }, desc: "Giảm 1 pin tiêu hao mỗi bước di chuyển." },
+  { id: "it_luck_up", name: "Bùa may mắn", kind: "Passive", icon: "✦", recipe: { Carnelian: 2, PinkDiamond: 1 }, desc: "Tăng 10% lượng tài nguyên khai thác." },
+  { id: "it_black_hole", name: "Hố đen", kind: "Active", icon: "◉", recipe: { PinkDiamond: 2, Topaz: 3 }, desc: "Xóa sổ hành tinh đang đứng, nhận 2 Carnelian." },
+  { id: "it_swap_pos", name: "Hoán đổi vị trí", kind: "Active", icon: "⇄", recipe: { Jasper: 2, Topaz: 2 }, desc: "Tráo đổi vị trí tàu với đối thủ." },
+  { id: "it_scarecrow", name: "Nhiễu đối thủ", kind: "Active", icon: "◇", recipe: { Carnelian: 2, Amethyst: 4 }, desc: "Làm đối thủ mất 1 AP." },
+  { id: "it_steal", name: "Đánh cắp", kind: "Active", icon: "⤴", recipe: { PinkDiamond: 1, Jasper: 2 }, desc: "Lấy 1 vật phẩm chủ động từ túi đối thủ." },
+  { id: "it_ap_boost", name: "Tăng AP", kind: "Active", icon: "↑", recipe: { Peridot: 2, Topaz: 1 }, desc: "Cộng thêm 2 AP vào lượt hiện tại." },
+  { id: "it_magnet", name: "Nam châm", kind: "Active", icon: "⊕", recipe: { Spinel: 5, HollyBlueAgate: 2 }, desc: "Hút toàn bộ tài nguyên của hành tinh đang đứng." },
+];
+
+function rpgRecipe(recipe) { return Object.entries(recipe).map(([name, n]) => `${resourceLabel(name)} × ${n}`).join(" · "); }
+
+function rpgDialogMarkup(view, mode) {
+  // BẢNG NÂNG CẤP ĐÃ CHỌN
+  if (mode === "augments") {
+    const augments = view.player.augments || [];
+    const listHtml = augments.length 
+      ? augments.map(offer => {
+          const info = getAugmentInfo(offer.type, offer.rarity);
+          return `
+            <article class="augment-card rarity-${offer.rarity}" style="cursor: default; transform: none; box-shadow: none;">
+                <span class="augment-icon" style="font-size: 2.5rem; margin-bottom: 0.5rem;">${info.icon}</span>
+                <h3 class="augment-name" style="font-size: 1rem;">${info.name}</h3>
+                <span class="augment-rarity" style="font-size: 0.7rem; margin-bottom: 0.5rem;">${getRarityLabel(offer.rarity)}</span>
+                <p class="augment-desc" style="font-size: 0.75rem;">${info.desc}</p>
+            </article>
+          `;
+        }).join("")
+      : '<p class="field-note" style="text-align:center;">Chưa có nâng cấp nào được chọn.</p>';
+
+    return `<dialog class="terminal-dialog rpg-dialog" id="rpg-dialog" style="width: min(900px, 95vw);"><section class="dialog-card panel"><span class="eyebrow amber-eyebrow">TRANG BỊ</span><h2>NÂNG CẤP ĐÃ CHỌN</h2><div class="augment-cards" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); padding: 1rem 0;">${listHtml}</div><button class="utility-button" data-action="close-rpg">ĐÓNG</button></section></dialog>`;
+  }
+
+  // BẢNG SỰ KIỆN
+  if (mode === "events") {
+    const list = eventTab === "planet" ? eventData.planet : eventData.canon;
+    return `<dialog class="terminal-dialog rpg-dialog" id="rpg-dialog"><section class="dialog-card panel"><span class="eyebrow amber-eyebrow">CƠ SỞ DỮ LIỆU</span><h2>DANH SÁCH SỰ KIỆN</h2><div class="rpg-tabs"><button data-event-tab="planet" class="${eventTab === "planet" ? "active" : ""}">HÀNH TINH</button><button data-event-tab="canon" class="${eventTab === "canon" ? "active" : ""}">TOÀN CẦU (CANON)</button></div><div class="rpg-items">${list.map((ev) => `<article class="rpg-item" style="grid-template-columns: 38px 1fr;"><span class="rpg-item-icon" style="color:var(--amber); border-color:rgba(255,180,94,0.4);">!</span><div class="rpg-item-copy"><strong>${ev.name}</strong><span>${ev.desc}</span></div></article>`).join("")}</div><button class="utility-button" data-action="close-rpg">ĐÓNG</button></section></dialog>`;
+  }
+
+  // BẢNG CHẾ TẠO
+  if (mode === "craft") {
+    const items = rpgItems.filter((item) => item.kind === rpgTab);
+    const available = new Set(view.canCraft || []);
+    return `<dialog class="terminal-dialog rpg-dialog" id="rpg-dialog"><section class="dialog-card panel"><span class="eyebrow amber-eyebrow">XƯỞNG CHẾ TẠO</span><h2>CHẾ TẠO VẬT PHẨM</h2><div class="rpg-tabs"><button data-rpg-tab="Active" class="${rpgTab === "Active" ? "active" : ""}">CHỦ ĐỘNG</button><button data-rpg-tab="Passive" class="${rpgTab === "Passive" ? "active" : ""}">BỊ ĐỘNG</button></div><div class="rpg-items">${items.map((item) => `<article class="rpg-item" data-tooltip="${item.desc}"><span class="rpg-item-icon">${item.icon}</span><div class="rpg-item-copy"><strong>${item.name}</strong><small>${item.kind === "Active" ? "VẬT PHẨM CHỦ ĐỘNG" : "VẬT PHẨM BỊ ĐỘNG"}</small><span>${rpgRecipe(item.recipe)}</span></div><button class="primary-button" data-rpg-action="craft" data-item="${item.id}" ${available.has(item.id) ? "" : "disabled"}>CHẾ TẠO</button></article>`).join("")}</div><button class="utility-button" data-action="close-rpg">ĐÓNG</button></section></dialog>`;
+  }
+
+  // BẢNG TÚI ĐỒ
+  const inv = view.player.inventory || { passives: {}, actives: [] };
+  const actives = (inv.actives || []).map((id) => { const key = String(id).toLowerCase(); const item = rpgItems.find((entry) => entry.id === key) || { name: key, icon: "◇", desc: "Vật phẩm không xác định." }; return `<article class="rpg-item" data-tooltip="${item.desc}"><span class="rpg-item-icon">${item.icon}</span><div class="rpg-item-copy"><strong>${item.name}</strong><small>CHỦ ĐỘNG · CÓ THỂ DÙNG</small></div><button class="primary-button" data-rpg-action="use" data-item="${item.id}">SỬ DỤNG</button></article>`; }).join("");
+  const passives = Object.entries(inv.passives || {}).map(([id, n]) => { const item = rpgItems.find((entry) => entry.id === id.toLowerCase()) || { name: id, icon: "▣", desc: "Vật phẩm không xác định." }; return `<article class="rpg-item" data-tooltip="${item.desc}"><span class="rpg-item-icon">${item.icon}</span><div class="rpg-item-copy"><strong>${item.name}</strong><small>BỊ ĐỘNG · CỘNG DỒN</small></div><b>× ${n}</b></article>`; }).join("");
+  return `<dialog class="terminal-dialog rpg-dialog" id="rpg-dialog"><section class="dialog-card panel"><span class="eyebrow amber-eyebrow">TRANG BỊ</span><h2>TÚI ĐỒ</h2><div class="rpg-items">${actives}${passives}${actives || passives ? "" : '<p class="field-note">Túi đồ đang trống.</p>'}</div><button class="utility-button" data-action="close-rpg">ĐÓNG</button></section></dialog>`;
+}
+
+
+function openRpgDialog(mode) {
+  root.querySelector("#rpg-dialog")?.remove();
+  root.insertAdjacentHTML("beforeend", rpgDialogMarkup(playerView, mode));
+  root.querySelector("#rpg-dialog")?.showModal();
+}
+function renderRpgTools() {
+  const heading = root.querySelector(".command-console .panel-heading");
+  if (heading && !heading.querySelector(".rpg-tools")) heading.insertAdjacentHTML("beforeend", '<div class="rpg-tools"><button type="button" data-action="open-crafting">CHẾ TẠO</button><button type="button" data-action="open-inventory">TÚI ĐỒ</button><button type="button" data-action="open-events">SỰ KIỆN</button><button type="button" data-action="open-augments">NÂNG CẤP</button></div>');  const turnRight = root.querySelector(".game-turnbar .turn-right");
+  if (turnRight && !turnRight.querySelector("#turn-countdown")) turnRight.insertAdjacentHTML("afterbegin", '<span id="turn-countdown" class="turn-countdown">01:30</span>');
+  const turnStatus = root.querySelector(".game-turnbar .turn-status");
+  const eventBadge = root.querySelector(".active-event-badge");
+  if (eventBadge) eventBadge.remove();
+  if (playerView?.activeEvent && turnStatus) {
+    const label = String(playerView.activeEvent).replace(/^CE_/, "").replace(/([a-z])([A-Z])/g, "$1 $2").toUpperCase();
+    turnStatus.insertAdjacentHTML("beforeend", `<span class="active-event-badge">CANON · ${escapeHtml(label)}</span>`);
+  }
+  updateTurnCountdown();
+}
+
+function updateTurnDeadline(view) {
+  const token = `${view.turn.round}:${view.turn.activePlayer}`;
+  if (view.turn.endTime) turnDeadlineMs = Number(view.turn.endTime) * 1000;
+  else if (token !== activeTurnToken || turnDeadlineMs === null) turnDeadlineMs = Date.now() + 90000;
+  activeTurnToken = token;
+}
+
+function updateTurnCountdown() {
+  const node = root.querySelector("#turn-countdown");
+  if (!node || turnDeadlineMs === null) return;
+  const seconds = Math.max(0, Math.ceil((turnDeadlineMs - Date.now()) / 1000));
+  node.textContent = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+  node.classList.toggle("expired", seconds <= 10);
+}
+async function submitRpgAction(action, item) {
+  if (pendingAction || !playerView?.turn.isMyTurn) return;
+  root.querySelector("#rpg-dialog")?.close();
+  pendingAction = true;
+  const previous = playerView;
+  const result = await window.gameAdapter.submitAction(action, { item });
+  pendingAction = false;
+  if (result.ok) { playerView = result.playerView; playActionFeedback(action, result, previous, playerView); }
+  else enqueueToast({ level: "warning", title: "HÀNH ĐỘNG BỊ TỪ CHỐI", message: result.error?.message || result.error?.code || "Không thể hoàn tất.", code: result.error?.code || "RPG_ACTION_FAILED" });
+  render("game");
+}
 
 function commandEchoMarkup() {
   if (!commandEcho) return "";
@@ -535,6 +603,17 @@ function enqueueToast(toast) {
 function dismissToast() { advanceToast(); }
 
 function showAdapterNotification(notice = {}) {
+  if (String(notice.code || "").startsWith("EVENT_")) {
+    const old = root.querySelector("#event-modal");
+    old?.remove();
+    const dialog = document.createElement("dialog");
+    dialog.id = "event-modal";
+    dialog.className = `terminal-dialog event-modal ${String(notice.code).includes("CE_") ? "canon" : "planet"}`;
+    dialog.innerHTML = `<section class="dialog-card panel"><span class="eyebrow amber-eyebrow">${escapeHtml(notice.title || "SỰ KIỆN")}</span><p>${escapeHtml(notice.message || "")}</p><button class="primary-button" data-action="close-event">ĐÃ HIỂU</button></section>`;
+    root.append(dialog);
+    dialog.showModal();
+    window.setTimeout(() => { if (dialog.open) dialog.close(); dialog.remove(); }, 3000);
+  }
   enqueueToast({ level: notice.level || "info", title: notice.title || "SERVER NOTICE", message: notice.message || "", code: notice.code || "SERVER_NOTIFICATION" });
 }
 
@@ -588,9 +667,15 @@ function formatActionResult(action, response) {
   const result = report.result || {};
   if (result.kind === "Moved") return `Đã di chuyển đến (${result.position.x}, ${result.position.y}).`;
   if (result.kind === "PlanetsFound") return result.planets.length ? `Đã phát hiện ${result.planets.length} hành tinh mới.` : "Quét xong; không tìm thấy hành tinh mới.";
+  if (result.kind === "NearestPlanetSignal") return result.found ? `Hành tinh gần nhất: ${result.direction}, cách ${result.distance} ô.` : "Không còn hành tinh nào có tài nguyên.";
+  if (result.kind === "OpponentSignal") return `Tín hiệu đối thủ: ${result.direction}.`;
   if (result.kind === "Mined") return `Đã thu được ${result.amount} ${resourceLabel(result.resource)}.`;
+  if (result.kind === "MinedAll") {
+    const parts = Object.entries(result.resources || {}).map(([k, v]) => `${v} ${resourceLabel(k)}`);
+    return parts.length ? `Đã thu được ${parts.join(", ")}.` : "Không thu được tài nguyên.";
+  }
   if (result.kind === "Deposited") return `Đã nộp hàng; +${result.scoreAdded} điểm Trái Đất.`;
-  if (result.kind === "Recharged") return `Pin +${result.batteryAdded}; đã dùng ${result.amount} ${resourceLabel(result.resource)}.`;
+  if (result.kind === "Recharged") return `Pin +${result.batteryAdded}.`;
   if (result.kind === "TurnEnded") return "Đã kết thúc lượt; đang chờ đối thủ.";
   return localizeText(report.message || `Đã hoàn tất: ${actionLabel(action)}.`);
 }
@@ -645,9 +730,12 @@ function commandSummaryMarkup(view) {
     const target = selected === "MOVE" && selectedCell
       ? `(${selectedCell.x}, ${selectedCell.y})`
       : selected === "MOVE" ? "Chưa chọn ô" : selected === "DEPOSIT" ? "Toàn bộ hàng" : selected === "RECHARGE" ? "Kho Trái Đất" : "—";
-    const cost = selected === "DEPOSIT" && distanceBetween(view.player.position, view.earth) > 0
-      ? "1 AP · 2 PIN"
-      : commandDefinitions.find(([name]) => name === selected)?.[1];
+    const moveSteps = selected === "MOVE" && selectedCell ? distanceBetween(view.player.position, selectedCell) : 0;
+    const engineBonus = Number(view.player.inventory?.passives?.it_eco_engine || 0);
+    const moveBattery = Math.max(0, moveSteps * 2 * (view.activeEvent === "CE_ReverseGravity" ? 2 : 1) - moveSteps * engineBonus);
+    const cost = selected === "MOVE" && moveSteps ? `${moveSteps} AP · ${moveBattery} PIN`
+      : selected === "DEPOSIT" && distanceBetween(view.player.position, view.earth) > 0 ? "1 AP · 2 PIN"
+        : commandDefinitions.find(([name]) => name === selected)?.[1];
     const result = actionFlow.result ? `<div class="action-result ${actionFlow.result.ok ? "result-success" : "result-error"}" role="status"><strong>${actionFlow.result.ok ? "ĐÃ CHẤP NHẬN" : escapeHtml(actionFlow.result.error.code)}</strong><span>${escapeHtml(actionFlow.result.ok ? localizeText(actionFlow.result.actionReport?.message || "Lệnh đã được chấp nhận.") : localizeText(actionFlow.result.error.message))}</span></div>` : "";
     const recharge = selected === "RECHARGE" ? rechargeControlsMarkup(view) : "";
     const pendingMarkup = actionFlow.status === "pending" ? `<div class="action-pending" role="status" aria-live="polite"><span class="wait-ring" aria-hidden="true"></span><span>ĐANG CHỜ PHẢN HỒI… Các lệnh đang tạm khóa.</span></div>` : "";
@@ -674,7 +762,15 @@ function rechargeControlsMarkup(view) {
   const amountAvailable = storage[rechargeSelection.resource] || 0;
   rechargeSelection.amount = Math.max(1, Math.min(amountAvailable, Number(rechargeSelection.amount) || 1));
   const points = window.gameAdapter.resourceValue(rechargeSelection.resource) * Number(rechargeSelection.amount) * 2;
-  return `<div class="recharge-controls"><label>TÀI NGUYÊN<select id="recharge-resource">${resources.map((type) => `<option value="${escapeHtml(type)}" ${type === rechargeSelection.resource ? "selected" : ""}>${escapeHtml(resourceLabel(type))} · ${storage[type]} đơn vị</option>`).join("")}</select></label><label>SỐ LƯỢNG<input id="recharge-amount" type="number" min="1" max="${amountAvailable}" step="1" value="${rechargeSelection.amount}" /></label><span class="recharge-preview">TỐI ĐA +${points} PIN · −${Number(rechargeSelection.amount) * window.gameAdapter.resourceValue(rechargeSelection.resource)} ĐIỂM</span></div>`;
+  return `<div class="recharge-controls"><label>TÀI NGUYÊN<select id="recharge-resource">${resources.map((type) => `<option value="${escapeHtml(type)}" ${type === rechargeSelection.resource ? "selected" : ""}>${escapeHtml(resourceLabel(type))} · ${storage[type]} đơn vị</option>`).join("")}</select></label><label>SỐ LƯỢNG<input id="recharge-amount" type="number" min="1" max="${amountAvailable}" step="1" value="${rechargeSelection.amount}" /></label><span class="recharge-preview">ƯỚC TÍNH +${points} PIN</span></div>`;
+}
+
+function mineControlsMarkup(view) {
+  const stock = view.player.currentPlanetStock || {};
+  const resources = Object.keys(stock).filter((type) => stock[type] > 0);
+  if (!resources.length) return `<p class="field-note">Đứng trên hành tinh có tài nguyên để khai thác.</p>`;
+  if (!resources.includes(mineSelection)) mineSelection = resources[0];
+  return `<div class="recharge-controls"><label>TÀI NGUYÊN<select id="mine-resource">${resources.map((type) => `<option value="${escapeHtml(type)}" ${type === mineSelection ? "selected" : ""}>${escapeHtml(resourceLabel(type))} · ${stock[type]} đơn vị</option>`).join("")}</select></label></div>`;
 }
 
 function confirmationDialogMarkup(view) {
@@ -682,15 +778,34 @@ function confirmationDialogMarkup(view) {
   const action = actionFlow.selected;
   const args = getActionArgs(action);
   const cost = action === "DEPOSIT" && distanceBetween(view.player.position, view.earth) > 0 ? "1 AP · 2 PIN" : commandDefinitions.find(([name]) => name === action)?.[1];
+  
+  // Rút gọn câu hỏi
   let summary = action === "DEPOSIT"
-    ? `Nộp toàn bộ ${view.player.cargoUsed} đơn vị hàng vào kho Trái Đất? Điểm chỉ thay đổi sau phản hồi.`
-    : action === "END_TURN" ? "Kết thúc lượt ngay? Các lệnh sẽ tạm khóa đến khi có phản hồi."
-      : `Dùng ${args.amount} ${resourceLabel(args.resource)} từ kho Trái Đất để sạc? Pin vượt tối đa sẽ mất.`;
-  return `<dialog id="action-confirm-dialog" class="terminal-dialog action-confirm-dialog" aria-labelledby="action-confirm-title"><div class="dialog-card panel"><span class="eyebrow amber-eyebrow">XÁC NHẬN LỆNH</span><h2 id="action-confirm-title">Xác nhận ${actionLabel(action)}</h2><p>${escapeHtml(summary)}</p><div class="confirmation-cost"><span>CHI PHÍ</span><strong>${escapeHtml(cost || "—")}</strong></div><div class="action-controls"><button class="primary-button" type="button" data-action="confirm-command">XÁC NHẬN & GỬI</button><button class="utility-button" type="button" data-action="cancel-confirmation">HỦY</button></div><p class="screen-footnote">Trạng thái chỉ đổi sau khi có phản hồi.</p></div></dialog>`;
+    ? `Nộp ${view.player.cargoUsed} đơn vị hàng về Trái Đất?`
+    : action === "END_TURN" ? "Kết thúc lượt ngay?"
+      : `Dùng ${args.amount} ${resourceLabel(args.resource)} để sạc pin?`;
+
+  // Chỉ hiện chi phí nếu không phải là Kết thúc lượt
+  const costMarkup = action !== "END_TURN" 
+    ? `<div class="confirmation-cost">CHI PHÍ: <strong>${escapeHtml(cost || "—")}</strong></div>` 
+    : "";
+
+  return `
+    <dialog id="action-confirm-dialog" class="terminal-dialog action-confirm-dialog" aria-labelledby="action-confirm-title">
+      <div class="dialog-card panel">
+        <h2 id="action-confirm-title" class="confirm-title">${escapeHtml(summary)}</h2>
+        ${costMarkup}
+        <div class="confirm-actions">
+          <button class="primary-button" type="button" data-action="confirm-command">ĐỒNG Ý</button>
+          <button class="utility-button" type="button" data-action="cancel-confirmation">HỦY</button>
+        </div>
+      </div>
+    </dialog>`;
 }
 
 function getActionArgs(action) {
   if (action === "MOVE") return { target: selectedCell ? { ...selectedCell } : null };
+  if (action === "MINE") return { resource: mineSelection };
   if (action === "RECHARGE") return { resource: rechargeSelection.resource, amount: Number(rechargeSelection.amount) };
   return {};
 }
@@ -699,7 +814,7 @@ function gameScreen() {
   const view = playerView;
   const player = view.player;
   const cargoItems = Object.entries(player.cargo);
-  const cargoRows = cargoItems.map(([name, amount]) => `<li><span>${resourceLabel(name)}</span><b>${amount}</b></li>`).join("");
+  const cargoRows = cargoItems.map(([name, amount]) => `<li><span><i class="resource-glyph resource-${String(name).toLowerCase()}" aria-hidden="true">${resourceGlyphs[name] || "◆"}</i>${resourceLabel(name)}</span><b>${amount}</b></li>`).join("");
   const apWidth = Math.round((player.ap / player.apMax) * 100);
   const batteryWidth = Math.round((player.battery / player.batteryMax) * 100);
   const cargoWidth = Math.round((player.cargoUsed / player.cargoCapacity) * 100);
@@ -713,41 +828,43 @@ function gameScreen() {
   const overviewMarkup = sectorOverviewOpen ? `
     <dialog id="sector-overview" class="sector-dialog" aria-labelledby="overview-title">
       <div class="overview-dialog-panel panel">
-        <div class="panel-heading"><div><span class="eyebrow amber-eyebrow">TOÀN KHU VỰC</span><h2 id="overview-title">Bản đồ tổng quan</h2></div><button class="utility-button" data-action="close-overview" autofocus>ĐÓNG <span aria-hidden="true">×</span></button></div>
-        <p class="overview-note">Tọa độ 0–99 · X tăng sang phải · Y tăng xuống dưới. Chỉ hiện Trái Đất, tàu của bạn và hành tinh đã khám phá. Ô chưa biết vẫn được giữ kín. Không thể chọn ô trong chế độ này.</p>
-        <div class="overview-canvas-wrap"><canvas id="overview-canvas" class="overview-canvas" role="img" aria-label="Bản đồ tổng quan chỉ hiển thị Trái Đất, tàu của bạn và hành tinh đã khám phá. Không thể chọn ô trong chế độ này."></canvas></div>
-        <div class="map-legend"><span><b class="legend-earth">⊕</b> TRÁI ĐẤT</span><span><b class="legend-ship">▲</b> TÀU CỦA BẠN</span><span><b class="legend-mining">◆</b> KHAI THÁC</span><span><b class="legend-energy">◇</b> NĂNG LƯỢNG</span><span><b class="legend-rare">◈</b> HIẾM</span><span>Ô CHƯA BIẾT ĐỂ TRỐNG</span></div>
+        <div class="overview-header-actions">
+          <button class="utility-button" data-action="close-overview" autofocus>ĐÓNG <span aria-hidden="true">×</span></button>
+        </div>
+        <div class="overview-canvas-wrap"><canvas id="overview-canvas" class="overview-canvas" role="img" aria-label="Bản đồ tổng quan chỉ hiển thị Trái Đất, tàu của bạn và hành tinh đã khám phá."></canvas></div>
       </div>
     </dialog>` : "";
 
   return `
-    <section class="game-screen" aria-label="Giao diện trận đấu thử">
-      <div class="game-turnbar panel"><div class="turn-readout"><span class="eyebrow">VÒNG</span><strong>${String(view.turn.round).padStart(2, "0")} <small>/ ${view.turn.roundMax}</small></strong></div><div class="turn-divider"></div><div class="turn-status"><span class="status-indicator"></span><div><strong>${view.turn.isMyTurn ? "LƯỢT CỦA BẠN" : "LƯỢT ĐỐI THỦ"}</strong><span>${view.turn.activePlayer === "Player 1" ? "NGƯỜI CHƠI 1" : "NGƯỜI CHƠI 2"} · TRẬN THỬ</span></div></div><div class="turn-right"><span class="field-label">PHIÊN</span><strong>TRẬN ĐẤU</strong><button class="utility-button game-leave-button" data-action="leave-room" ${lobbyBusy || pendingAction ? "disabled" : ""}>RỜI TRẬN THỬ</button></div></div>
+    <section class="game-screen" aria-label="Giao diện trận đấu">
+      <div class="game-turnbar panel"><div class="turn-readout"><span class="eyebrow">VÒNG</span><strong>${String(view.turn.round).padStart(2, "0")} <small>/ ${view.turn.roundMax}</small></strong></div><div class="turn-divider"></div><div class="turn-status"><span class="status-indicator"></span><div><strong>${view.turn.isMyTurn ? "LƯỢT CỦA BẠN" : "LƯỢT ĐỐI THỦ"}</strong><span>${view.turn.activePlayer === "Player 1" ? "NGƯỜI CHƠI 1" : "NGƯỜI CHƠI 2"}</span></div></div><div class="turn-right"><span class="field-label">PHIÊN</span><strong>TRẬN ĐẤU</strong><button class="utility-button game-leave-button" data-action="leave-room" ${lobbyBusy || pendingAction ? "disabled" : ""}>RỜI TRẬN</button></div></div>
       <div id="toast-region" class="toast-region" aria-live="polite" ${activeToast ? "" : "hidden"}>${toastMarkup()}</div>
       <div class="game-grid">
         <aside class="ship-hud panel" aria-labelledby="ship-hud-title">
           <div class="panel-heading"><h2 id="ship-hud-title">THÔNG TIN TÀU</h2></div>
           <div class="hud-content">
             <section class="hud-position"><span class="field-label">VỊ TRÍ TÀU</span><strong>(${player.position.x}, ${player.position.y})</strong></section>
-            <div class="meter-block"><div class="meter-label"><span>AP</span><strong>${player.ap} <small>/ ${player.apMax}</small></strong></div><div class="meter-track" role="progressbar" aria-label="Điểm hành động" aria-valuemin="0" aria-valuemax="${player.apMax}" aria-valuenow="${player.ap}"><span style="width:${apWidth}%"></span></div></div>
-            <div class="meter-block"><div class="meter-label"><span>PIN</span><strong>${player.battery} <small>/ ${player.batteryMax}</small></strong></div><div class="meter-track meter-amber" role="progressbar" aria-label="Pin" aria-valuemin="0" aria-valuemax="${player.batteryMax}" aria-valuenow="${player.battery}"><span style="width:${batteryWidth}%"></span></div></div>
-            <div class="hud-section-title"><span>HÀNG HÓA</span><span>${player.cargoUsed} / ${player.cargoCapacity}</span></div>
+            
+            <div class="meter-block"><div class="meter-label"><span>AP</span><strong>${player.ap} <small>/ ${player.apMax}</small></strong></div><div class="meter-track meter-green" role="progressbar" aria-label="Điểm hành động" aria-valuemin="0" aria-valuemax="${player.apMax}" aria-valuenow="${player.ap}"><span style="width:${apWidth}%"></span></div></div>
+            
+            <div class="meter-block"><div class="meter-label"><span>BATTERY</span><strong>${player.battery} <small>/ ${player.batteryMax}</small></strong></div><div class="meter-track meter-amber" role="progressbar" aria-label="Pin" aria-valuemin="0" aria-valuemax="${player.batteryMax}" aria-valuenow="${player.battery}"><span style="width:${batteryWidth}%"></span></div></div>
+            
+            <div class="hud-section-title"><span>KHO CHỨA</span><span>${player.cargoUsed} / ${player.cargoCapacity}</span></div>
             <div class="meter-track cargo-meter" role="progressbar" aria-label="Sức chứa hàng hóa" aria-valuemin="0" aria-valuemax="${player.cargoCapacity}" aria-valuenow="${player.cargoUsed}"><span style="width:${cargoWidth}%"></span></div>
-            <ul class="cargo-list">${cargoRows || "<li><span>RỖNG</span><b>0</b></li>"}</ul>
-            <section class="score-block"><div class="meter-label"><span>ĐIỂM TRÁI ĐẤT</span><strong>${player.earthScore} <small>/ ${player.earthScoreTarget}</small></strong></div><div class="meter-track score-meter" role="progressbar" aria-label="Điểm Trái Đất đến mục tiêu chiến thắng" aria-valuemin="0" aria-valuemax="${player.earthScoreTarget}" aria-valuenow="${player.earthScore}"><span style="width:${scoreWidth}%"></span></div></section>
+            <ul class="cargo-list">${cargoRows}</ul>
+            
+            <section class="score-block"><div class="meter-label"><span>SCORE</span><strong>${player.earthScore} <small>/ ${player.earthScoreTarget}</small></strong></div><div class="meter-track score-meter" role="progressbar" aria-label="Điểm Trái Đất đến mục tiêu chiến thắng" aria-valuemin="0" aria-valuemax="${player.earthScoreTarget}" aria-valuenow="${player.earthScore}"><span style="width:${scoreWidth}%"></span></div></section>
           </div>
         </aside>
 
         <section class="tactical-panel panel" aria-labelledby="map-title">
-          <div class="panel-heading map-panel-heading"><h2 id="map-title">BẢN ĐỒ CHIẾN THUẬT</h2><div class="map-controls"><button class="map-control-button" data-action="reset-to-ship" title="Đưa bản đồ về vị trí tàu">VỀ VỊ TRÍ TÀU</button><button class="map-control-button" data-action="open-overview">TOÀN KHU VỰC</button></div></div>
+          <div class="panel-heading map-panel-heading"><h2 id="map-title">BẢN ĐỒ CHIẾN THUẬT</h2><div class="map-controls"><button class="map-control-button" data-action="reset-to-ship" title="Đưa bản đồ về vị trí tàu">VỀ VỊ TRÍ TÀU</button><button class="map-control-button" data-action="open-overview">TOÀN KHU VỰC</button><button class="map-control-button" data-action="clear-target" ${selectedCell ? "" : "hidden"}>BỎ CHỌN</button></div></div>
           <div class="map-preview">${renderMapPreview(view)}</div>
-          <div class="cell-status-strip"><span class="field-label">Ô MỤC TIÊU</span><strong>${selectedCell ? `(${selectedCell.x}, ${selectedCell.y}) · ${cellStatusLabel(selectedInfo.status)}` : "CHƯA CHỌN Ô"}</strong><span id="hover-status" role="status" aria-live="polite">Chọn ô chỉ để xem · chưa gửi lệnh</span><button class="clear-target-button" data-action="clear-target" ${selectedCell ? "" : "hidden"}>BỎ CHỌN MỤC TIÊU</button></div>
         </section>
 
         <aside class="target-panel panel" aria-labelledby="target-title">
           <div class="panel-heading"><h2 id="target-title">THÔNG TIN MỤC TIÊU</h2></div>
           <div class="target-content">${targetPreviewPanel(view)}</div>
-          <section class="opponent-status"><div class="opponent-heading"><span class="eyebrow">TRẠNG THÁI ĐỐI THỦ</span></div><div class="opponent-connection"><span class="status-indicator" aria-hidden="true"></span><strong>${escapeHtml(statusLabel(view.opponent?.connection || "unknown"))}</strong></div><p>Lượt: ${escapeHtml(statusLabel(view.opponent?.publicStatus || "unknown"))}</p></section>
         </aside>
 
         <section class="command-console panel" aria-labelledby="command-title">
@@ -760,9 +877,7 @@ function gameScreen() {
           <ol class="event-list">${events}</ol>
         </section>
       </div>
-      <div class="game-statusbar"><span><span class="live-mark"></span> TRẠNG THÁI NGƯỜI CHƠI</span><span>${selectedCell ? `MỤC TIÊU: (${selectedCell.x}, ${selectedCell.y}) / ${cellStatusLabel(selectedInfo.status)}` : "CHỌN MỘT Ô / CHƯA CÓ MỤC TIÊU"}</span><span>${view.turn.isMyTurn ? "MẠNG NGOẠI TUYẾN" : "ĐANG CHỜ LƯỢT ĐỐI THỦ"}</span></div>
-      ${window.mockDemoAdapter && !view.turn.isMyTurn && !pendingAction ? `<div class="opponent-turn-control"><span>Đang chờ lượt của Người chơi 2.</span><button class="utility-button" data-action="simulate-opponent-turn">MÔ PHỎNG LƯỢT ĐỐI THỦ</button></div>` : ""}
-      ${matchDemoControls()}
+      <div class="game-statusbar"><span><span class="live-mark"></span> ĐÃ KẾT NỐI MÁY CHỦ</span><span>${selectedCell ? `MỤC TIÊU: (${selectedCell.x}, ${selectedCell.y}) / ${cellStatusLabel(selectedInfo.status)}` : "CHỌN MỘT Ô / CHƯA CÓ MỤC TIÊU"}</span><span>${view.turn.isMyTurn ? "ĐẾN LƯỢT CỦA BẠN" : "ĐANG CHỜ LƯỢT ĐỐI THỦ"}</span></div>
     </section>${overviewMarkup}${confirmationDialogMarkup(view)}`;
 }
 
@@ -997,20 +1112,22 @@ function cellAtPoint(canvas, clientX, clientY) {
 function updateTargetDisplay() {
   const view = playerView;
   const target = root.querySelector(".target-content");
-  const strip = root.querySelector(".cell-status-strip");
   const statusbar = root.querySelector(".game-statusbar");
-  if (!target || !strip || !statusbar) return;
+  if (!target || !statusbar) return;
+  
   target.innerHTML = targetPreviewPanel(view);
   const info = getCellInfo(view, selectedCell);
-  strip.querySelector("strong").textContent = selectedCell
-    ? `(${selectedCell.x}, ${selectedCell.y}) · ${cellStatusLabel(info.status)}`
-    : "CHƯA CHỌN Ô";
-  strip.querySelector(".clear-target-button").hidden = !selectedCell;
+  
+  const clearBtn = root.querySelector('.map-controls [data-action="clear-target"]');
+  if (clearBtn) clearBtn.hidden = !selectedCell;
+
   statusbar.children[1].textContent = selectedCell
     ? `MỤC TIÊU: (${selectedCell.x}, ${selectedCell.y}) / ${cellStatusLabel(info.status)}`
     : "CHỌN MỘT Ô / CHƯA CÓ MỤC TIÊU";
+    
   const commandPanel = root.querySelector(".command-console");
   if (commandPanel) commandPanel.innerHTML = `<div class="panel-heading"><h2 id="command-title">BẢNG HÀNH ĐỘNG</h2></div>${commandSummaryMarkup(view)}`;
+  renderRpgTools();
 }
 
 function attachTacticalCanvas() {
@@ -1040,18 +1157,11 @@ function attachTacticalCanvas() {
         camera.x = Math.max(0, Math.min(99, pointerStart.cameraX - dx / cellSize));
         camera.y = Math.max(0, Math.min(99, pointerStart.cameraY - dy / cellSize));
         hoverCell = null;
-        const hoverStatus = root.querySelector("#hover-status");
-        if (hoverStatus) hoverStatus.textContent = "ĐANG DỊCH BẢN ĐỒ · KHÔNG ĐỔI TRẠNG THÁI TRẬN";
         drawTacticalMap();
         return;
       }
     }
     hoverCell = cellAtPoint(canvas, event.clientX, event.clientY);
-    const hoverStatus = root.querySelector("#hover-status");
-    if (hoverStatus) {
-      const info = getCellInfo(playerView, hoverCell);
-      hoverStatus.textContent = hoverCell ? `ĐANG RÊ (${hoverCell.x}, ${hoverCell.y}) · ${cellStatusLabel(info.status)}` : "NGOÀI RÌA BẢN ĐỒ";
-    }
     drawTacticalMap();
   });
   canvas.addEventListener("pointerup", (event) => {
@@ -1072,8 +1182,6 @@ function attachTacticalCanvas() {
   canvas.addEventListener("pointerleave", () => {
     if (pointerStart) return;
     hoverCell = null;
-    const hoverStatus = root.querySelector("#hover-status");
-    if (hoverStatus) hoverStatus.textContent = "Chọn ô chỉ để xem · chưa gửi lệnh";
     drawTacticalMap();
   });
   canvas.addEventListener("wheel", (event) => {
@@ -1104,51 +1212,41 @@ function escapeHtml(value) {
   })[character]);
 }
 
-async function beginCreateRoom() {
-  if (lobbyBusy) return;
-  lobbyBusy = true;
-  render("creating-room");
-  const response = await window.gameAdapter.createRoom();
-  lobbyBusy = false;
-  if (!response.ok) return;
-  lobbyState = { roomCode: response.data.roomCode, role: "host" };
-  render("waiting-room");
-}
-
-async function submitJoinRoom() {
-  if (lobbyBusy) return;
-  const input = root.querySelector("#room-code");
-  joinCodeValue = input.value;
-  lobbyBusy = true;
-  render("join-room");
-  const response = await window.gameAdapter.joinRoom(joinCodeValue);
-  lobbyBusy = false;
-  if (!response.ok) {
-    joinCodeValue = joinCodeValue.trim().toUpperCase();
-    lobbyError = response.error;
-    render("join-room");
-    root.querySelector("#room-code").focus();
-    root.querySelector("#room-code").setSelectionRange(0, joinCodeValue.length);
-    return;
-  }
-  lobbyError = null;
-  lobbyState = { roomCode: response.data.roomCode, role: "guest" };
-  beginMatchTransition();
-}
-
 async function beginMatchTransition() {
-  lobbyBusy = false;
-  render("initializing");
+  if (lobbyBusy) return;
+  lobbyBusy = true;
+  matchViewInitialized = false;
+  matchResult = null;
+  matchLinkLost = false;
+  matchConnectStatus = "Đang kết nối với máy chủ…";
+  render("waiting-room");
   const matchResponse = await window.gameAdapter.startMatch();
+  lobbyBusy = false;
   if (!matchResponse.ok) {
     matchLinkNotice = `${matchResponse.error.code}: ${matchResponse.error.message}`;
+    matchLinkLost = true;
     render("link-lost");
     return;
   }
-  playerView = matchResponse.playerView;
+  // The adapter normally publishes this view through subscribePlayerViews.
+  // Use the resolved startMatch view as a fallback so a missed event cannot
+  // leave the player stuck on the waiting screen.
+  if (!matchViewInitialized) beginMatchFromView(matchResponse.playerView);
+}
+
+function beginMatchFromView(view) {
+  if (matchViewInitialized) return;
+  if (!view?.player?.position || !view?.turn || !Array.isArray(view.knownPlanets)) {
+    matchLinkLost = true;
+    matchLinkNotice = "Máy chủ đã ghép trận nhưng dữ liệu bản đồ không hợp lệ.";
+    render("link-lost");
+    return;
+  }
+  playerView = view;
+  updateTurnDeadline(view);
   matchResult = null;
   matchLinkLost = false;
-    matchLinkNotice = "Kết quả trận chưa được xác nhận. Mất kết nối không đồng nghĩa với việc có người thắng.";
+  matchLinkNotice = "Kết quả trận chưa được xác nhận. Mất kết nối không đồng nghĩa với việc có người thắng.";
   summaryNotice = "";
   actionFlow = { status: "idle", selected: null, result: null };
   commandEcho = null;
@@ -1167,33 +1265,35 @@ async function beginMatchTransition() {
   camera.x = playerView.player.position.x;
   camera.y = playerView.player.position.y;
   camera.zoom = 1;
-  render("initializing");
-  window.setTimeout(() => {
-    if (currentScreen === "initializing") render("game");
-  }, 550);
+  try {
+    render("game");
+    matchViewInitialized = true;
+  } catch (error) {
+    console.error("Không thể dựng giao diện trận đấu:", error);
+    matchLinkLost = true;
+    matchLinkNotice = `Đã nhận trận từ máy chủ nhưng giao diện bị lỗi: ${error?.message || error}`;
+    try { render("link-lost"); }
+    catch (fallbackError) { console.error("Không thể dựng màn hình lỗi:", fallbackError); }
+  }
 }
 
 function render(screen = currentScreen) {
   currentScreen = screen;
   pendingAction = actionFlow.status === "pending";
-  if (runtimeStatus) runtimeStatus.textContent = screen === "home" ? "GIAO DIỆN SẴN SÀNG" : "GIAO DIỆN THỬ NGHIỆM";
+  
+  updateBgm(screen === "game"); // <-- THÊM DÒNG NÀY ĐỂ TỰ ĐỘNG ĐỔI NHẠC
+  
   root.innerHTML = screen === "help" ? helpScreen()
+    : screen === "lobby" ? lobbyHomeScreen()
     : screen === "settings" ? settingsScreen()
-      : screen === "lobby" ? lobbyHomeScreen()
-        : screen === "join-room" ? joinRoomScreen(lobbyError)
-          : screen === "waiting-room" ? waitingRoomScreen()
-            : screen === "link-lost" ? linkLostScreen()
-              : screen === "match-result" ? matchResultScreen()
-              : screen === "initializing" ? initializingScreen()
-                : screen === "creating-room" ? creatingRoomScreen()
-                  : screen === "game" ? gameScreen()
-        : homeScreen();
+      : screen === "link-lost" ? linkLostScreen()
+        : screen === "match-result" ? matchResultScreen()
+          : screen === "waiting-room" || screen === "initializing" ? initializingScreen()
+            : screen === "game" ? gameScreen()
+              : homeScreen();
 
-  if (screen === "settings") {
-    const address = root.querySelector("#server-address");
-    address.value = settings.serverAddress;
-  }
   applySettings();
+  if (screen === "game") renderRpgTools();
   root.focus({ preventScroll: true });
   if (screen === "game") {
     window.requestAnimationFrame(() => {
@@ -1219,7 +1319,7 @@ function render(screen = currentScreen) {
   }
 }
 
-async function sendMockCommand() {
+async function sendCommand() {
   if (!actionFlow.selected || actionFlow.status === "pending" || !playerView.turn.isMyTurn) return;
   const action = actionFlow.selected;
   const args = getActionArgs(action);
@@ -1248,6 +1348,7 @@ async function sendMockCommand() {
   render("game");
   const previousView = playerView;
   const response = await window.gameAdapter.submitAction(action, args);
+  if (currentScreen === "match-result" || currentScreen === "link-lost") return;
   const nextView = response.ok ? response.playerView : previousView;
   const targetLabel = action === "MOVE" ? `(${args.target.x}, ${args.target.y})`
     : action === "RECHARGE" ? `${args.amount} ${resourceLabel(args.resource)}`
@@ -1286,43 +1387,178 @@ function showExitDialog() {
   dialog.showModal();
 }
 
+function showAugmentUI(offers) {
+    augmentOffers = offers;
+    augmentDeadline = Date.now() + 30000;
+    renderAugmentOverlay();
+    if (augmentTimerInterval) clearInterval(augmentTimerInterval);
+    augmentTimerInterval = setInterval(updateAugmentCountdown, 100);
+}
+
+function hideAugmentUI() {
+    augmentOffers = null;
+    if (augmentTimerInterval) clearInterval(augmentTimerInterval);
+    root.querySelector("#augment-overlay")?.remove();
+}
+
+function getRarityLabel(rarity) {
+    if (rarity === "silver") return "BẠC";
+    if (rarity === "gold") return "VÀNG";
+    if (rarity === "diamond") return "KIM CƯƠNG";
+    return String(rarity).toUpperCase();
+}
+
+function getAugmentInfo(type, rarity) {
+    let icon = "❓", name = "Chưa xác định", baseDesc = "";
+    if (type === "battery_max") {
+        icon = "⚡"; name = "Tụ Điện Siêu Cấp";
+        const amt = rarity === "silver" ? 20 : rarity === "gold" ? 35 : 50;
+        baseDesc = `Tăng vĩnh viễn ${amt} Pin tối đa.`;
+    } else if (type === "move_cost") {
+        icon = "🚀"; name = "Động Cơ Phản Vật Chất";
+        const amt = rarity === "silver" ? 1 : rarity === "gold" ? 2 : 3;
+        baseDesc = `Giảm ${amt} Pin tiêu hao mỗi bước Di chuyển.`;
+    } else if (type === "cargo_max") {
+        icon = "🎒"; name = "Khoang Hàng Không Gian";
+        const amt = rarity === "silver" ? 10 : rarity === "gold" ? 20 : 30;
+        baseDesc = `Tăng vĩnh viễn ${amt} sức chứa hàng hóa.`;
+    } else if (type === "ap_max") {
+        icon = "⚙️"; name = "Lõi Năng Lượng";
+        const amt = rarity === "silver" ? 1 : rarity === "gold" ? 2 : 3;
+        baseDesc = `Tăng vĩnh viễn ${amt} AP tối đa.`;
+    } else if (type === "midas") {
+        icon = "💎"; name = "Bàn Tay Midas";
+        const amt = rarity === "silver" ? 20 : rarity === "gold" ? 50 : 100;
+        baseDesc = `${amt}% tỉ lệ nhận thêm 1 tài nguyên hiếm khi Khai thác.`;
+    } else if (type === "luck") {
+        icon = "🍀"; name = "Thần Tài Gõ Cửa";
+        const amt = rarity === "silver" ? 10 : rarity === "gold" ? 20 : 30;
+        baseDesc = `Tăng ${amt} Luck (tỉ lệ rớt nhiều tài nguyên hơn).`;
+    } else if (type === "scan_radius") {
+        icon = "👁️"; name = "Mắt Thần";
+        const amt = rarity === "silver" ? 1 : rarity === "gold" ? 2 : 3;
+        baseDesc = `Tăng ${amt} bán kính Quan sát và Quét khu vực.`;
+    } else if (type === "craft_discount") {
+        icon = "🛠️"; name = "Thợ Chế Tạo";
+        const amt = rarity === "silver" ? 1 : rarity === "gold" ? 2 : 3;
+        baseDesc = `Giảm ${amt} tài nguyên cần thiết khi Chế tạo vật phẩm (tối thiểu 1).`;
+    }
+    return { icon, name, desc: baseDesc };
+}
+
+function renderAugmentOverlay() {
+    if (!augmentOffers) return;
+    root.querySelector("#augment-overlay")?.remove();
+
+    const offersHtml = augmentOffers.map((offer, index) => {
+        const info = getAugmentInfo(offer.type, offer.rarity);
+        return `
+            <article class="augment-card rarity-${offer.rarity}" data-augment-index="${index}">
+                <span class="augment-icon">${info.icon}</span>
+                <h3 class="augment-name">${info.name}</h3>
+                <span class="augment-rarity">${getRarityLabel(offer.rarity)}</span>
+                <p class="augment-desc">${info.desc}</p>
+            </article>
+        `;
+    }).join("");
+
+    const overlay = document.createElement("div");
+    overlay.id = "augment-overlay";
+    overlay.className = "augment-overlay";
+    overlay.innerHTML = `
+        <div class="augment-container">
+            <div class="augment-header">
+                <h2>CHỌN NÂNG CẤP</h2>
+                <div id="augment-timer" class="augment-timer">00:30</div>
+            </div>
+            <div class="augment-cards">${offersHtml}</div>
+            <div id="augment-waiting" class="augment-waiting" hidden>
+                <span class="wait-ring"></span> Đang chờ đối thủ chọn...
+            </div>
+        </div>
+    `;
+    root.append(overlay);
+    updateAugmentCountdown();
+
+    overlay.querySelectorAll(".augment-card").forEach(card => {
+        card.addEventListener("click", () => {
+            if (!augmentOffers) return;
+            const index = Number(card.dataset.augmentIndex);
+            pickAugment(index);
+        });
+    });
+}
+
+function updateAugmentCountdown() {
+    if (!augmentOffers) return;
+    const timerEl = root.querySelector("#augment-timer");
+    if (!timerEl) return;
+    const seconds = Math.max(0, Math.ceil((augmentDeadline - Date.now()) / 1000));
+    timerEl.textContent = `00:${String(seconds).padStart(2, "0")}`;
+}
+
+function pickAugment(index) {
+    if (!augmentOffers) return;
+    augmentOffers = null;
+    window.gameAdapter.submitAugment(index);
+    const overlay = root.querySelector("#augment-overlay");
+    if (overlay) {
+        const cards = overlay.querySelector(".augment-cards");
+        if (cards) cards.style.opacity = "0.3";
+        const waiting = overlay.querySelector("#augment-waiting");
+        if (waiting) waiting.hidden = false;
+        const timerEl = overlay.querySelector("#augment-timer");
+        if (timerEl) timerEl.style.opacity = "0.3";
+    }
+}
+
 root.addEventListener("click", (event) => {
   const button = event.target.closest("button");
   if (!button) return;
+  if (settings.sound && activeBgm && activeBgm.paused) activeBgm.play().catch(() => {});
   if (button.dataset.screen) {
     if (pendingAction) return;
-    lobbyError = null;
     render(button.dataset.screen);
   } else if (button.dataset.command) {
     if (pendingAction || !playerView.turn.isMyTurn) return;
     actionFlow = { status: "selected", selected: button.dataset.command, result: null };
     updateTargetDisplay();
     root.querySelector(`[data-command="${button.dataset.command}"]`)?.focus();
+  } else if (button.dataset.rpgTab) {
+    rpgTab = button.dataset.rpgTab;
+    openRpgDialog("craft");
+  } else if (button.dataset.rpgAction === "craft") {
+    submitRpgAction("CRAFT", button.dataset.item);
+  } else if (button.dataset.rpgAction === "use") {
+    submitRpgAction("USE_ITEM", button.dataset.item);
+  } else if (button.dataset.action === "open-crafting") {
+    rpgTab = "Active";
+    openRpgDialog("craft");
+  } else if (button.dataset.action === "open-inventory") {
+    openRpgDialog("inventory");
+  } else if (button.dataset.action === "open-events") {
+    eventTab = "planet";
+    openRpgDialog("events");
+  } else if (button.dataset.action === "open-augments") {
+    openRpgDialog("augments");
+  } else if (button.dataset.eventTab) {
+    eventTab = button.dataset.eventTab;
+    openRpgDialog("events");
+  } else if (button.dataset.action === "close-rpg" || button.dataset.action === "close-event") {
+    button.closest("dialog")?.close();
+    button.closest("dialog")?.remove();
   } else if (button.dataset.action === "exit") {
     showExitDialog();
-  } else if (button.dataset.action === "test-connection") {
-    connectionNotice = "KẾT QUẢ THỬ: không gửi yêu cầu kết nối.";
-    root.querySelector("#connection-notice").textContent = connectionNotice;
-  } else if (button.dataset.action === "create-room") {
-    beginCreateRoom();
-  } else if (button.dataset.action === "copy-room") {
-    copyRoomCode();
-  } else if (button.dataset.action === "cancel-room" || button.dataset.action === "leave-room") {
-    leaveMockRoom();
-  } else if (button.dataset.action === "simulate-join") {
-    simulateOpponentJoin();
-  } else if (button.dataset.action === "simulate-link-loss") {
-    simulateLinkLoss();
-  } else if (button.dataset.action === "retry-lobby") {
-    retryMockConnection();
-  } else if (button.dataset.action === "result-fixture") {
-    loadMatchResultFixture(button.dataset.outcome);
-  } else if (button.dataset.action === "match-link-loss") {
-    matchLinkLost = true;
-    matchLinkNotice = "Kết nối trận thử bị mất. Chưa có kết quả xác thực nên chưa rõ người thắng và điểm số.";
-    render("link-lost");
-  } else if (button.dataset.action === "check-match-result") {
-    checkMatchResultAfterDisconnect();
+  } else if (button.dataset.action === "connect-match") {
+    beginMatchTransition();
+  } else if (button.dataset.action === "real-match" || button.dataset.action === "mock-match") {
+    const url = new URL(window.location.href);
+    if (button.dataset.action === "mock-match") url.searchParams.set("mock", "1");
+    else url.searchParams.delete("mock");
+    url.searchParams.set("start", "1");
+    window.location.assign(url);
+  } else if (button.dataset.action === "leave-room") {
+    leaveMatch();
   } else if (button.dataset.action === "copy-match-summary") {
     copyMatchSummary();
   } else if (button.dataset.action === "reset-to-ship") {
@@ -1351,19 +1587,17 @@ root.addEventListener("click", (event) => {
       updateTargetDisplay();
     }
   } else if (button.dataset.action === "send-command") {
-    sendMockCommand();
+    sendCommand();
   } else if (button.dataset.action === "review-command") {
     if (!pendingAction && actionFlow.selected) {
       actionFlow.status = "confirming";
       render("game");
     }
   } else if (button.dataset.action === "confirm-command") {
-    sendMockCommand();
+    sendCommand();
   } else if (button.dataset.action === "cancel-confirmation") {
     actionFlow.status = "selected";
     render("game");
-  } else if (button.dataset.action === "simulate-opponent-turn") {
-    simulateMockOpponentTurn();
   } else if (button.dataset.action === "dismiss-toast") {
     dismissToast();
   } else if (button.dataset.action === "toggle-event-log") {
@@ -1375,45 +1609,6 @@ root.addEventListener("click", (event) => {
     toggle.setAttribute("aria-expanded", String(eventLogExpanded));
   }
 });
-
-async function simulateMockOpponentTurn() {
-  if (pendingAction || playerView.turn.isMyTurn) return;
-  actionFlow.status = "pending";
-  render("game");
-  const response = await window.mockDemoAdapter.advanceOpponentTurn();
-  if (response.ok) playerView = response.playerView;
-  actionFlow = { status: response.ok ? "success" : "error", selected: null, result: response.ok ? { ok: true, actionReport: { message: "Đối thủ đã xong lượt." } } : response };
-  if (response.ok) enqueueToast({ level: "info", title: "ĐẾN LƯỢT CỦA BẠN", message: "Đối thủ đã kết thúc lượt. AP đã được cập nhật theo trạng thái mới.", code: "TURN_STARTED" });
-  render("game");
-}
-
-async function loadMatchResultFixture(outcome) {
-  lobbyBusy = true;
-  render("game");
-  const response = await window.mockDemoAdapter.getResultFixture(outcome);
-  lobbyBusy = false;
-  if (!response.ok) return;
-  matchResult = response.result;
-    summaryNotice = "ĐÃ NHẬN KẾT QUẢ THỬ";
-  render("match-result");
-}
-
-async function checkMatchResultAfterDisconnect() {
-  lobbyBusy = true;
-  render("link-lost");
-  const response = await window.gameAdapter.getMatchResult();
-  lobbyBusy = false;
-  if (response.ok && response.data?.result) {
-    matchResult = response.data.result;
-    summaryNotice = "ĐÃ NHẬN PHẢN HỒI KẾT QUẢ TRẬN";
-    render("match-result");
-    return;
-  }
-  matchLinkNotice = response.error
-    ? `${response.error.code}: ${localizeText(response.error.message)} Kết quả trận vẫn chưa rõ.`
-    : "Phản hồi không có kết quả trận đã xác minh. Kết quả vẫn chưa rõ.";
-  render("link-lost");
-}
 
 async function copyMatchSummary() {
   if (!matchResult) return;
@@ -1440,69 +1635,13 @@ async function copyMatchSummary() {
   render("match-result");
 }
 
-root.addEventListener("submit", (event) => {
-  if (event.target.id !== "join-form") return;
-  event.preventDefault();
-  submitJoinRoom();
-});
-
-async function copyRoomCode() {
-  const notice = root.querySelector("#copy-notice");
-  try {
-    if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
-    await navigator.clipboard.writeText(lobbyState.roomCode);
-    notice.textContent = "ĐÃ SAO CHÉP MÃ PHÒNG.";
-    notice.classList.remove("copy-error");
-  } catch {
-    notice.textContent = "Sao chép thất bại. Hãy chọn mã phía trên và sao chép thủ công.";
-    notice.classList.add("copy-error");
-    const code = root.querySelector("#created-room-code");
-    const range = document.createRange();
-    range.selectNodeContents(code);
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-  }
-}
-
-async function leaveMockRoom() {
-  if (lobbyBusy || !lobbyState) return;
-  lobbyBusy = true;
-  const returnScreen = currentScreen === "waiting-room" ? "waiting-room" : "game";
-  render(returnScreen);
-  const response = await window.gameAdapter.leaveRoom();
-  lobbyBusy = false;
-  if (!response.ok) return;
-  lobbyState = null;
-  render("lobby");
-}
-
-async function simulateOpponentJoin() {
-  if (lobbyBusy || !lobbyState) return;
-  lobbyBusy = true;
-  render("waiting-room");
-  const response = await window.mockDemoAdapter.simulateOpponentJoin(lobbyState.roomCode);
-
-  lobbyBusy = false;
-  if (response.ok && response.data.playersConnected) beginMatchTransition();
-}
-
-async function simulateLinkLoss() {
+async function leaveMatch() {
   if (lobbyBusy) return;
   lobbyBusy = true;
-  render("waiting-room");
-  await window.mockDemoAdapter.simulateLobbyLinkLoss();
+  await window.gameAdapter.leaveRoom();
   lobbyBusy = false;
-  render("link-lost");
-}
-
-async function retryMockConnection() {
-  if (lobbyBusy) return;
-  lobbyBusy = true;
-  render("link-lost");
-  const response = await window.gameAdapter.reconnectRoom();
-  lobbyBusy = false;
-  if (response.ok && response.data.connection === "restored") render("waiting-room");
+  playerView = null;
+  render("home");
 }
 
 root.addEventListener("input", (event) => {
@@ -1515,9 +1654,7 @@ root.addEventListener("input", (event) => {
   } else if (control.id === "volume") {
     settings.volume = Number(control.value);
     root.querySelector("#volume-output").value = `${settings.volume}%`;
-    saveSettings();
-  } else if (control.id === "server-address") {
-    settings.serverAddress = control.value;
+    if (activeBgm) activeBgm.volume = settings.volume / 100;
     saveSettings();
   }
 });
@@ -1533,9 +1670,12 @@ root.addEventListener("change", (event) => {
     rechargeSelection.amount = Number(control.value);
     updateTargetDisplay();
     root.querySelector("#recharge-amount")?.focus();
+  } else if (control.id === "mine-resource") {
+    mineSelection = control.value;
   } else if (control.id === "sound-toggle") {
     settings.sound = control.checked;
     control.nextElementSibling.nextElementSibling.textContent = settings.sound ? "BẬT" : "TẮT";
+    applySettings();
     saveSettings();
   } else if (control.id === "reduced-motion") {
     settings.reducedMotion = control.checked;
@@ -1547,11 +1687,26 @@ root.addEventListener("change", (event) => {
 
 applySettings();
 render("home");
+if (!countdownTimer) countdownTimer = window.setInterval(updateTurnCountdown, 250);
 window.gameAdapter.subscribeNotifications(showAdapterNotification);
 window.gameAdapter.subscribePlayerViews((nextView) => {
   if (!nextView) return;
+  if (currentScreen === "waiting-room" || (currentScreen === "initializing" && !matchViewInitialized)) {
+    lobbyBusy = false;
+    beginMatchFromView(nextView);
+    return;
+  }
   playerView = nextView;
+  updateTurnDeadline(nextView);
   if (currentScreen === "game") render("game");
+});
+
+window.gameAdapter.subscribeAugmentEvents((event) => {
+    if (event.type === "offer") {
+        showAugmentUI(event.offers);
+    } else if (event.type === "result") {
+        hideAugmentUI();
+    }
 });
 window.gameAdapter.subscribeMatchResults((result) => {
   matchResult = result;
@@ -1559,12 +1714,28 @@ window.gameAdapter.subscribeMatchResults((result) => {
   render("match-result");
 });
 
-document.querySelector(".brand")?.addEventListener("click", (event) => {
-  event.preventDefault();
-  if (pendingAction) return;
-  lobbyError = null;
-  render("home");
+window.gameAdapter.subscribeConnectionStates?.(({ state, message }) => {
+  if (state === "connecting" || state === "waiting") {
+    matchConnectStatus = message;
+    if (currentScreen === "waiting-room" || currentScreen === "initializing") {
+      const status = root.querySelector("#match-connect-status");
+      if (status) status.textContent = message;
+    }
+  } else if (state === "disconnected" && (currentScreen === "game" || (currentScreen === "initializing" && matchViewInitialized))) {
+    matchLinkLost = true;
+    matchLinkNotice = message || "Kết nối bị gián đoạn. Kết quả trận chưa được xác nhận.";
+    render("link-lost");
+  }
 });
+
+const launchParams = new URLSearchParams(window.location.search);
+if (launchParams.get("start") === "1") {
+  launchParams.delete("start");
+  const cleanQuery = launchParams.toString();
+  window.history.replaceState(null, "", `${window.location.pathname}${cleanQuery ? `?${cleanQuery}` : ""}${window.location.hash}`);
+  render("lobby");
+  beginMatchTransition();
+}
 
 window.addEventListener("resize", () => {
   if (currentScreen !== "game") return;

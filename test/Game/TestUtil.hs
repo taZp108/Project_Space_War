@@ -20,7 +20,7 @@ cfg = defaultConfig
 
 -- | Hanh tinh duy nhat trong 'baseState', nam o (60, 60).
 testPlanet :: Planet
-testPlanet = Planet 1 (Pos 60 60) Mining (rs [(Iron, 80), (Crystal, 30)])
+testPlanet = Planet 1 (Pos 60 60) Mining (rs [(Iron, 80), (Crystal, 30)]) False
 
 -- | Tao kho tai nguyen tu danh sach.
 rs :: [(ResourceType, Int)] -> Resources

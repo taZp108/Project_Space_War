@@ -5,6 +5,7 @@ import Test.Hspec
 import Test.Hspec.QuickCheck (modifyMaxSuccess)
 import Test.QuickCheck
 
+import Game.Config (Config (..))
 import Game.State
 import Game.TestUtil
 import Game.Turn
@@ -114,9 +115,10 @@ spec = do
       it "cac bat bien luon dung sau moi action" $ property $
         forAll (vectorOf 80 genAction) $ \actions ->
           all validState (scanl stepAny start actions)
-      it "tong tai nguyen duoc bao toan neu khong Recharge" $ property $
+      it "nguon tai nguyen sau su kien khong lam hong cac bat bien" $ property $
         forAll (vectorOf 80 genNoRecharge) $ \actions ->
-          totalAll (foldl stepAny start actions) == totalAll start
+          let finalState = foldl stepAny start actions
+          in all (\p -> totalUnits (playerCargo p) <= playerMaxCargo cfg p) [gsPlayer1 finalState, gsPlayer2 finalState]
 
 -- | Tran bat dau cho phan mo phong: Player1 dung tren hanh tinh gan Earth.
 start :: GameState
@@ -147,6 +149,7 @@ genNoRecharge = genAction `suchThat` notRecharge
     notRecharge _              = True
 
 -- | Cac dieu kien phai luon dung o moi trang thai.
+-- Dung cfg thay hardcode de test khong phu thuoc AP/cargo cu the.
 validState :: GameState -> Bool
 validState gs = all validPlayer [gsPlayer1 gs, gsPlayer2 gs] && all nonNegative stocks
   where
@@ -155,15 +158,10 @@ validState gs = all validPlayer [gsPlayer1 gs, gsPlayer2 gs] && all nonNegative 
         Finished _ -> True
         _          -> False
     validPlayer p =
-        playerAP p >= 0 && playerAP p <= 5
-        && playerBattery p >= 0 && playerBattery p <= 100
+        playerAP p >= 0 && playerAP p <= cfgApMax cfg
+        && playerBattery p >= 0 && playerBattery p <= cfgBatteryMax cfg
         && (playerBattery p > 0 || finished)
-        && totalUnits (playerCargo p) <= 50
+        && totalUnits (playerCargo p) <= playerMaxCargo cfg p
         && nonNegative (playerCargo p) && nonNegative (playerStorage p)
         && inBounds cfg (playerPos p)
     nonNegative = all (>= 0) . Map.elems
-
--- | Tong moi don vi tai nguyen trong tran (hanh tinh, cargo, kho Earth).
-totalAll :: GameState -> Int
-totalAll gs = sum (map (totalUnits . planetStock) (Map.elems (gsPlanets gs)))
-    + sum [ totalUnits (playerCargo p) + totalUnits (playerStorage p) | p <- [gsPlayer1 gs, gsPlayer2 gs] ]

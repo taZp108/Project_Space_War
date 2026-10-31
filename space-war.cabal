@@ -1,4 +1,4 @@
-cabal-version: 1.12
+cabal-version: 2.2
 
 -- This file has been generated from package.yaml by hpack version 0.39.6.
 --
@@ -6,10 +6,21 @@ cabal-version: 1.12
 
 name:           space-war
 version:        0.1.0.0
-synopsis:       Game 2 người chơi theo lượt, client-server (Haskell + WebSocket)
-license:        BSD3
+description:    Please see the README on GitHub at <https://github.com/githubuser/space-war#readme>
+homepage:       https://github.com/githubuser/space-war#readme
+bug-reports:    https://github.com/githubuser/space-war/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2024 Author name here
+license:        BSD-3-Clause
 license-file:   LICENSE
 build-type:     Simple
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/space-war
 
 library
   exposed-modules:
@@ -24,18 +35,26 @@ library
       Lib
       Protocol.Json
       Protocol.Message
+      Server.Handler
+      Server.Lobby
+      Server.Types
   other-modules:
+      Paths_space_war
+  autogen-modules:
       Paths_space_war
   hs-source-dirs:
       src
-  ghc-options: -Wall
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       aeson
+    , async
     , base >=4.7 && <5
     , bytestring
     , containers
     , random
+    , stm
     , text
+    , time
     , websockets
   default-language: Haskell2010
 
@@ -43,12 +62,23 @@ executable space-war-exe
   main-is: Main.hs
   other-modules:
       Paths_space_war
+  autogen-modules:
+      Paths_space_war
   hs-source-dirs:
       app
-  ghc-options: -Wall
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , async
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , random
     , space-war
+    , stm
+    , text
+    , time
+    , websockets
   default-language: Haskell2010
 
 test-suite space-war-test
@@ -57,6 +87,7 @@ test-suite space-war-test
   other-modules:
       Game.ActionSpec
       Game.GenerateSpec
+      Game.RoguelikeSpec
       Game.StateSpec
       Game.TestUtil
       Game.TurnSpec
@@ -64,17 +95,23 @@ test-suite space-war-test
       Game.WorldSpec
       Protocol.JsonSpec
       Paths_space_war
+  autogen-modules:
+      Paths_space_war
   hs-source-dirs:
       test
-  ghc-options: -Wall
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
     , aeson
+    , async
     , base >=4.7 && <5
     , bytestring
     , containers
     , hspec
     , random
     , space-war
+    , stm
     , text
+    , time
+    , websockets
   default-language: Haskell2010

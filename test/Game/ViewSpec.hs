@@ -82,9 +82,12 @@ spec = do
       viewKnown (view1 gs) `shouldBe` Map.singleton 1 (KnownPlanet (Pos 60 60) Mining)
       viewHere (view1 gs) `shouldBe` Nothing
 
-  describe "summaryOf" $
-    it "lo vi tri va diem cuoi cua ca hai ben" $ do
+  describe "summaryOf" $ do
+    it "lo vi tri, diem, va tong da nop cua ca hai ben" $ do
       let gs = modifyPlayer Player1 (\p -> p { playerStorage = rs [(Crystal, 4)] })
                  (modifyPlayer Player2 (\p -> p { playerStorage = rs [(Iron, 7)] }) baseState)
       summaryOf cfg gs `shouldBe`
-        GameSummary (PlayerFinal (Pos 50 50) 12) (PlayerFinal (Pos 50 40) 7)
+        GameSummary (PlayerFinal (Pos 50 50) 12 0) (PlayerFinal (Pos 50 40) 7 0)
+    it "finalDeposited tracking tich luy tu playerTotalDeposited" $ do
+      let gs = modifyPlayer Player1 (\p -> p { playerTotalDeposited = rs [(Iron, 5), (Crystal, 3)] }) baseState
+      finalDeposited (summaryPlayer1 (summaryOf cfg gs)) `shouldBe` 8
