@@ -44,6 +44,27 @@ module Game.Types
     , Notice (..)
     , ActionResult (..)
     , ActionReport (..)
+      -- * Zone (Phase 2)
+    , ZoneType (..)
+    , ZoneShape (..)
+    , ZoneId
+    , Zone (..)
+      -- * Wormhole (Phase 1)
+    , WormholeId
+    , Wormhole (..)
+      -- * Crate (Phase 3)
+    , CrateId
+    , LootItem (..)
+    , TrapType (..)
+    , CrateContent (..)
+    , Crate (..)
+      -- * Objective (Phase 4)
+    , ObjectiveDifficulty (..)
+    , ObjectiveType (..)
+    , ObjectiveReward (..)
+    , Objective (..)
+    , ObjectiveTrackers (..)
+    , emptyTrackers
     ) where
 
 import qualified Data.Map.Strict as Map
@@ -125,6 +146,10 @@ data Player = Player
     , playerCargoJam         :: Int      
     , playerTotalDeposited   :: Resources 
     , playerAugments :: [AugmentOffer]
+    , playerKnownWormholes :: Map.Map WormholeId Wormhole  -- ^ cong khong gian da kham pha
+    , playerObjectives     :: [Objective]                  -- ^ 3 nhiem vu hien tai
+    , playerTrackers       :: ObjectiveTrackers            -- ^ tien do nhiem vu trong luot
+    , playerCargoPenaltyTurns :: Int                       -- ^ so luot con bi phat cargo tu trap
     } deriving (Show, Eq)
 
 -- | Ly do thang.
@@ -163,6 +188,12 @@ data GameState = GameState
     , gsActiveCanonEvent :: Maybe CanonEvent
     , gsPendingAugments :: Maybe [AugmentOffer]
     , gsAugmentChoices :: Map.Map PlayerId Int
+    , gsWormholes     :: Map.Map WormholeId Wormhole  -- ^ tat ca cong khong gian
+    , gsZones         :: Map.Map ZoneId Zone          -- ^ cac vung hien tai
+    , gsCrates        :: Map.Map CrateId Crate        -- ^ cac hom tiep te dang co
+    , gsNextCrateId   :: Int
+    , gsNextZoneId    :: Int
+    , gsNextObjId     :: Int
     } deriving (Show, Eq)
 
 
@@ -181,6 +212,8 @@ data Action
     | Deposit
     | Recharge ResourceType Int   -- ^ loai tai nguyen va so luong dung de nap
     | EndTurn
+    | OpenCrate                   -- ^ mo hom tiep te dang dung tren (0 AP)
+    | ClaimObjective Int          -- ^ nhan thuong nhiem vu da hoan thanh (0 AP)
     deriving (Show, Eq)
 
 -- | Ly do mot action bi tu choi (khi bi tu choi thi khong mat gi).
@@ -201,6 +234,11 @@ data GameError
     | InvalidAmount           -- ^ so luong khong hop le (<= 0)
     | ItemUnavailable
     | InventoryFull
+    | InJammedZone            -- ^ dung trong vung nhieu song, khong the quet
+    | NoCrateHere             -- ^ khong dung tren hom tiep te
+    | ObjectiveNotComplete    -- ^ nhiem vu chua hoan thanh, khong the nhan thuong
+    | ObjectiveAlreadyClaimed -- ^ nhiem vu da nhan thuong
+    | ObjectiveNotFound       -- ^ khong co nhiem vu voi id do
     deriving (Show, Eq)
 
 -- | Thong bao gui cho doi thu khi ban lam mot action.
@@ -222,6 +260,12 @@ data ActionResult
     | CanonEventOccurred CanonEvent ActionResult
     | ItemCrafted ItemId
     | ItemUsed ItemId
+    | WormholeEntered Pos Pos                -- ^ from, to
+    | CrateOpened [LootItem]                 -- ^ loot nhan duoc
+    | TrapTriggered TrapType                 -- ^ trap kich hoat khi mo hom
+    | ZoneEntered ZoneType                   -- ^ thong bao vao zone
+    | ZoneEndedTurn ZoneType Int             -- ^ radiation drain cuoi luot
+    | ObjectiveClaimed Int ObjectiveReward   -- ^ objectiveId, reward
     deriving (Show, Eq)
 
 -- | Bao cao cua mot action thanh cong.
@@ -274,3 +318,186 @@ data EventNotification = EventNotification
     , effectDesc :: String
     , eventKind :: String
     } deriving (Show, Eq)
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- PHASE 2: ZONES
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- | Nam loai vung moi truong, reset moi vong.
+data ZoneType = ZoneJamming | ZoneRadiation | ZoneZeroG | ZoneSwamp | ZoneGoldRush
+    deriving (Show, Eq, Ord, Enum, Bounded)
+
+-- | Ma so cua zone.
+type ZoneId = Int
+
+-- | Hinh dang zone: tron (Manhattan radius) hoac chu nhat.
+data ZoneShape
+    = ZoneCircle Int        -- ^ ban kinh Manhattan
+    | ZoneRect Int Int      -- ^ width, height
+    deriving (Show, Eq)
+
+-- | Mot vung tren map. Vi tri la tam (cho tron) hoac tam hinh chu nhat.
+data Zone = Zone
+    { zoneId    :: ZoneId
+    , zoneType  :: ZoneType
+    , zoneShape :: ZoneShape
+    , zonePos   :: Pos
+    } deriving (Show, Eq)
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- PHASE 1: WORMHOLES
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- | Ma so cua cong khong gian.
+type WormholeId = Int
+
+-- | Mot dau cong khong gian. Moi cong noi voi dung 1 cong khac qua 'wormholePairedWith'.
+data Wormhole = Wormhole
+    { wormholeId         :: WormholeId
+    , wormholePos        :: Pos
+    , wormholePairedWith :: WormholeId
+    } deriving (Show, Eq)
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- PHASE 3: CRATES
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- | Ma so cua hom tiep te.
+type CrateId = Int
+
+-- | Mot loai loot trong hom.
+data LootItem
+    = LootResources Resources
+    | LootActiveItem ItemId
+    | LootPassiveItem ItemId
+    | LootAugment Rarity
+    deriving (Show, Eq)
+
+-- | Cac loai bay (trap) co the gap khi mo hom.
+data TrapType
+    = TrapBatteryLeak Int          -- ^ -N battery
+    | TrapMagneticStorm Int        -- ^ -N battery (nang hon)
+    | TrapItemThief                -- ^ mat 1 active item random
+    | TrapPassiveThief             -- ^ mat 1 passive item random
+    | TrapTax Int                  -- ^ -N diem Earth
+    | TrapTeleportRandom Int Int   -- ^ teleport ngau nhien trong khoang [min, max]
+    | TrapCargoLeak Int Int        -- ^ -N cargo capacity trong M luot
+    | TrapPlunder Int              -- ^ mat N don vi tai nguyen dat nhat
+    | TrapAPDrain Int              -- ^ -N AP luot hien tai
+    | TrapNextAPDrain Int          -- ^ -N AP luot sau
+    | TrapEmptyCrate               -- ^ hom rong (troll)
+    | TrapHomecoming               -- ^ teleport ve Earth
+    | TrapRadiation Int Int        -- ^ -N battery, -M diem Earth
+    | TrapMiniBlackHole Int        -- ^ -N battery
+    | TrapMixed Int Int Int        -- ^ -N battery, -M AP luot sau, -K diem
+    deriving (Show, Eq)
+
+-- | Noi dung cua hom: loot thuong hoac trap.
+data CrateContent
+    = CrateLoot [LootItem]
+    | CrateTrap TrapType
+    deriving (Show, Eq)
+
+-- | Mot hom tiep te tren map.
+data Crate = Crate
+    { crateId           :: CrateId
+    , cratePos          :: Pos
+    , crateContent      :: CrateContent
+    , crateSpawnedRound :: Int
+    } deriving (Show, Eq)
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- PHASE 4: SECRET OBJECTIVES
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- | Do kho cua nhiem vu.
+data ObjectiveDifficulty = ObjEasy | ObjMedium | ObjHard
+    deriving (Show, Eq, Ord, Enum, Bounded)
+
+-- | Loai nhiem vu. Cac so trong constructor la nguong can dat.
+data ObjectiveType
+    = ObjMineTimes Int
+    | ObjMoveCells Int
+    | ObjScanTimes Int
+    | ObjOpenCrates Int
+    | ObjUseWormholes Int
+    | ObjDepositTimes Int
+    | ObjCraftItems Int
+    | ObjUseItems Int
+    | ObjMineResources Int
+    | ObjDoNothing
+    | ObjVisitPlanets Int
+    | ObjSpendBattery Int
+    | ObjGainEarthScore Int
+    | ObjVisitPlanetTypes Int
+    | ObjReachCell Pos
+    | ObjDoAllFour
+    | ObjCraftDifferent Int
+    | ObjEndInRadiation
+    | ObjSquareDance
+    deriving (Show, Eq)
+
+-- | Phan thuong khi claim nhiem vu.
+data ObjectiveReward
+    = RewardBattery Int
+    | RewardResources Resources
+    | RewardAugment Rarity
+    | RewardActiveItem ItemId
+    | RewardPassiveItem ItemId
+    | RewardEarthScore Int
+    | RewardAP Int
+    | RewardCombo [ObjectiveReward]
+    deriving (Show, Eq)
+
+-- | Mot nhiem vu ca nhan. Player co 3 cai, reset moi vong.
+data Objective = Objective
+    { objId         :: Int
+    , objDifficulty :: ObjectiveDifficulty
+    , objType       :: ObjectiveType
+    , objReward     :: ObjectiveReward
+    , objCompleted  :: Bool
+    , objClaimed    :: Bool
+    , objTargetPos  :: Maybe Pos    -- ^ chi dung cho ObjReachCell
+    } deriving (Show, Eq)
+
+-- | Bo dem tien do nhiem vu, reset moi luot cua player.
+data ObjectiveTrackers = ObjectiveTrackers
+    { otCellsMoved              :: Int
+    , otMinesThisTurn           :: Int
+    , otScansThisTurn           :: Int
+    , otCraftsThisTurn          :: Int
+    , otCraftedItems            :: [ItemId]
+    , otItemsUsedThisTurn       :: Int
+    , otDepositsThisTurn        :: Int
+    , otCratesOpenedThisTurn    :: Int
+    , otWormholesUsedThisTurn   :: Int
+    , otUniquePlanetsVisited    :: [PlanetId]
+    , otUniquePlanetTypes       :: [PlanetType]
+    , otBatterySpentThisTurn    :: Int
+    , otEarthScoreAtStart       :: Int
+    , otResourcesMinedThisTurn  :: Int
+    , otDidMove                 :: Bool
+    , otDidScan                 :: Bool
+    , otDidMine                 :: Bool
+    , otDidCraft                :: Bool
+    , otDidUseItem              :: Bool
+    , otDidDeposit              :: Bool
+    , otMoveSequence            :: [Direction]
+    , otEndedInRadiation        :: Bool
+    , otReachedTargetPos        :: Bool
+    } deriving (Show, Eq)
+
+-- | Bo dem rong, dung khi reset luot moi.
+emptyTrackers :: ObjectiveTrackers
+emptyTrackers = ObjectiveTrackers
+    { otCellsMoved = 0, otMinesThisTurn = 0, otScansThisTurn = 0
+    , otCraftsThisTurn = 0, otCraftedItems = [], otItemsUsedThisTurn = 0
+    , otDepositsThisTurn = 0, otCratesOpenedThisTurn = 0
+    , otWormholesUsedThisTurn = 0, otUniquePlanetsVisited = []
+    , otUniquePlanetTypes = [], otBatterySpentThisTurn = 0
+    , otEarthScoreAtStart = 0, otResourcesMinedThisTurn = 0
+    , otDidMove = False, otDidScan = False, otDidMine = False
+    , otDidCraft = False, otDidUseItem = False, otDidDeposit = False
+    , otMoveSequence = [], otEndedInRadiation = False
+    , otReachedTargetPos = False
+    }

@@ -14,9 +14,11 @@ module Game.View
 
 import qualified Data.Map.Strict as Map
 
+import Game.Action (crateAt)
 import Game.Config
 import Game.State
 import Game.Types
+import Game.World (distance)
 
 -- | Nhung gi mot nguoi choi duoc thay.
 data PlayerView = PlayerView
@@ -47,7 +49,14 @@ data PlayerView = PlayerView
     , viewActiveEvent   :: Maybe CanonEvent
    , viewCanCraft      :: [ItemId]
     , viewTurnEndTime   :: Maybe Integer
-    , viewAugments      :: [AugmentOffer] 
+    , viewAugments      :: [AugmentOffer]
+      -- * Phase 1-4 (moi)
+    , viewZones          :: [Zone]              -- ^ tat ca zone dang hoat dong
+    , viewCrates         :: [Crate]             -- ^ tat ca hom tiep te dang co
+    , viewKnownWormholes :: [Wormhole]          -- ^ cong khong gian da kham pha
+    , viewObjectives     :: [Objective]         -- ^ 3 nhiem vu hien tai
+    , viewCrateHere      :: Maybe Crate         -- ^ hom dang dung tren (neu co)
+    , viewCurrentZone    :: Maybe ZoneType      -- ^ zone dang dung trong (neu co)
     } deriving (Show, Eq)
 
 -- | Thong tin cuoi cung cua mot nguoi choi, lo ra khi tran ket thuc.
@@ -62,6 +71,7 @@ data GameSummary = GameSummary
     { summaryPlayer1 :: PlayerFinal
     , summaryPlayer2 :: PlayerFinal
     } deriving (Show, Eq)
+
 
 -- | Phan trang thai ma nguoi choi nay duoc thay.
 viewFor :: Config -> PlayerId -> GameState -> PlayerView
@@ -94,6 +104,12 @@ viewFor cfg pid gs = PlayerView
     , viewCanCraft      = [item | item <- [minBound .. maxBound], canAfford item]
     , viewTurnEndTime   = Nothing
     , viewAugments      = playerAugments me
+    , viewZones          = Map.elems (gsZones gs)
+    , viewCrates         = Map.elems (gsCrates gs)
+    , viewKnownWormholes = Map.elems (playerKnownWormholes me)
+    , viewObjectives     = playerObjectives me
+    , viewCrateHere      = crateAt (playerPos me) gs
+    , viewCurrentZone    = findZoneAt (playerPos me) gs
     }
   where
     me = getPlayer pid gs
@@ -107,3 +123,20 @@ summaryOf cfg gs = GameSummary (final (gsPlayer1 gs)) (final (gsPlayer2 gs))
         (playerPos p)
         (playerScore cfg p)
         (totalUnits (playerTotalDeposited p))
+
+-- | Tim zone tai pos (uu tien thu tu Jamming > Radiation > Swamp > ZeroG > Gold).
+findZoneAt :: Pos -> GameState -> Maybe ZoneType
+findZoneAt pos gs =
+    let check ty = any (\z -> zoneType z == ty && pointInZone z pos) (Map.elems (gsZones gs))
+    in case filter check [ZoneJamming, ZoneRadiation, ZoneSwamp, ZoneZeroG, ZoneGoldRush] of
+         (ty:_) -> Just ty
+         []     -> Nothing
+  where
+    pointInZone (Zone _ _ shape center) p = case shape of
+        ZoneCircle r -> distance center p <= r
+        ZoneRect w h ->
+            let Pos cx cy = center
+                Pos px py = p
+                hw = w `div` 2
+                hh = h `div` 2
+            in px >= cx - hw && px <= cx + hw && py >= cy - hh && py <= cy + hh

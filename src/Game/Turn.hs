@@ -4,19 +4,17 @@ module Game.Turn
     , endTurn
     , forfeit
     , startTurn
-    , generateAugments
     ) where
-
-import Game.Action (performAction, removeFirst)
+    
+import Game.Action (performAction, removeFirst, checkObjectives, inZoneOfType)
 import Game.Config
-import Game.Generate (pickDistinct)
+import Game.Generate (pickDistinct, generateCrates, generateZones, generateObjectives, generateAugments)
 import Game.State
 import Game.Types
 import Game.World (allCells)
 import qualified Data.Map.Strict as Map
 import Data.List (sortOn)
-import System.Random (StdGen, randomR)
-
+import System.Random (randomR)
 
 -- | Ap dung mot action cua nguoi choi. Kiem tra tran dang choi va dung luot,
 -- roi thuc hien action, roi xu ly ket qua (thang, thua, het AP thi doi luot).
@@ -28,7 +26,8 @@ applyAction cfg pid action gs
     | gsCurrent gs /= pid      = Left NotYourTurn
     | otherwise = do
         (gs', rep) <- performAction cfg pid action gs
-        let gsAfter = afterAction cfg pid action gs' rep
+        let gsChecked = checkObjectives cfg pid action gs'
+            gsAfter = afterAction cfg pid action gsChecked rep
             startedRound = gsPhase gsAfter == InProgress && gsRound gsAfter > gsRound gs
             (gsFinal, event) = if startedRound then triggerCanon cfg gsAfter else (gsAfter, Nothing)
             repFinal = maybe rep (\ev -> rep { reportResult = CanonEventOccurred ev (reportResult rep) }) event
@@ -42,7 +41,12 @@ afterAction cfg pid action gs rep
         finish (Winner pid ReachedTarget) gs
     | playerBattery me <= 0 =
         finish (Winner (otherPlayer pid) OpponentOutOfBattery) gs
-    | action == EndTurn || forcedEnd (reportResult rep) || playerAP me <= 0 = endTurn cfg gs
+    | action == EndTurn || forcedEnd (reportResult rep) || playerAP me <= 0 =
+        -- Neu action KHONG phai EndTurn nhung bi auto/forced end,
+        -- re-check objectives voi tin hieu EndTurn (cho ObjDoNothing / ObjEndInRadiation).
+        let gsChecked = if action == EndTurn then gs
+                        else checkObjectives cfg pid EndTurn gs
+        in endTurn cfg gsChecked
     | otherwise = gs
   where
     me = getPlayer pid gs
@@ -53,22 +57,77 @@ afterAction cfg pid action gs rep
 -- so vong thi tinh ket qua theo diem kho Earth. Nguoi den luot duoc nap day AP.
 endTurn :: Config -> GameState -> GameState
 endTurn cfg gs = case gsCurrent gs of
-    Player1 -> startTurn cfg Player2 gs
+    Player1 ->
+        startTurn cfg Player2 (applyRadiationDrain cfg Player1 gs)
     Player2
         | gsRound gs >= cfgMaxRounds cfg -> finish (roundLimitResult cfg gs) gs
-        | (gsRound gs + 1) `mod` cfgAugmentInterval cfg == 1 -> 
-            let (augs, g') = generateAugments (gsRng gs)
-            in gs { gsRound = gsRound gs + 1
-                  , gsPendingAugments = Just augs
-                  , gsAugmentChoices = Map.empty
-                  , gsRng = g'
-                  }
-        | otherwise -> startTurn cfg Player1 (gs { gsRound = gsRound gs + 1 })
+        | (gsRound gs + 1) `mod` cfgAugmentInterval cfg == 1 ->
+            let gsRad = applyRadiationDrain cfg Player2 gs
+                gsNew = beginNewRound cfg (gsRound gs + 1) gsRad
+                (augs, g') = generateAugments (gsRng gsNew)
+            in gsNew { gsPendingAugments = Just augs
+                     , gsAugmentChoices = Map.empty
+                     , gsRng = g'
+                     }
+        | otherwise ->
+            startTurn cfg Player1
+                (beginNewRound cfg (gsRound gs + 1)
+                    (applyRadiationDrain cfg Player2 gs))
 
--- | Bat dau luot cua mot nguoi: dat nguoi do lam nguoi hien tai, AP day.
+-- | Tru battery cuoi luot neu player dang dung trong vung Radiation.
+-- Chi goi tu 'endTurn', khong goi truc tiep tu cho khac.
+applyRadiationDrain :: Config -> PlayerId -> GameState -> GameState
+applyRadiationDrain cfg pid gs =
+    let p = getPlayer pid gs
+    in if inZoneOfType ZoneRadiation gs (playerPos p)
+       then setPlayer pid (p { playerBattery = max 0 (playerBattery p - cfgRadiationBatteryDrain cfg) }) gs
+       else gs
+
+-- | Sang vong moi: cap nhat gsRound, loc crate het han, roll crate moi,
+-- reset zones, reset objectives cho ca 2 player.
+beginNewRound :: Config -> Int -> GameState -> GameState
+beginNewRound cfg newRound gs =
+    let -- Loc crate con han
+        cratesFiltered = Map.filter (\c -> newRound - crateSpawnedRound c <= cfgCrateLifetime cfg) (gsCrates gs)
+        -- Roll crate moi cho vong nay
+        (newCrates, nextCrateId, g1) = generateCrates cfg gs newRound
+        cratesAll = Map.union cratesFiltered newCrates
+        -- Reset zones
+        (zones, g2) = generateZones cfg (gsPlanets gs) (gsWormholes gs) g1
+        -- Reset objectives
+        (objs1, g3) = generateObjectives cfg (playerPos (gsPlayer1 gs)) (gsNextObjId gs) g2
+        (objs2, g4) = generateObjectives cfg (playerPos (gsPlayer2 gs)) (gsNextObjId gs + 50) g3
+        p1 = (gsPlayer1 gs) { playerObjectives = objs1 }
+        p2 = (gsPlayer2 gs) { playerObjectives = objs2 }
+    in gs { gsRound = newRound
+          , gsZones = zones
+          , gsCrates = cratesAll
+          , gsNextCrateId = nextCrateId
+          , gsNextZoneId = Map.size zones + 1
+          , gsNextObjId = gsNextObjId gs + 100
+          , gsPlayer1 = p1
+          , gsPlayer2 = p2
+          , gsRng = g4
+          }
+
+
+-- | Bat dau luot cua mot nguoi: dat nguoi do lam nguoi hien tai, AP day,
+-- reset tracker (cho objective tinh theo luot), va decay cargo penalty neu co.
 startTurn :: Config -> PlayerId -> GameState -> GameState
 startTurn cfg pid gs =
-    modifyPlayer pid (\p -> p { playerAP = max 0 (playerMaxAP cfg p - playerNextTurnAPPenalty p), playerNextTurnAPPenalty = 0 }) (gs { gsCurrent = pid })
+    modifyPlayer pid (\p ->
+        let penalty = playerCargoPenaltyTurns p
+            newPenalty = max 0 (penalty - 1)
+            newJam = if penalty > 0 && newPenalty == 0
+                     then max 0 (playerCargoJam p - 5)  -- giai phong 5 jam khi het han
+                     else playerCargoJam p
+        in p { playerAP = max 0 (playerMaxAP cfg p - playerNextTurnAPPenalty p)
+             , playerNextTurnAPPenalty = 0
+             , playerTrackers = emptyTrackers { otEarthScoreAtStart = playerScore cfg p }
+             , playerCargoPenaltyTurns = newPenalty
+             , playerCargoJam = newJam
+             }
+        ) (gs { gsCurrent = pid })
 
 -- | Ket qua khi het so vong: diem Earth cao hon thang, bang nhau thi hoa.
 roundLimitResult :: Config -> GameState -> GameResult
@@ -92,7 +151,7 @@ triggerCanon cfg gs =
     let (roll, g1) = randomR (1, 100 :: Int) (gsRng gs)
         (ix, g2) = randomR (fromEnum (minBound :: CanonEvent), fromEnum (maxBound :: CanonEvent)) g1
         cleared = gs { gsRng = g2, gsActiveCanonEvent = Nothing }
-    in if roll > 30 then (cleared, Nothing)
+    in if roll > cfgCanonEventChance cfg then (cleared, Nothing)
        else let ev = toEnum ix in (applyCanon cfg ev cleared, Just ev)
 
 applyCanon :: Config -> CanonEvent -> GameState -> GameState
@@ -197,17 +256,3 @@ applyCanon cfg ev gs = case ev of
             inv' = if length (invActives inv) < slots then inv { invActives = invActives inv ++ [activeItems !! ix] } else inv
         in (p { playerCargo = cargo', playerInventory = inv' }, g2)
 
-
-
-generateAugments :: StdGen -> ([AugmentOffer], StdGen)
-generateAugments g0 = go 0 g0
-  where
-    go id g
-        | id == 3 = ([], g)
-        | otherwise = 
-            let (rarityRoll, g1) = randomR (1, 100 :: Int) g
-                rarity = if rarityRoll <= 50 then Silver else if rarityRoll <= 85 then Gold else Diamond
-                (typeIdx, g2) = randomR (0, fromEnum (maxBound :: AugmentType)) g1
-                augType = toEnum typeIdx
-                (rest, g3) = go (id + 1) g2
-            in (AugmentOffer id augType rarity : rest, g3)

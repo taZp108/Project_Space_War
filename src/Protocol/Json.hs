@@ -222,6 +222,145 @@ instance ToJSON GamePhase where
     toJSON (Finished result) = tagged "finished" ["result" .= result]
 
 -- ---------------------------------------------------------------------------
+-- Zone, Wormhole, Crate, Objective (Phase 1-4)
+
+instance ToJSON ZoneType where
+    toJSON ZoneJamming    = String "jamming"
+    toJSON ZoneRadiation  = String "radiation"
+    toJSON ZoneZeroG      = String "zero_g"
+    toJSON ZoneSwamp      = String "swamp"
+    toJSON ZoneGoldRush   = String "gold_rush"
+
+instance ToJSON Zone where
+    toJSON z = object $
+        [ "id"    .= zoneId z
+        , "type"  .= zoneType z
+        , "pos"   .= zonePos z
+        , "shape" .= shapeName (zoneShape z)
+        ] ++ shapeFields (zoneShape z)
+      where
+        shapeName (ZoneCircle _) = ("circle" :: Text)
+        shapeName (ZoneRect _ _) = "rect"
+        shapeFields (ZoneCircle r) = ["radius" .= r]
+        shapeFields (ZoneRect w h) = ["width" .= w, "height" .= h]
+
+instance ToJSON Wormhole where
+    toJSON w = object
+        [ "id"          .= wormholeId w
+        , "pos"         .= wormholePos w
+        , "paired_with" .= wormholePairedWith w
+        ]
+
+instance ToJSON LootItem where
+    toJSON (LootResources rs)  = object ["kind" .= ("resources" :: Text), "resources" .= resourcesToJSON rs]
+    toJSON (LootActiveItem i)  = object ["kind" .= ("active_item" :: Text), "item" .= i]
+    toJSON (LootPassiveItem i) = object ["kind" .= ("passive_item" :: Text), "item" .= i]
+    toJSON (LootAugment r)     = object ["kind" .= ("augment" :: Text), "rarity" .= r]
+
+instance ToJSON TrapType where
+    toJSON (TrapBatteryLeak n)        = object ["kind" .= ("battery_leak" :: Text), "amount" .= n]
+    toJSON (TrapMagneticStorm n)      = object ["kind" .= ("magnetic_storm" :: Text), "amount" .= n]
+    toJSON TrapItemThief              = object ["kind" .= ("item_thief" :: Text)]
+    toJSON TrapPassiveThief           = object ["kind" .= ("passive_thief" :: Text)]
+    toJSON (TrapTax n)                = object ["kind" .= ("tax" :: Text), "amount" .= n]
+    toJSON (TrapTeleportRandom mn mx) = object ["kind" .= ("teleport_random" :: Text), "min" .= mn, "max" .= mx]
+    toJSON (TrapCargoLeak n m)        = object ["kind" .= ("cargo_leak" :: Text), "amount" .= n, "turns" .= m]
+    toJSON (TrapPlunder n)            = object ["kind" .= ("plunder" :: Text), "amount" .= n]
+    toJSON (TrapAPDrain n)            = object ["kind" .= ("ap_drain" :: Text), "amount" .= n]
+    toJSON (TrapNextAPDrain n)        = object ["kind" .= ("next_ap_drain" :: Text), "amount" .= n]
+    toJSON TrapEmptyCrate             = object ["kind" .= ("empty_crate" :: Text)]
+    toJSON TrapHomecoming             = object ["kind" .= ("homecoming" :: Text)]
+    toJSON (TrapRadiation n m)        = object ["kind" .= ("radiation" :: Text), "battery" .= n, "score" .= m]
+    toJSON (TrapMiniBlackHole n)      = object ["kind" .= ("mini_black_hole" :: Text), "amount" .= n]
+    toJSON (TrapMixed n m k)          = object ["kind" .= ("mixed" :: Text), "battery" .= n, "ap" .= m, "score" .= k]
+
+instance ToJSON CrateContent where
+    toJSON (CrateLoot ls) = object ["kind" .= ("loot" :: Text), "items" .= ls]
+    toJSON (CrateTrap t)  = object ["kind" .= ("trap" :: Text), "trap" .= t]
+
+instance ToJSON Crate where
+    toJSON c = object
+        [ "id"            .= crateId c
+        , "pos"           .= cratePos c
+        , "content"       .= crateContent c
+        , "spawned_round" .= crateSpawnedRound c
+        ]
+
+instance ToJSON ObjectiveDifficulty where
+    toJSON ObjEasy   = String "easy"
+    toJSON ObjMedium = String "medium"
+    toJSON ObjHard   = String "hard"
+
+instance ToJSON ObjectiveType where
+    toJSON t = object $ ["kind" .= kindName t] ++ params t
+      where
+        kindName ObjMineTimes{}        = ("mine_times" :: Text)
+        kindName ObjMoveCells{}        = "move_cells"
+        kindName ObjScanTimes{}        = "scan_times"
+        kindName ObjOpenCrates{}       = "open_crates"
+        kindName ObjUseWormholes{}     = "use_wormholes"
+        kindName ObjDepositTimes{}     = "deposit_times"
+        kindName ObjCraftItems{}       = "craft_items"
+        kindName ObjUseItems{}         = "use_items"
+        kindName ObjMineResources{}    = "mine_resources"
+        kindName ObjDoNothing          = "do_nothing"
+        kindName ObjVisitPlanets{}     = "visit_planets"
+        kindName ObjSpendBattery{}     = "spend_battery"
+        kindName ObjGainEarthScore{}   = "gain_earth_score"
+        kindName ObjVisitPlanetTypes{} = "visit_planet_types"
+        kindName ObjReachCell{}        = "reach_cell"
+        kindName ObjDoAllFour          = "do_all_four"
+        kindName ObjCraftDifferent{}   = "craft_different"
+        kindName ObjEndInRadiation     = "end_in_radiation"
+        kindName ObjSquareDance        = "square_dance"
+        params (ObjMineTimes n)        = ["n" .= n]
+        params (ObjMoveCells n)        = ["n" .= n]
+        params (ObjScanTimes n)        = ["n" .= n]
+        params (ObjOpenCrates n)       = ["n" .= n]
+        params (ObjUseWormholes n)     = ["n" .= n]
+        params (ObjDepositTimes n)     = ["n" .= n]
+        params (ObjCraftItems n)       = ["n" .= n]
+        params (ObjUseItems n)         = ["n" .= n]
+        params (ObjMineResources n)    = ["n" .= n]
+        params (ObjVisitPlanets n)     = ["n" .= n]
+        params (ObjSpendBattery n)     = ["n" .= n]
+        params (ObjGainEarthScore n)   = ["n" .= n]
+        params (ObjVisitPlanetTypes n) = ["n" .= n]
+        params (ObjReachCell p)        = ["pos" .= p]
+        params (ObjCraftDifferent n)   = ["n" .= n]
+        params _                       = []
+
+instance ToJSON ObjectiveReward where
+    toJSON r = object $ ["kind" .= rkind r] ++ rfields r
+      where
+        rkind (RewardBattery _)      = ("battery" :: Text)
+        rkind (RewardResources _)    = "resources"
+        rkind (RewardAugment _)      = "augment"
+        rkind (RewardActiveItem _)   = "active_item"
+        rkind (RewardPassiveItem _)  = "passive_item"
+        rkind (RewardEarthScore _)   = "earth_score"
+        rkind (RewardAP _)           = "ap"
+        rkind (RewardCombo _)        = "combo"
+        rfields (RewardBattery n)    = ["amount" .= n]
+        rfields (RewardResources rs) = ["resources" .= resourcesToJSON rs]
+        rfields (RewardAugment rar)  = ["rarity" .= rar]
+        rfields (RewardActiveItem i) = ["item" .= i]
+        rfields (RewardPassiveItem i)= ["item" .= i]
+        rfields (RewardEarthScore n) = ["amount" .= n]
+        rfields (RewardAP n)         = ["amount" .= n]
+        rfields (RewardCombo rs)     = ["parts" .= rs]
+
+instance ToJSON Objective where
+    toJSON o = object
+        [ "id"         .= objId o
+        , "difficulty" .= objDifficulty o
+        , "type"       .= objType o
+        , "reward"     .= objReward o
+        , "completed"  .= objCompleted o
+        , "claimed"    .= objClaimed o
+        ]
+
+-- ---------------------------------------------------------------------------
 -- Action va bao cao
 
 errorName :: GameError -> Text
@@ -241,6 +380,11 @@ errorName NotEnoughResources      = "not_enough_resources"
 errorName InvalidAmount           = "invalid_amount"
 errorName ItemUnavailable         = "item_unavailable"
 errorName InventoryFull           = "inventory_full"
+errorName InJammedZone            = "in_jammed_zone"
+errorName NoCrateHere             = "no_crate_here"
+errorName ObjectiveNotComplete    = "objective_not_complete"
+errorName ObjectiveAlreadyClaimed = "objective_already_claimed"
+errorName ObjectiveNotFound       = "objective_not_found"
 
 instance ToJSON GameError where
     toJSON = String . errorName
@@ -282,8 +426,9 @@ instance FromJSON Action where
             "deposit"       -> pure Deposit
             "recharge"      -> Recharge <$> o .: "resource" <*> o .: "amount"
             "end_turn"      -> pure EndTurn
+            "open_crate"      -> pure OpenCrate
+            "claim_objective" -> ClaimObjective <$> o .: "id"
             other           -> fail ("unknown action: " ++ T.unpack other)
-
 
 
 instance ToJSON ActionResult where
@@ -302,6 +447,13 @@ instance ToJSON ActionResult where
     toJSON (CanonEventOccurred ev result) = tagged "canon_event" ["event" .= ev, "result" .= result]
     toJSON (ItemCrafted item) = tagged "item_crafted" ["item" .= item]
     toJSON (ItemUsed item) = tagged "item_used" ["item" .= item]
+    toJSON (WormholeEntered from to) = tagged "wormhole_entered" ["from" .= from, "to" .= to]
+    toJSON (CrateOpened loots) = tagged "crate_opened" ["items" .= loots]
+    toJSON (TrapTriggered trap) = tagged "crate_trap" ["trap" .= trap]
+    toJSON (ZoneEntered ty) = tagged "zone_entered" ["zone_type" .= ty]
+    toJSON (ZoneEndedTurn ty amount) = tagged "zone_ended_turn" ["zone_type" .= ty, "amount" .= amount]
+    toJSON (ObjectiveClaimed oid reward) = tagged "objective_claimed" ["objective_id" .= oid, "reward" .= reward]
+
 
 instance ToJSON ActionReport where
     toJSON rep = object
@@ -342,6 +494,12 @@ instance ToJSON PlayerView where
         , "can_craft"        .= viewCanCraft v
         , "turn_end_time"    .= viewTurnEndTime v
         , "augments"         .= viewAugments v
+        , "zones"            .= viewZones v
+        , "crates"           .= viewCrates v
+        , "wormholes"        .= viewKnownWormholes v
+        , "objectives"       .= viewObjectives v
+        , "crate_here"       .= viewCrateHere v
+        , "current_zone"     .= viewCurrentZone v
         ]
 instance ToJSON PlayerFinal where
     toJSON f = object

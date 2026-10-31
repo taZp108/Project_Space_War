@@ -42,12 +42,18 @@ handleJoin cfg client seed state = case state of
         let gs = newGame cfg seed
             view1 = viewFor cfg Player1 gs
             view2 = viewFor cfg Player2 gs
+            augmentMsgs = case gsPendingAugments gs of
+                Just offers ->
+                    [ pushMsg (clientChan client1) (AugmentOfferMsg offers 0)
+                    , pushMsg (clientChan client) (AugmentOfferMsg offers 0)
+                    ]
+                Nothing -> []
         in ( Playing gs client1 client Nothing Nothing
            , Right Player2
            , [ pushMsg (clientChan client) (Welcome Player2)
              , pushTimedView (clientChan client1) GameStarted view1 Nothing
              , pushTimedView (clientChan client) GameStarted view2 Nothing
-             ]
+             ] ++ augmentMsgs
            )
     Playing _ _ _ _ _ ->
         ( state

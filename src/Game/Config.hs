@@ -52,6 +52,42 @@ data Config = Config
     , cfgCostDepositRemote  :: Cost
     , cfgCostRecharge     :: Cost
     , cfgAugmentInterval :: Int
+      -- * Event Rates (moi)
+    , cfgCanonEventChance       :: Int   -- ^ % xac suat trigger canon event moi round
+    , cfgPlanetEventChance      :: Int   -- ^ % xac suat trigger planet event khi mine
+      -- * Wormhole (Phase 1)
+    , cfgWormholePairCount      :: Int
+    , cfgWormholeMinDistance    :: Int
+    , cfgWormholeEarthDist      :: Int
+      -- * Zones (Phase 2)
+    , cfgZoneSkipChance         :: Int   -- ^ % xac suat vong do KHONG co zone nao
+    , cfgZoneCountMin           :: Int
+    , cfgZoneCountMax           :: Int
+    , cfgJammingRadiusMin       :: Int
+    , cfgJammingRadiusMax       :: Int
+    , cfgRadiationRadiusMin     :: Int
+    , cfgRadiationRadiusMax     :: Int
+    , cfgRadiationBatteryDrain  :: Int
+    , cfgRadiationMineBonus     :: Int
+    , cfgZeroGWidthMin          :: Int
+    , cfgZeroGWidthMax          :: Int
+    , cfgZeroGHeightMin         :: Int
+    , cfgZeroGHeightMax         :: Int
+    , cfgSwampRadiusMin         :: Int
+    , cfgSwampRadiusMax         :: Int
+    , cfgGoldRadiusMin          :: Int
+    , cfgGoldRadiusMax          :: Int
+    , cfgGoldResourceAmountMin  :: Int
+    , cfgGoldResourceAmountMax  :: Int
+      -- * Crates (Phase 3)
+    , cfgCrateSpawnChance       :: Int   -- ^ % xac suat spawn crate moi vong
+    , cfgCrateCountMin          :: Int
+    , cfgCrateCountMax          :: Int
+    , cfgCrateLifetime          :: Int   -- ^ so vong ton tai
+    , cfgCrateMinEarthDist      :: Int
+    , cfgCrateTrapChance        :: Int   -- ^ % xac suat hom la trap
+      -- * Objectives (Phase 4)
+    , cfgObjectiveCount         :: Int   -- ^ so nhiem vu moi nguoi moi vong (3)
     } deriving (Show, Eq)
 
 -- | Cau hinh mac dinh theo spec v1.0.
@@ -70,7 +106,7 @@ defaultConfig = Config
     , cfgSpawnMaxDist     = 5
     , cfgBatteryMax       = 100
     , cfgApMax            = 5
-    , cfgCargoCapacity    = 50
+    , cfgCargoCapacity    = 120      -- tăng từ 50 → 120
     , cfgObserveRadius    = 3
     , cfgScanRadius       = 8
     , cfgMineAmount       = 5
@@ -98,8 +134,8 @@ defaultConfig = Config
         , (IT_Magnet, Map.fromList [(Spinel, 5), (HollyBlueAgate, 2)])
         ]
     , cfgMaxActiveSlots = 3
-    , cfgScoreTarget      = 500
-    , cfgMaxRounds        = 100
+    , cfgScoreTarget      = 1000     -- tăng từ 500 → 1000
+    , cfgMaxRounds        = 150      -- tăng từ 100 → 150 (cân bằng với target 1000)
     , cfgCostMove         = Cost 1 2
     , cfgCostObserve      = Cost 1 1
     , cfgCostScanArea     = Cost 2 3
@@ -109,7 +145,43 @@ defaultConfig = Config
     , cfgCostDepositAtEarth = Cost 1 0
     , cfgCostDepositRemote  = Cost 1 2
     , cfgCostRecharge     = Cost 1 0
-    , cfgAugmentInterval = 3
+    , cfgAugmentInterval = 2            -- giảm 3→2: augment mỗi 2 round thay vì 3
+      -- * Event Rates (moi)
+    , cfgCanonEventChance       = 50    -- tăng 30→50: 50% round có canon event
+    , cfgPlanetEventChance      = 30    -- tăng 15→30: 30% lần mine trigger planet event
+      -- * Wormhole (Phase 1)
+    , cfgWormholePairCount      = 10    -- tăng 7→10: 20 cổng (10 cặp)
+    , cfgWormholeMinDistance    = 8     -- giảm 10→8: cổng gần nhau hơn (dễ tìm cặp hơn)
+    , cfgWormholeEarthDist      = 8     -- giảm 10→8: cổng có thể gần Earth hơn
+      -- * Zones (Phase 2)
+    , cfgZoneSkipChance         = 5        -- 5% round trống zone (95% có zone)
+    , cfgZoneCountMin           = 4        -- tối thiểu 4 zone/round
+    , cfgZoneCountMax           = 9        -- tối đa 9 zone/round
+    , cfgJammingRadiusMin       = 8        -- Jamming to hơn
+    , cfgJammingRadiusMax       = 18       -- radius max 18 (gần gấp đôi 14)
+    , cfgRadiationRadiusMin     = 5
+    , cfgRadiationRadiusMax     = 10
+    , cfgRadiationBatteryDrain  = 5
+    , cfgRadiationMineBonus     = 50
+    , cfgZeroGWidthMin          = 14       -- ZeroG rect to hơn
+    , cfgZeroGWidthMax          = 22       -- rộng tối đa 22 ô
+    , cfgZeroGHeightMin         = 8        -- cao tối thiểu 8 ô
+    , cfgZeroGHeightMax         = 12       -- cao tối đa 12 ô
+    , cfgSwampRadiusMin         = 7        -- Swamp to hơn
+    , cfgSwampRadiusMax         = 12
+    , cfgGoldRadiusMin          = 4        -- Gold to hơn
+    , cfgGoldRadiusMax          = 7
+    , cfgGoldResourceAmountMin  = 1
+    , cfgGoldResourceAmountMax  = 2
+      -- * Crates (Phase 3)
+    , cfgCrateSpawnChance       = 60    -- tăng 30→60: 60% round có crate
+    , cfgCrateCountMin          = 2     -- tăng 1→2: tối thiểu 2 crate/round
+    , cfgCrateCountMax          = 5     -- tăng 3→5: tối đa 5 crate/round
+    , cfgCrateLifetime          = 4     -- tăng 3→4: crate tồn tại 4 round
+    , cfgCrateMinEarthDist      = 5
+    , cfgCrateTrapChance        = 30    -- tăng 20→30: 30% crate là trap
+      -- * Objectives (Phase 4)
+    , cfgObjectiveCount         = 3
     }
 
 -- | Cau hinh v2: AP toi da tang len 10 de cho phep di chuyen xa hon trong 1 luot.

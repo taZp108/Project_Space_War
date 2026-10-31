@@ -939,3 +939,54 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
     gap: 0.8rem;
     font-weight: bold;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 1-4: ZONES, WORMHOLES, CRATES, OBJECTIVES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Target Panel Styling */
+.target-crate strong { color: var(--amber); text-shadow: 0 0 10px rgba(255,180,94,0.5); }
+.target-wormhole strong { color: #79d7ff; text-shadow: 0 0 10px rgba(121,215,255,0.5); }
+
+.target-zone strong {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.target-zone.zone-jamming strong { color: #d1a8ff; text-shadow: 0 0 10px #d1a8ff; }
+.target-zone.zone-radiation strong { color: #a7f36b; text-shadow: 0 0 10px #a7f36b; }
+.target-zone.zone-zero_g strong { color: #8bc3ff; text-shadow: 0 0 10px #8bc3ff; }
+.target-zone.zone-swamp strong { color: #79b87c; text-shadow: 0 0 10px #79b87c; }
+.target-zone.zone-gold_rush strong { color: #ffcc5f; text-shadow: 0 0 10px #ffcc5f; }
+
+/* Objective Claim Button */
+.rpg-item button[data-rpg-action="claim"] {
+  background: rgba(63, 191, 107, 0.15);
+  border-color: var(--green-soft);
+  color: var(--green);
+  box-shadow: 0 0 10px rgba(63, 191, 107, 0.2);
+  transition: all 0.2s ease;
+}
+
+.rpg-item button[data-rpg-action="claim"]:hover:not(:disabled) {
+  background: rgba(63, 191, 107, 0.3);
+  box-shadow: 0 0 15px rgba(63, 191, 107, 0.4);
+  transform: scale(1.05);
+}
+
+.rpg-item button[data-rpg-action="claim"]:disabled {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #71897a;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+#btn-objectives { position: relative; }
+#obj-badge { font-size: 0.8em; margin-left: 2px; animation: pulse-badge 1.5s infinite; }
+
+@keyframes pulse-badge {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; text-shadow: 0 0 10px var(--amber); }
+  100% { opacity: 1; }
+}

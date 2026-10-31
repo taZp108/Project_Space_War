@@ -119,6 +119,7 @@ const actionLabels = {
   MOVE: "DI CHUYỂN", OBSERVE: "QUAN SÁT", SCAN_AREA: "QUÉT KHU VỰC",
   SCAN_NEAREST: "TÌM HÀNH TINH GẦN NHẤT", SCAN_OPPONENT: "QUÉT ĐỐI THỦ",
   MINE: "KHAI THÁC", DEPOSIT: "NỘP TÀI NGUYÊN", RECHARGE: "SẠC PIN", END_TURN: "KẾT THÚC LƯỢT",
+  OPEN_CRATE: "MỞ HÒM", // ▼▼ MỚI ▼▼
 };
 const resourceLabels = { Iron: "Sắt", Crystal: "Pha lê", EnergyCore: "Lõi năng lượng", RareOre: "Quặng hiếm", ExoticMatter: "Vật chất lạ" };
 
@@ -388,9 +389,26 @@ function renderMapPreview(view) {
 function getCellInfo(view, cell) {
   if (!cell) return null;
   if (cell.x === view.earth.x && cell.y === view.earth.y) return { status: "EARTH", object: null };
+  
+  const crate = (view.crates || []).find(c => c.pos.x === cell.x && c.pos.y === cell.y);
+  if (crate) return { status: "CRATE", object: crate };
+  
+  const wh = (view.knownWormholes || []).find(w => w.pos.x === cell.x && w.pos.y === cell.y);
+  if (wh) return { status: "WORMHOLE", object: wh };
+
   const planet = view.knownPlanets.find((item) => item.position.x === cell.x && item.position.y === cell.y);
   if (planet) return { status: "KNOWN PLANET", object: planet };
+  
   if (cell.x === view.player.position.x && cell.y === view.player.position.y) return { status: "OWN SHIP", object: null };
+  
+  const zone = (view.zones || []).find(z => {
+    const dx = Math.abs(cell.x - z.pos.x), dy = Math.abs(cell.y - z.pos.y);
+    if (z.shape === "circle") return dx + dy <= z.radius;
+    if (z.shape === "rect") return dx <= z.width/2 && dy <= z.height/2;
+    return false;
+  });
+  if (zone) return { status: "ZONE", object: zone };
+
   return { status: "UNKNOWN", object: null };
 }
 
@@ -422,6 +440,20 @@ function targetPreviewPanel(view) {
     return `<div class="target-state target-known"><span class="target-glyph" aria-hidden="true">◆</span><div><span class="field-label">TRẠNG THÁI Ô</span><strong>${cellStatusLabel(info.status)}</strong><span class="target-coordinate">(${selectedCell.x}, ${selectedCell.y}) · ${planet.id}</span></div></div><dl class="target-details"><div><dt>SỰ KIỆN</dt><dd>${eventName}</dd></div><div><dt>TÀI NGUYÊN</dt><dd class="unknown-value">${stockValue}</dd></div></dl>`;
   }
 
+  if (info.status === "CRATE") {
+    return `<div class="target-state target-crate"><span class="target-glyph" style="color:var(--amber); border-color:var(--amber);">▣</span><div><span class="field-label">TRẠNG THÁI Ô</span><strong>HÒM TIẾP TẾ</strong><span class="target-coordinate">(${selectedCell.x}, ${selectedCell.y})</span></div></div><p class="target-note">Đứng lên và bấm MỞ HÒM.</p>`;
+  }
+  if (info.status === "WORMHOLE") {
+    const partner = (view.knownWormholes || []).find(w => w.id === info.object.pairedWith);
+    const dest = partner ? `(${partner.pos.x}, ${partner.pos.y})` : "CHƯA RÕ";
+    return `<div class="target-state target-wormhole"><span class="target-glyph" style="color:#79d7ff; border-color:#79d7ff;">◉</span><div><span class="field-label">TRẠNG THÁI Ô</span><strong>CỔNG KHÔNG GIAN</strong><span class="target-coordinate">(${selectedCell.x}, ${selectedCell.y})</span></div></div><dl class="target-details"><div><dt>DỊCH CHUYỂN ĐẾN</dt><dd>${dest}</dd></div></dl>`;
+  }
+  if (info.status === "ZONE") {
+    const z = info.object;
+    const names = { jamming: "NHIỄU SÓNG", radiation: "PHÓNG XẠ", zero_g: "KHÔNG TRỌNG LỰC", swamp: "ĐẦM LẦY", gold_rush: "KINH TẾ" };
+    return `<div class="target-state target-zone zone-${z.type}"><span class="target-glyph">◈</span><div><span class="field-label">VÙNG</span><strong>${names[z.type] || z.type}</strong><span class="target-coordinate">(${selectedCell.x}, ${selectedCell.y})</span></div></div>`;
+  }
+
   const glyph = info.status === "EARTH" ? "⊕" : info.status === "OWN SHIP" ? "▲" : "□";
   return `<div class="target-state ${info.status === "UNKNOWN" ? "target-unknown" : ""}"><span class="target-glyph" aria-hidden="true">${glyph}</span><div><span class="field-label">TRẠNG THÁI Ô</span><strong>${cellStatusLabel(info.status)}</strong><span class="target-coordinate">(${selectedCell.x}, ${selectedCell.y})</span></div></div>${info.status === "UNKNOWN" ? '<p class="target-note">Chưa có thông tin về ô này.</p>' : ""}`;
 }
@@ -433,6 +465,7 @@ const commandDefinitions = [
   ["SCAN_NEAREST", "2 AP · 3 PIN", ""],
   ["SCAN_OPPONENT", "3 AP · 3 PIN", ""],
   ["MINE", "2 AP · 1 PIN", ""],
+  ["OPEN_CRATE", "0 AP · 0 PIN", ""], // ▼▼ MỚI ▼▼
   ["DEPOSIT", "1 AP · 0–2 PIN", ""],
   ["RECHARGE", "1 AP · 0 PIN", ""],
   ["END_TURN", "0 AP · 0 PIN", ""],
@@ -491,6 +524,32 @@ function rpgDialogMarkup(view, mode) {
     return `<dialog class="terminal-dialog rpg-dialog" id="rpg-dialog"><section class="dialog-card panel"><span class="eyebrow amber-eyebrow">XƯỞNG CHẾ TẠO</span><h2>CHẾ TẠO VẬT PHẨM</h2><div class="rpg-tabs"><button data-rpg-tab="Active" class="${rpgTab === "Active" ? "active" : ""}">CHỦ ĐỘNG</button><button data-rpg-tab="Passive" class="${rpgTab === "Passive" ? "active" : ""}">BỊ ĐỘNG</button></div><div class="rpg-items">${items.map((item) => `<article class="rpg-item" data-tooltip="${item.desc}"><span class="rpg-item-icon">${item.icon}</span><div class="rpg-item-copy"><strong>${item.name}</strong><small>${item.kind === "Active" ? "VẬT PHẨM CHỦ ĐỘNG" : "VẬT PHẨM BỊ ĐỘNG"}</small><span>${rpgRecipe(item.recipe)}</span></div><button class="primary-button" data-rpg-action="craft" data-item="${item.id}" ${available.has(item.id) ? "" : "disabled"}>CHẾ TẠO</button></article>`).join("")}</div><button class="utility-button" data-action="close-rpg">ĐÓNG</button></section></dialog>`;
   }
 
+  // BẢNG NHIỆM VỤ
+  if (mode === "objectives") {
+    const list = view.objectives || [];
+    return `<dialog class="terminal-dialog rpg-dialog" id="rpg-dialog"><section class="dialog-card panel"><span class="eyebrow amber-eyebrow">CƠ SỞ DỮ LIỆU</span><h2>NHIỆM VỤ</h2><div class="rpg-items">${list.map((o) => {
+      let desc = "Hoàn thành mục tiêu";
+      if (o.type.kind === "move_cells") desc = `Di chuyển ${o.type.n} ô trong 1 lượt`;
+      else if (o.type.kind === "mine_times") desc = `Khai thác ${o.type.n} lần trong 1 lượt`;
+      else if (o.type.kind === "scan_times") desc = `Quét ${o.type.n} lần trong 1 lượt`;
+      else if (o.type.kind === "open_crates") desc = `Mở ${o.type.n} hòm tiếp tế`;
+      else if (o.type.kind === "use_wormholes") desc = `Đi qua ${o.type.n} cổng không gian`;
+      
+      const diffColors = { easy: "var(--green-soft)", medium: "var(--amber)", hard: "var(--danger)" };
+      const diffNames = { easy: "DỄ", medium: "TRUNG BÌNH", hard: "KHÓ" };
+      
+      return `<article class="rpg-item" style="grid-template-columns: 1fr auto; border-color: ${diffColors[o.difficulty]}">
+        <div class="rpg-item-copy">
+          <strong style="color:${diffColors[o.difficulty]}">${diffNames[o.difficulty]}</strong>
+          <span>${desc}</span>
+        </div>
+        <button class="primary-button" data-rpg-action="claim" data-id="${o.id}" ${(!o.completed || o.claimed) ? "disabled" : ""}>
+          ${o.claimed ? "ĐÃ NHẬN" : o.completed ? "NHẬN" : "CHƯA XONG"}
+        </button>
+      </article>`;
+    }).join("")}</div><button class="utility-button" data-action="close-rpg">ĐÓNG</button></section></dialog>`;
+  }
+
   // BẢNG TÚI ĐỒ
   const inv = view.player.inventory || { passives: {}, actives: [] };
   const actives = (inv.actives || []).map((id) => { const key = String(id).toLowerCase(); const item = rpgItems.find((entry) => entry.id === key) || { name: key, icon: "◇", desc: "Vật phẩm không xác định." }; return `<article class="rpg-item" data-tooltip="${item.desc}"><span class="rpg-item-icon">${item.icon}</span><div class="rpg-item-copy"><strong>${item.name}</strong><small>CHỦ ĐỘNG · CÓ THỂ DÙNG</small></div><button class="primary-button" data-rpg-action="use" data-item="${item.id}">SỬ DỤNG</button></article>`; }).join("");
@@ -506,7 +565,17 @@ function openRpgDialog(mode) {
 }
 function renderRpgTools() {
   const heading = root.querySelector(".command-console .panel-heading");
-  if (heading && !heading.querySelector(".rpg-tools")) heading.insertAdjacentHTML("beforeend", '<div class="rpg-tools"><button type="button" data-action="open-crafting">CHẾ TẠO</button><button type="button" data-action="open-inventory">TÚI ĐỒ</button><button type="button" data-action="open-events">SỰ KIỆN</button><button type="button" data-action="open-augments">NÂNG CẤP</button></div>');  const turnRight = root.querySelector(".game-turnbar .turn-right");
+  if (heading && !heading.querySelector(".rpg-tools")) {
+    heading.insertAdjacentHTML("beforeend", '<div class="rpg-tools"><button type="button" data-action="open-crafting">CHẾ TẠO</button><button type="button" data-action="open-inventory">TÚI ĐỒ</button><button type="button" data-action="open-events">SỰ KIỆN</button><button type="button" data-action="open-augments">NÂNG CẤP</button><button type="button" data-action="open-objectives" id="btn-objectives">NHIỆM VỤ<span id="obj-badge" style="color:var(--amber); font-weight:bold;"></span></button></div>');
+  }
+  
+  const badge = root.querySelector("#obj-badge");
+  if (badge && playerView?.objectives) {
+    const unclaimed = playerView.objectives.filter(o => o.completed && !o.claimed).length;
+    badge.textContent = unclaimed > 0 ? ` (${unclaimed})` : "";
+  }
+
+  const turnRight = root.querySelector(".game-turnbar .turn-right");
   if (turnRight && !turnRight.querySelector("#turn-countdown")) turnRight.insertAdjacentHTML("afterbegin", '<span id="turn-countdown" class="turn-countdown">01:30</span>');
   const turnStatus = root.querySelector(".game-turnbar .turn-status");
   const eventBadge = root.querySelector(".active-event-badge");
@@ -645,12 +714,17 @@ function isMotionReduced() {
   return settings.reducedMotion || Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
 }
 
-function startActionEffects(action, previousView, nextView) {
+function startActionEffects(action, previousView, nextView, actionReport) {
   if (isMotionReduced()) { activeEffects = []; return; }
   const startedAt = performance.now();
   if (action === "MOVE") {
-    activeEffects = activeEffects.filter((effect) => effect.type !== "move");
-    activeEffects.push({ type: "move", from: { ...previousView.player.position }, to: { ...nextView.player.position }, startedAt, duration: 620 });
+    activeEffects = activeEffects.filter((effect) => effect.type !== "move" && effect.type !== "teleport");
+    const wh = actionReport?.result?.kind === "WormholeEntered" ? actionReport.result : null;
+    if (wh) {
+      activeEffects.push({ type: "teleport", from: { ...wh.from }, to: { ...wh.to }, startedAt, duration: 800 });
+    } else {
+      activeEffects.push({ type: "move", from: { ...previousView.player.position }, to: { ...nextView.player.position }, startedAt, duration: 620 });
+    }
   }
   if (["OBSERVE", "SCAN_AREA", "SCAN_NEAREST", "SCAN_OPPONENT"].includes(action)) {
     const radius = action === "OBSERVE" ? 3 : action === "SCAN_AREA" ? 8 : null;
@@ -677,6 +751,7 @@ function formatActionResult(action, response) {
   if (result.kind === "Deposited") return `Đã nộp hàng; +${result.scoreAdded} điểm Trái Đất.`;
   if (result.kind === "Recharged") return `Pin +${result.batteryAdded}.`;
   if (result.kind === "TurnEnded") return "Đã kết thúc lượt; đang chờ đối thủ.";
+  if (result.kind === "WormholeEntered") return `DỊCH CHUYỂN KHÔNG GIAN: (${result.from.x}, ${result.from.y}) → (${result.to.x}, ${result.to.y}).`;
   return localizeText(report.message || `Đã hoàn tất: ${actionLabel(action)}.`);
 }
 
@@ -700,15 +775,25 @@ function setCommandEcho(action, target, response) {
 function playActionFeedback(action, response, previousView, nextView) {
   const report = response.actionReport || {};
   const found = response.ok && report.result?.kind === "PlanetsFound" ? (report.result.planets || []) : [];
+  const wormholed = response.ok && report.result?.kind === "WormholeEntered" ? report.result : null;
   if (response.ok) {
-    startActionEffects(action, previousView, nextView);
+    startActionEffects(action, previousView, nextView, report);
     const discovered = found.length > 0;
-    enqueueToast({
-      level: discovered ? "success" : "info",
-      title: discovered ? "ĐÃ PHÁT HIỆN HÀNH TINH" : `${actionLabel(action)} ĐÃ XÁC NHẬN`,
-      message: discovered ? `Đã thêm ${found.length} hành tinh mới vào bản đồ.` : localizeText(report.message),
-      code: discovered ? "PLANET_DISCOVERED" : report.code,
-    });
+    if (wormholed) {
+      enqueueToast({
+        level: "success",
+        title: "DỊCH CHUYỂN KHÔNG GIAN",
+        message: `(${wormholed.from.x}, ${wormholed.from.y}) → (${wormholed.to.x}, ${wormholed.to.y})`,
+        code: "WORMHOLE_ENTERED",
+      });
+    } else {
+      enqueueToast({
+        level: discovered ? "success" : "info",
+        title: discovered ? "ĐÃ PHÁT HIỆN HÀNH TINH" : `${actionLabel(action)} ĐÃ XÁC NHẬN`,
+        message: discovered ? `Đã thêm ${found.length} hành tinh mới vào bản đồ.` : localizeText(report.message),
+        code: discovered ? "PLANET_DISCOVERED" : report.code,
+      });
+    }
     for (const notice of response.notifications || []) {
       showAdapterNotification(notice);
     }
@@ -720,10 +805,14 @@ function playActionFeedback(action, response, previousView, nextView) {
 
 function commandSummaryMarkup(view) {
   const locked = actionFlow.status === "pending" || !view.turn.isMyTurn;
-  const commands = commandDefinitions.map(([name, cost]) => `
-    <button class="command-option" type="button" data-command="${name}" ${locked ? "disabled" : ""} aria-pressed="${actionFlow.selected === name}">
+  const commands = commandDefinitions.map(([name, cost]) => {
+    let disabled = locked;
+    if (name === "OPEN_CRATE" && !view.crateHere) disabled = true; // Chỉ bật khi đứng trên hòm
+    return `
+    <button class="command-option" type="button" data-command="${name}" ${disabled ? "disabled" : ""} aria-pressed="${actionFlow.selected === name}">
       <strong>${actionLabel(name)}</strong><span>${cost}</span>
-    </button>`).join("");
+    </button>`;
+  }).join("");
   const selected = actionFlow.selected;
   let detail = `<p class="command-note"><span class="notice-icon" aria-hidden="true">◇</span><span>Chọn hành động để xem mục tiêu và chi phí. Chế độ thử nghiệm.</span></p>`;
   if (selected) {
@@ -902,18 +991,132 @@ function drawFeedbackEffects(ctx, width, height, cellSize, screenX, screenY, now
   for (const effect of activeEffects) {
     const progress = Math.max(0, Math.min(1, (now - effect.startedAt) / effect.duration));
     if (effect.type === "move") {
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const x = effect.from.x + (effect.to.x - effect.from.x) * eased;
-      const y = effect.from.y + (effect.to.y - effect.from.y) * eased;
+      const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+      const curX = effect.from.x + (effect.to.x - effect.from.x) * eased;
+      const curY = effect.from.y + (effect.to.y - effect.from.y) * eased;
+      
       const fromX = screenX(effect.from.x), fromY = screenY(effect.from.y);
-      const shipX = screenX(x), shipY = screenY(y);
+      const toX = screenX(effect.to.x), toY = screenY(effect.to.y);
+      const shipX = screenX(curX), shipY = screenY(curY);
+      
+      const dx = effect.to.x - effect.from.x;
+      const dy = effect.to.y - effect.from.y;
+      // Tính góc xoay: Tàu mặc định hướng lên (trục -Y), nên cộng thêm PI/2
+      const angle = (dx !== 0 || dy !== 0) ? Math.atan2(dy, dx) + Math.PI / 2 : 0;
+      
       ctx.save();
-      ctx.strokeStyle = `rgba(113, 255, 145, ${0.45 * (1 - progress)})`;
-      ctx.lineWidth = Math.max(1, cellSize * 0.045);
-      ctx.setLineDash([cellSize * 0.12, cellSize * 0.1]);
-      ctx.beginPath(); ctx.moveTo(fromX, fromY); ctx.lineTo(shipX, shipY); ctx.stroke();
+      
+      // 1. Vệt sáng đuôi (Warp Trail)
+      const tailLength = Math.min(1, progress * 4); // Vệt đuôi dài dần
+      const tailX = shipX - (shipX - fromX) * tailLength;
+      const tailY = shipY - (shipY - fromY) * tailLength;
+      
+      const trailGrad = ctx.createLinearGradient(tailX, tailY, shipX, shipY);
+      trailGrad.addColorStop(0, "rgba(113, 255, 145, 0)");
+      trailGrad.addColorStop(1, "rgba(113, 255, 145, 0.8)");
+      
+      ctx.strokeStyle = trailGrad;
+      ctx.lineWidth = Math.max(4, cellSize * 0.2); // Vệt đuôi to
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(tailX, tailY);
+      ctx.lineTo(shipX, shipY);
+      ctx.stroke();
+
+      // Lõi vệt sáng (trắng)
+      ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * (1 - progress * 0.5)})`;
+      ctx.lineWidth = Math.max(1, cellSize * 0.05);
+      ctx.beginPath();
+      ctx.moveTo(tailX, tailY);
+      ctx.lineTo(shipX, shipY);
+      ctx.stroke();
+
+      // 2. Target Reticle (4 góc ngoặc tại điểm đích)
+      const reticleAlpha = Math.max(0, 1 - progress * 1.5);
+      if (reticleAlpha > 0) {
+        ctx.strokeStyle = `rgba(255, 240, 166, ${reticleAlpha})`;
+        ctx.lineWidth = 2;
+        const size = cellSize * 0.4;
+        const len = cellSize * 0.15;
+        ctx.beginPath();
+        // Góc trên trái
+        ctx.moveTo(toX - size, toY - size + len); ctx.lineTo(toX - size, toY - size); ctx.lineTo(toX - size + len, toY - size);
+        // Góc trên phải
+        ctx.moveTo(toX + size - len, toY - size); ctx.lineTo(toX + size, toY - size); ctx.lineTo(toX + size, toY - size + len);
+        // Góc dưới trái
+        ctx.moveTo(toX - size, toY + size - len); ctx.lineTo(toX - size, toY + size); ctx.lineTo(toX - size + len, toY + size);
+        // Góc dưới phải
+        ctx.moveTo(toX + size - len, toY + size); ctx.lineTo(toX + size, toY + size); ctx.lineTo(toX + size, toY + size - len);
+        ctx.stroke();
+        
+        // Vòng tròn nhắm mục tiêu thu nhỏ
+        ctx.strokeStyle = `rgba(113, 255, 145, ${reticleAlpha * 0.6})`;
+        ctx.beginPath();
+        ctx.arc(toX, toY, cellSize * (0.8 - progress * 0.3), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // 3. Particle Burst tại điểm xuất phát (0.2s đầu)
+      if (progress < 0.2) {
+        const burstProgress = progress / 0.2;
+        ctx.fillStyle = `rgba(113, 255, 145, ${1 - burstProgress})`;
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2 + (now / 100);
+          const r = cellSize * 0.5 * burstProgress;
+          ctx.beginPath();
+          ctx.arc(fromX + Math.cos(a) * r, fromY + Math.sin(a) * r, Math.max(1, cellSize * 0.08 * (1 - burstProgress)), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // 4. Tàu di chuyển & Xoay góc
+      ctx.translate(shipX, shipY);
+      ctx.rotate(angle);
+      
+      // Hiệu ứng lửa phụt đuôi tàu (vẽ đè lên lửa tĩnh của drawMapGlyph)
+      const thrust = Math.sin(now / 40) * 0.3 + 0.7;
+      ctx.fillStyle = `rgba(255, 180, 94, ${0.8 * thrust * (1 - progress * 0.5)})`;
+      ctx.beginPath();
+      ctx.moveTo(-cellSize * 0.1, cellSize * 0.25);
+      ctx.lineTo(0, cellSize * 0.6 * thrust);
+      ctx.lineTo(cellSize * 0.1, cellSize * 0.25);
+      ctx.fill();
+
+      // Vẽ thân tàu tại tâm (0,0) do đã translate
+      drawMapGlyph(ctx, "ship", 0, 0, cellSize, now);
+      
       ctx.restore();
-      drawMapGlyph(ctx, "ship", shipX, shipY, cellSize);
+    } else if (effect.type === "teleport") {
+      const fromX = screenX(effect.from.x), fromY = screenY(effect.from.y);
+      const toX = screenX(effect.to.x), toY = screenY(effect.to.y);
+      // Ship fade out o from (0..0.5), xuat hien o to (0.5..1)
+      ctx.save();
+      if (progress < 0.5) {
+        const alpha = 1 - progress * 2;
+        ctx.globalAlpha = alpha;
+        drawMapGlyph(ctx, "ship", fromX, fromY, cellSize);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = `rgba(121, 215, 255, ${0.9 * alpha})`;
+        ctx.lineWidth = Math.max(1, cellSize * 0.06);
+        for (let r = 0; r < 3; r++) {
+          ctx.beginPath();
+          ctx.arc(fromX, fromY, cellSize * (0.2 + r * 0.25) * (1 + progress * 2), 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      } else {
+        const alpha = (progress - 0.5) * 2;
+        ctx.globalAlpha = alpha;
+        drawMapGlyph(ctx, "ship", toX, toY, cellSize);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = `rgba(121, 215, 255, ${0.9 * (1 - alpha)})`;
+        ctx.lineWidth = Math.max(1, cellSize * 0.06);
+        for (let r = 0; r < 3; r++) {
+          ctx.beginPath();
+          ctx.arc(toX, toY, cellSize * (0.8 - r * 0.2) * (2 - progress * 2 + 0.3), 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
     } else if (effect.type === "scan") {
       const centerX = screenX(effect.center.x), centerY = screenY(effect.center.y);
       // A null radius is a viewport-wide decorative sweep, not scan-range feedback.
@@ -955,52 +1158,225 @@ function drawTacticalMap() {
   const minY = Math.floor(camera.y - height / (2 * cellSize)) - 1;
   const maxY = Math.ceil(camera.y + height / (2 * cellSize)) + 1;
 
-  ctx.fillStyle = "#07100b";
+  // 1. Nền gradient (sáng hơn xíu)
+  const bgGrad = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height));
+  bgGrad.addColorStop(0, "#0a1e14");
+  bgGrad.addColorStop(1, "#040a06");
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, width, height);
+
+  // 2. Lưới cơ bản (đậm hơn xíu)
   for (let y = minY; y <= maxY; y += 1) {
     for (let x = minX; x <= maxX; x += 1) {
       const left = screenX(x) - cellSize / 2;
       const top = screenY(y) - cellSize / 2;
+      
       if (x < 0 || x > 99 || y < 0 || y > 99) {
-        ctx.fillStyle = "rgba(1, 4, 2, 0.62)";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fillRect(left, top, cellSize, cellSize);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(Math.round(left) + 0.5, Math.round(top) + 0.5, Math.ceil(cellSize), Math.ceil(cellSize));
+        continue;
       }
-      ctx.strokeStyle = "rgba(63, 191, 107, 0.2)";
+
+      ctx.strokeStyle = "rgba(63, 191, 107, 0.12)";
       ctx.lineWidth = 1;
       ctx.strokeRect(Math.round(left) + 0.5, Math.round(top) + 0.5, Math.ceil(cellSize), Math.ceil(cellSize));
 
-      if (x < 0 || x > 99 || y < 0 || y > 99) continue;
       const centerX = screenX(x);
       const centerY = screenY(y);
+
+      // 3. Zone - hiệu ứng đặc trưng theo loại
+      const zone = (view.zones || []).find(z => {
+        const dx = Math.abs(x - z.pos.x), dy = Math.abs(y - z.pos.y);
+        if (z.shape === "circle") return dx + dy <= z.radius;
+        if (z.shape === "rect") return dx <= z.width/2 && dy <= z.height/2;
+        return false;
+      });
+      
+      if (zone) {
+        ctx.save();
+        const t = now / 1000;
+        const pulse = 0.5 + Math.sin(t * 2 + x * 0.1 + y * 0.1) * 0.15;
+        
+        // Signature effect per zone type
+        if (zone.type === "jamming") {
+          // ── NHIỄU SÓNG: scanline + static
+          ctx.fillStyle = `rgba(180, 80, 220, ${0.28 * pulse + 0.15})`;
+          ctx.fillRect(left, top, cellSize, cellSize);
+          // Scanline ngang di chuyển
+          const scanY = top + ((t * 80 + y * 20) % cellSize);
+          ctx.fillStyle = "rgba(230, 150, 255, 0.7)";
+          ctx.fillRect(left, scanY, cellSize, 1);
+          // Static dot
+          const staticSeed = (x * 73 + y * 37 + Math.floor(t * 12)) % 100;
+          if (staticSeed < 20) {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+            ctx.fillRect(centerX - 1, centerY - 1, 2, 2);
+          }
+          
+        } else if (zone.type === "radiation") {
+          // ── PHÓNG XẠ: vòng đồng tâm + hạt bay lên
+          ctx.fillStyle = `rgba(120, 220, 80, ${0.2 * pulse + 0.12})`;
+          ctx.fillRect(left, top, cellSize, cellSize);
+          // Vòng đồng tâm lan từ tâm zone
+          const distFromCenter = Math.sqrt((x - zone.pos.x) ** 2 + (y - zone.pos.y) ** 2);
+          const ringPhase = (t * 1.2 - distFromCenter * 0.25) % 2;
+          if (ringPhase > 0 && ringPhase < 0.4) {
+            const ringAlpha = (1 - ringPhase / 0.4) * 0.5;
+            ctx.fillStyle = `rgba(180, 255, 120, ${ringAlpha})`;
+            ctx.fillRect(left, top, cellSize, cellSize);
+          }
+          // Hạt bay lên
+          if (cellSize > 12) {
+            const pPhase = (t * 1.5 + x * 0.3 + y * 0.5) % 1;
+            ctx.fillStyle = `rgba(200, 255, 140, ${0.8 * (1 - pPhase)})`;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY - pPhase * cellSize * 0.4, Math.max(1, cellSize * 0.05), 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+        } else if (zone.type === "zero_g") {
+          // ── KHÔNG TRỌNG LỰC: hạt trôi nổi
+          ctx.fillStyle = `rgba(150, 200, 255, ${0.14 * pulse + 0.1})`;
+          ctx.fillRect(left, top, cellSize, cellSize);
+          // 2 hạt trôi chậm
+          if (cellSize > 12) {
+            const p1 = (t * 0.25 + x * 0.17) % 1;
+            const p2 = (t * 0.18 + y * 0.23) % 1;
+            ctx.fillStyle = "rgba(200, 230, 255, 0.75)";
+            ctx.beginPath();
+            ctx.arc(left + p1 * cellSize, top + p2 * cellSize, Math.max(1, cellSize * 0.04), 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+        } else if (zone.type === "swamp") {
+          // ── ĐẦM LẦY: bong bóng + gradient nhớt
+          ctx.fillStyle = `rgba(50, 150, 50, ${0.25 * pulse + 0.15})`;
+          ctx.fillRect(left, top, cellSize, cellSize);
+          // Gradient nhớt ở đáy
+          const slimeGrad = ctx.createLinearGradient(left, top, left, top + cellSize);
+          slimeGrad.addColorStop(0, "transparent");
+          slimeGrad.addColorStop(1, "rgba(25, 90, 25, 0.5)");
+          ctx.fillStyle = slimeGrad;
+          ctx.fillRect(left, top, cellSize, cellSize);
+          // Bong bóng nổi lên
+          if (cellSize > 12) {
+            const bPhase = (t * 0.7 + x * 0.4 + y * 0.3) % 1;
+            const bX = left + (0.3 + ((x * 17) % 40) / 100) * cellSize;
+            const bY = top + cellSize * (1 - bPhase);
+            ctx.strokeStyle = `rgba(140, 220, 140, ${0.7 * (1 - bPhase)})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(bX, bY, Math.max(1.5, cellSize * 0.07), 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
+        } else if (zone.type === "gold_rush") {
+          // ── KINH TẾ: sparkle + tia chéo
+          ctx.fillStyle = `rgba(255, 215, 0, ${0.22 * pulse + 0.15})`;
+          ctx.fillRect(left, top, cellSize, cellSize);
+          // Sparkle nhấp nháy
+          const spSeed = (x * 31 + y * 17 + Math.floor(t * 4)) % 50;
+          if (spSeed < 10) {
+            ctx.fillStyle = "rgba(255, 255, 220, 0.95)";
+            const sx = centerX + ((spSeed % 3) - 1) * cellSize * 0.15;
+            const sy = centerY + ((spSeed * 3) % 3 - 1) * cellSize * 0.15;
+            ctx.beginPath();
+            ctx.moveTo(sx, sy - 2.5);
+            ctx.lineTo(sx + 0.8, sy);
+            ctx.lineTo(sx, sy + 2.5);
+            ctx.lineTo(sx - 0.8, sy);
+            ctx.closePath();
+            ctx.fill();
+          }
+          // Tia chéo xoay
+          if ((x + y) % 3 === 0 && cellSize > 15) {
+            const rayAngle = t * 0.5 + x * 0.1;
+            ctx.strokeStyle = `rgba(255, 240, 120, ${0.35 + Math.sin(t * 2) * 0.2})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(centerX - Math.cos(rayAngle) * cellSize * 0.3, centerY - Math.sin(rayAngle) * cellSize * 0.3);
+            ctx.lineTo(centerX + Math.cos(rayAngle) * cellSize * 0.3, centerY + Math.sin(rayAngle) * cellSize * 0.3);
+            ctx.stroke();
+          }
+        }
+        
+        // ── VIỀN ZONE (vẽ cạnh tiếp giáp cell ngoài)
+        const inZoneAt = (px, py) => {
+          const dx = Math.abs(px - zone.pos.x), dy = Math.abs(py - zone.pos.y);
+          if (zone.shape === "circle") return dx + dy <= zone.radius;
+          if (zone.shape === "rect") return dx <= zone.width/2 && dy <= zone.height/2;
+          return false;
+        };
+        const edgeColorMap = {
+          jamming: "#d1a8ff", radiation: "#a7f36b",
+          zero_g: "#8bc3ff", swamp: "#79b87c", gold_rush: "#ffd700"
+        };
+        const edgeColor = edgeColorMap[zone.type] || "#ffffff";
+        const edgePulse = 0.7 + Math.sin(t * 3) * 0.3;
+        
+        ctx.save();
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = edgeColor;
+        ctx.strokeStyle = edgeColor;
+        ctx.globalAlpha = edgePulse;
+        ctx.lineWidth = Math.max(1.2, cellSize * 0.05);
+        ctx.beginPath();
+        if (!inZoneAt(x, y - 1)) { ctx.moveTo(left, top); ctx.lineTo(left + cellSize, top); }
+        if (!inZoneAt(x, y + 1)) { ctx.moveTo(left, top + cellSize); ctx.lineTo(left + cellSize, top + cellSize); }
+        if (!inZoneAt(x - 1, y)) { ctx.moveTo(left, top); ctx.lineTo(left, top + cellSize); }
+        if (!inZoneAt(x + 1, y)) { ctx.moveTo(left + cellSize, top); ctx.lineTo(left + cellSize, top + cellSize); }
+        ctx.stroke();
+        ctx.restore();
+        
+        ctx.restore();
+      }
+
       const isShip = x === view.player.position.x && y === view.player.position.y;
       const isEarth = x === view.earth.x && y === view.earth.y;
       const planet = view.knownPlanets.find((item) => item.position.x === x && item.position.y === y);
-      if (isEarth) drawMapGlyph(ctx, "earth", centerX, centerY, cellSize);
-      if (planet) drawMapGlyph(ctx, planet.type, centerX, centerY, cellSize);
-      if (isShip && !isMoving) drawMapGlyph(ctx, "ship", centerX, centerY, cellSize);
+      const wormhole = (view.knownWormholes || []).find(w => w.pos.x === x && w.pos.y === y);
+      const crate = (view.crates || []).find(c => c.pos.x === x && c.pos.y === y);
+
+      if (isEarth) drawMapGlyph(ctx, "earth", centerX, centerY, cellSize, now);
+      if (planet) drawMapGlyph(ctx, planet.type, centerX, centerY, cellSize, now);
+      if (wormhole) drawMapGlyph(ctx, "wormhole", centerX, centerY, cellSize, now);
+      if (crate) drawMapGlyph(ctx, "crate", centerX, centerY, cellSize, now);
+      if (isShip && !isMoving) drawMapGlyph(ctx, "ship", centerX, centerY, cellSize, now);
 
       const isSelected = selectedCell?.x === x && selectedCell?.y === y;
       const isHovered = hoverCell?.x === x && hoverCell?.y === y;
       if (isHovered || isSelected) {
-        ctx.strokeStyle = isSelected ? "#fff0a6" : "rgba(255, 180, 94, 0.82)";
-        ctx.lineWidth = isSelected ? 2 : 1.5;
-        const inset = Math.max(2, cellSize * 0.08);
+        ctx.save();
+        if (isSelected) {
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = "#fff0a6";
+          ctx.strokeStyle = "#fff0a6";
+          ctx.lineWidth = 2.5;
+        } else {
+          ctx.strokeStyle = "rgba(255, 180, 94, 0.6)";
+          ctx.lineWidth = 1.5;
+        }
+        const inset = Math.max(2, cellSize * 0.05);
         ctx.strokeRect(left + inset, top + inset, cellSize - inset * 2, cellSize - inset * 2);
+        ctx.restore();
       }
     }
   }
 
   drawFeedbackEffects(ctx, width, height, cellSize, screenX, screenY, now);
 
-  ctx.fillStyle = "rgba(210, 229, 215, 0.62)";
-  ctx.font = "10px Consolas, monospace";
+  ctx.fillStyle = "rgba(113, 255, 145, 0.6)";
+  ctx.font = "11px Consolas, monospace";
   ctx.textAlign = "right";
-  ctx.fillText("X →", width - 12, 17);
+  ctx.fillText("X →", width - 15, 20);
   ctx.textAlign = "left";
-  ctx.fillText("Y ↓", 12, height - 10);
-  ctx.fillStyle = "rgba(139, 164, 147, 0.82)";
-  ctx.textAlign = "left";
-  ctx.fillText(`CENTER ${Math.round(camera.x)}, ${Math.round(camera.y)}  /  ZOOM ${camera.zoom.toFixed(1)}×`, 12, 17);
+  ctx.fillText("Y ↓", 15, height - 15);
+  ctx.fillStyle = "rgba(139, 164, 147, 0.85)";
+  ctx.fillText(`SYS: ${Math.round(camera.x)}, ${Math.round(camera.y)}  |  ZOOM: ${camera.zoom.toFixed(1)}×`, 15, 20);
+  
   if (activeEffects.length && !effectFrame) {
     effectFrame = window.requestAnimationFrame(() => {
       effectFrame = 0;
@@ -1009,95 +1385,458 @@ function drawTacticalMap() {
   }
 }
 
-function drawMapGlyph(ctx, kind, x, y, cellSize) {
-  const radius = Math.max(4, Math.min(11, cellSize * 0.2));
+function drawMapGlyph(ctx, kind, x, y, cellSize, time = 0) {
+  const radius = Math.max(8, Math.min(18, cellSize * 0.38));
   ctx.save();
-  ctx.lineWidth = 1.5;
+  const applyGlow = (color, blur = 15) => { ctx.shadowBlur = blur; ctx.shadowColor = color; };
+
   if (kind === "ship") {
+    // ── TÀU: mũi tên + động cơ phụt lửa + buồng lái
+    const pulse = Math.sin(time / 150) * 0.15 + 0.85;
+    
+    // Động cơ phụt lửa (2 bên đuôi)
+    applyGlow("#ffb45e", 20);
+    ctx.fillStyle = `rgba(255, 180, 94, ${0.6 * pulse})`;
+    ctx.beginPath();
+    ctx.moveTo(x - radius * 0.5, y + radius * 0.6);
+    ctx.lineTo(x - radius * 0.3, y + radius * 1.4 * pulse);
+    ctx.lineTo(x - radius * 0.7, y + radius * 0.7);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + radius * 0.5, y + radius * 0.6);
+    ctx.lineTo(x + radius * 0.3, y + radius * 1.4 * pulse);
+    ctx.lineTo(x + radius * 0.7, y + radius * 0.7);
+    ctx.closePath(); ctx.fill();
+
+    // Thân tàu chính
+    applyGlow("#71ff91", 18);
     ctx.fillStyle = "#71ff91";
     ctx.beginPath();
     ctx.moveTo(x, y - radius);
-    ctx.lineTo(x + radius * 0.8, y + radius * 0.7);
-    ctx.lineTo(x, y + radius * 0.35);
-    ctx.lineTo(x - radius * 0.8, y + radius * 0.7);
-    ctx.closePath();
+    ctx.lineTo(x + radius * 0.75, y + radius * 0.7);
+    ctx.lineTo(x, y + radius * 0.3);
+    ctx.lineTo(x - radius * 0.75, y + radius * 0.7);
+    ctx.closePath(); ctx.fill();
+    
+    // Viền sáng
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "#a8ffba";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Buồng lái (cockpit) hình thoi trắng
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.ellipse(x, y - radius * 0.15, radius * 0.18, radius * 0.35, 0, 0, Math.PI * 2);
     ctx.fill();
+    
+    // Lõi xanh phát sáng
+    applyGlow("#00ffcc", 25);
+    ctx.fillStyle = "#00ffcc";
+    ctx.beginPath();
+    ctx.arc(x, y + radius * 0.1, radius * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    
   } else if (kind === "earth") {
-    ctx.strokeStyle = "#ffb45e";
+    // ── TRÁI ĐẤT: khí quyển + lục địa + mây + quỹ đạo
+    // Khí quyển phát sáng
+    applyGlow("#4fafff", 25);
+    ctx.fillStyle = "rgba(79, 175, 255, 0.3)";
+    ctx.beginPath(); ctx.arc(x, y, radius * 0.95, 0, Math.PI * 2); ctx.fill();
+    
+    // Lõi trái đất (xanh dương)
+    ctx.shadowBlur = 0;
+    const earthGrad = ctx.createRadialGradient(x - radius * 0.2, y - radius * 0.2, 0, x, y, radius * 0.75);
+    earthGrad.addColorStop(0, "#5fc9ff");
+    earthGrad.addColorStop(1, "#1a5a99");
+    ctx.fillStyle = earthGrad;
+    ctx.beginPath(); ctx.arc(x, y, radius * 0.75, 0, Math.PI * 2); ctx.fill();
+    
+    // Lục địa (xanh lá) - dùng path ngẫu nhiên
+    ctx.fillStyle = "rgba(113, 255, 145, 0.7)";
     ctx.beginPath();
-    ctx.arc(x, y, radius * 0.72, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x - radius, y);
-    ctx.lineTo(x + radius, y);
-    ctx.moveTo(x, y - radius);
-    ctx.lineTo(x, y + radius);
-    ctx.stroke();
-  } else if (kind === "Mining") {
-    ctx.fillStyle = "#ffb45e";
-    ctx.beginPath();
-    ctx.moveTo(x, y - radius * 0.82);
-    ctx.lineTo(x + radius * 0.82, y);
-    ctx.lineTo(x, y + radius * 0.82);
-    ctx.lineTo(x - radius * 0.82, y);
-    ctx.closePath();
+    ctx.ellipse(x - radius * 0.2, y - radius * 0.15, radius * 0.28, radius * 0.18, 0.3, 0, Math.PI * 2);
     ctx.fill();
-  } else if (kind === "Energy") {
-    ctx.strokeStyle = "#71ff91";
     ctx.beginPath();
-    for (let edge = 0; edge < 6; edge += 1) {
-      const angle = Math.PI / 3 * edge - Math.PI / 2;
-      const px = x + Math.cos(angle) * radius * 0.82;
-      const py = y + Math.sin(angle) * radius * 0.82;
-      if (edge === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-    }
-    ctx.closePath();
+    ctx.ellipse(x + radius * 0.25, y + radius * 0.1, radius * 0.22, radius * 0.15, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x - radius * 0.05, y + radius * 0.35, radius * 0.15, radius * 0.1, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Mây trắng mờ
+    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.beginPath();
+    ctx.ellipse(x + radius * 0.1, y - radius * 0.35, radius * 0.3, radius * 0.08, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Quỹ đạo elip phát sáng
+    applyGlow("#ffb45e", 15);
+    ctx.strokeStyle = "rgba(255, 180, 94, 0.7)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(x, y, radius * 1.15, radius * 0.35, Math.PI / 6, 0, Math.PI * 2);
     ctx.stroke();
-  } else {
-    ctx.strokeStyle = "#ffb45e";
-    for (const factor of [0.82, 0.42]) {
+    
+    // Vệ tinh nhỏ trên quỹ đạo
+    const satAngle = (time / 2000) % (Math.PI * 2);
+    const satX = x + Math.cos(satAngle) * radius * 1.15 * Math.cos(Math.PI/6) - Math.sin(satAngle) * radius * 0.35 * Math.sin(Math.PI/6);
+    const satY = y + Math.cos(satAngle) * radius * 1.15 * Math.sin(Math.PI/6) + Math.sin(satAngle) * radius * 0.35 * Math.cos(Math.PI/6);
+    applyGlow("#ffffff", 10);
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(satX, satY, 1.8, 0, Math.PI * 2); ctx.fill();
+    
+  } else if (kind === "Mining") {
+    // ── HÀNH TINH KHAI THÁC: đá có miệng núi lửa + mạch khoáng
+    applyGlow("#ffb45e", 18);
+    
+    // Nền đá nâu-cam
+    const rockGrad = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, 0, x, y, radius * 0.85);
+    rockGrad.addColorStop(0, "#ffcc5f");
+    rockGrad.addColorStop(0.5, "#c9823b");
+    rockGrad.addColorStop(1, "#5a3a1a");
+    ctx.fillStyle = rockGrad;
+    ctx.beginPath(); ctx.arc(x, y, radius * 0.85, 0, Math.PI * 2); ctx.fill();
+    
+    // Miệng núi lửa (craters)
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "rgba(42, 26, 10, 0.7)";
+    ctx.beginPath(); ctx.arc(x - radius * 0.3, y - radius * 0.2, radius * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + radius * 0.25, y + radius * 0.3, radius * 0.15, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + radius * 0.15, y - radius * 0.4, radius * 0.1, 0, Math.PI * 2); ctx.fill();
+    
+    // Mạch khoáng phát sáng (đường nứt)
+    applyGlow("#ffcc5f", 8);
+    ctx.strokeStyle = "rgba(255, 204, 95, 0.9)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - radius * 0.6, y + radius * 0.4);
+    ctx.lineTo(x - radius * 0.2, y + radius * 0.1);
+    ctx.lineTo(x + radius * 0.1, y + radius * 0.3);
+    ctx.lineTo(x + radius * 0.5, y - radius * 0.1);
+    ctx.stroke();
+    
+  } else if (kind === "Energy") {
+    // ── HÀNH TINH NĂNG LƯỢNG: plasma lõi + tia điện
+    const pulse = Math.sin(time / 300) * 0.2 + 0.8;
+    
+    // Quầng năng lượng
+    applyGlow("#79d7ff", 25);
+    ctx.fillStyle = `rgba(121, 215, 255, ${0.2 * pulse})`;
+    ctx.beginPath(); ctx.arc(x, y, radius * 1.05, 0, Math.PI * 2); ctx.fill();
+    
+    // Lõi plasma (gradient sáng)
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = "#79d7ff";
+    const plasmaGrad = ctx.createRadialGradient(x, y, 0, x, y, radius * 0.7);
+    plasmaGrad.addColorStop(0, "#ffffff");
+    plasmaGrad.addColorStop(0.3, "#a0e6ff");
+    plasmaGrad.addColorStop(1, "#1a5a99");
+    ctx.fillStyle = plasmaGrad;
+    ctx.beginPath(); ctx.arc(x, y, radius * 0.7, 0, Math.PI * 2); ctx.fill();
+    
+    // Lục giác viền ngoài
+    ctx.shadowBlur = 12;
+    ctx.strokeStyle = "#79d7ff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = Math.PI / 3 * i - Math.PI / 2;
+      const px = x + Math.cos(angle) * radius * 0.9;
+      const py = y + Math.sin(angle) * radius * 0.9;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath(); ctx.stroke();
+    
+    // Tia sét xoay quanh
+    ctx.shadowBlur = 15;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.lineWidth = 1.5;
+    const sparkAngle = (time / 400) % (Math.PI * 2);
+    for (let i = 0; i < 3; i++) {
+      const a = sparkAngle + (i * Math.PI * 2 / 3);
       ctx.beginPath();
-      ctx.moveTo(x, y - radius * factor);
-      ctx.lineTo(x + radius * factor, y);
-      ctx.lineTo(x, y + radius * factor);
-      ctx.lineTo(x - radius * factor, y);
-      ctx.closePath();
+      ctx.moveTo(x + Math.cos(a) * radius * 0.7, y + Math.sin(a) * radius * 0.7);
+      ctx.lineTo(x + Math.cos(a + 0.3) * radius * 0.9, y + Math.sin(a + 0.3) * radius * 0.9);
       ctx.stroke();
     }
+    
+  } else if (kind === "Rare") {
+    // ── HÀNH TINH HIẾM: tinh thể đa sắc + tia sáng
+    const pulse = Math.sin(time / 400) * 0.3 + 0.7;
+    const rotation = (time / 3000) % (Math.PI * 2);
+    
+    // Quầng sáng hồng
+    applyGlow("#ff76dc", 30);
+    ctx.fillStyle = `rgba(255, 118, 220, ${0.15 * pulse})`;
+    ctx.beginPath(); ctx.arc(x, y, radius * 1.2, 0, Math.PI * 2); ctx.fill();
+    
+    // Tinh thể chính (hình thoi lấp lánh)
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    
+    // Gradient cầu vồng
+    const crystalGrad = ctx.createLinearGradient(-radius, -radius, radius, radius);
+    crystalGrad.addColorStop(0, "#ff76dc");
+    crystalGrad.addColorStop(0.5, "#d1a8ff");
+    crystalGrad.addColorStop(1, "#79d7ff");
+    ctx.fillStyle = crystalGrad;
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = "#ff76dc";
+    
+    ctx.beginPath();
+    ctx.moveTo(0, -radius * 0.9);
+    ctx.lineTo(radius * 0.6, 0);
+    ctx.lineTo(0, radius * 0.9);
+    ctx.lineTo(-radius * 0.6, 0);
+    ctx.closePath(); ctx.fill();
+    
+    // Viền tinh thể
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    
+    // Các tia sáng xung quanh (star sparkles)
+    ctx.restore();
+    applyGlow("#ffffff", 12);
+    ctx.fillStyle = "#ffffff";
+    const sparkleAngle = (time / 500) % (Math.PI * 2);
+    for (let i = 0; i < 4; i++) {
+      const a = sparkleAngle + (i * Math.PI / 2);
+      const dist = radius * (1.1 + Math.sin(time / 200 + i) * 0.15);
+      const sx = x + Math.cos(a) * dist;
+      const sy = y + Math.sin(a) * dist;
+      // Vẽ ngôi sao 4 cánh nhỏ
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - 3);
+      ctx.lineTo(sx + 1, sy);
+      ctx.lineTo(sx, sy + 3);
+      ctx.lineTo(sx - 1, sy);
+      ctx.closePath(); ctx.fill();
+    }
+    
+  } else if (kind === "wormhole") {
+    // ── CỔNG KHÔNG GIAN: nhiều lớp xoáy + hạt sáng bay vào
+    const rotOffset = (time / 800) % (Math.PI * 2);
+    
+    // Quầng sáng lớn
+    applyGlow("#79d7ff", 30);
+    ctx.fillStyle = "rgba(121, 215, 255, 0.15)";
+    ctx.beginPath(); ctx.arc(x, y, radius * 1.2, 0, Math.PI * 2); ctx.fill();
+    
+    // Lõi đen (hố đen mini)
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#000000";
+    ctx.beginPath(); ctx.arc(x, y, radius * 0.3, 0, Math.PI * 2); ctx.fill();
+    
+    // 4 lớp xoáy ốc
+    for (let layer = 0; layer < 4; layer++) {
+      const layerRadius = radius * (0.35 + layer * 0.2);
+      const layerRotation = rotOffset + (layer * Math.PI / 4);
+      const alpha = 1 - layer * 0.18;
+      
+      applyGlow("#79d7ff", 15 - layer * 2);
+      ctx.strokeStyle = `rgba(121, 215, 255, ${alpha})`;
+      ctx.lineWidth = 2.5 - layer * 0.4;
+      ctx.beginPath();
+      ctx.arc(x, y, layerRadius, layerRotation, layerRotation + Math.PI * 1.4);
+      ctx.stroke();
+    }
+    
+    // Hạt sáng bay vào tâm
+    applyGlow("#ffffff", 10);
+    for (let i = 0; i < 6; i++) {
+      const particleAngle = (time / 600 + i * Math.PI / 3) % (Math.PI * 2);
+      const particleDist = ((time / 100 + i * 40) % 100) / 100 * radius * 1.1;
+      const px = x + Math.cos(particleAngle) * (radius * 1.1 - particleDist);
+      const py = y + Math.sin(particleAngle) * (radius * 1.1 - particleDist);
+      const alpha = particleDist / (radius * 1.1);
+      ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+      ctx.beginPath(); ctx.arc(px, py, 1.5, 0, Math.PI * 2); ctx.fill();
+    }
+    
+  } else if (kind === "crate") {
+    // ── HÒM TIẾP TẾ: hòm kho báu có khóa + đinh tán
+    const pulse = Math.sin(time / 250) * 0.3 + 0.7;
+    
+    // Quầng sáng vàng
+    applyGlow("#ffd700", 20 + pulse * 15);
+    ctx.fillStyle = `rgba(255, 215, 0, ${0.2 * pulse})`;
+    ctx.beginPath(); ctx.arc(x, y, radius * 1.1, 0, Math.PI * 2); ctx.fill();
+    
+    // Thân hòm (gỗ nâu vàng)
+    ctx.shadowBlur = 0;
+    const woodGrad = ctx.createLinearGradient(x - radius * 0.7, y - radius * 0.5, x + radius * 0.7, y + radius * 0.5);
+    woodGrad.addColorStop(0, "#d4a028");
+    woodGrad.addColorStop(0.5, "#ffd700");
+    woodGrad.addColorStop(1, "#b38f00");
+    ctx.fillStyle = woodGrad;
+    ctx.fillRect(x - radius * 0.65, y - radius * 0.35, radius * 1.3, radius * 0.85);
+    
+    // Nắp hòm (vòm cong)
+    const lidGrad = ctx.createLinearGradient(x - radius * 0.65, y - radius * 0.6, x + radius * 0.65, y - radius * 0.3);
+    lidGrad.addColorStop(0, "#ffd700");
+    lidGrad.addColorStop(1, "#b38f00");
+    ctx.fillStyle = lidGrad;
+    ctx.beginPath();
+    ctx.moveTo(x - radius * 0.7, y - radius * 0.35);
+    ctx.lineTo(x - radius * 0.7, y - radius * 0.5);
+    ctx.quadraticCurveTo(x, y - radius * 0.85, x + radius * 0.7, y - radius * 0.5);
+    ctx.lineTo(x + radius * 0.7, y - radius * 0.35);
+    ctx.closePath(); ctx.fill();
+    
+    // Viền đen bao quanh
+    ctx.strokeStyle = "#2a1a0a";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x - radius * 0.65, y - radius * 0.35, radius * 1.3, radius * 0.85);
+    ctx.stroke();
+    
+    // Đinh tán (rivets) 4 góc
+    ctx.fillStyle = "#2a1a0a";
+    [[-0.5, -0.2], [0.5, -0.2], [-0.5, 0.4], [0.5, 0.4]].forEach(([dx, dy]) => {
+      ctx.beginPath();
+      ctx.arc(x + radius * dx, y + radius * dy, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    
+    // Ổ khóa vàng ở giữa
+    applyGlow("#ffd700", 8);
+    ctx.fillStyle = "#2a1a0a";
+    ctx.fillRect(x - radius * 0.12, y + radius * 0.05, radius * 0.24, radius * 0.25);
+    ctx.fillStyle = "#ffd700";
+    ctx.beginPath();
+    ctx.arc(x, y + radius * 0.18, radius * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(x - 1, y + radius * 0.18, 2, radius * 0.08);
+    
+  } else {
+    // Fallback
+    ctx.strokeStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(x, y, radius * 0.5, 0, Math.PI * 2);
+    ctx.stroke();
   }
   ctx.restore();
 }
 
-function drawSectorOverview() {
-  const canvas = root.querySelector("#overview-canvas");
+function drawTacticalMap() {
+  const canvas = root.querySelector("#tactical-canvas");
   if (!canvas) return;
+  const now = performance.now();
+  if (isMotionReduced()) activeEffects = [];
+  activeEffects = activeEffects.filter((effect) => now - effect.startedAt < effect.duration);
+  const isMoving = activeEffects.some((effect) => effect.type === "move");
   const { context: ctx, width, height } = canvasContext(canvas);
   const view = playerView;
-  const cellSize = Math.min(width, height) / 100;
-  const offsetX = (width - cellSize * 100) / 2;
-  const offsetY = (height - cellSize * 100) / 2;
-  ctx.fillStyle = "#07100b";
+  const cellSize = Math.min(width, height) / 9 * camera.zoom;
+  const screenX = (x) => width / 2 + (x - camera.x) * cellSize;
+  const screenY = (y) => height / 2 + (y - camera.y) * cellSize;
+  const minX = Math.floor(camera.x - width / (2 * cellSize)) - 1;
+  const maxX = Math.ceil(camera.x + width / (2 * cellSize)) + 1;
+  const minY = Math.floor(camera.y - height / (2 * cellSize)) - 1;
+  const maxY = Math.ceil(camera.y + height / (2 * cellSize)) + 1;
+
+  // 1. Nền tối gradient nhẹ (sạch sẽ)
+  const bgGrad = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height));
+  bgGrad.addColorStop(0, "#081510");
+  bgGrad.addColorStop(1, "#030705");
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, width, height);
-  ctx.strokeStyle = "rgba(63, 191, 107, 0.09)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  for (let cell = 0; cell <= 100; cell += 1) {
-    const x = offsetX + cell * cellSize;
-    const y = offsetY + cell * cellSize;
-    ctx.moveTo(Math.round(x) + 0.5, offsetY);
-    ctx.lineTo(Math.round(x) + 0.5, offsetY + cellSize * 100);
-    ctx.moveTo(offsetX, Math.round(y) + 0.5);
-    ctx.lineTo(offsetX + cellSize * 100, Math.round(y) + 0.5);
+
+  // 2. Lưới đơn giản
+  for (let y = minY; y <= maxY; y += 1) {
+    for (let x = minX; x <= maxX; x += 1) {
+      const left = screenX(x) - cellSize / 2;
+      const top = screenY(y) - cellSize / 2;
+      
+      if (x < 0 || x > 99 || y < 0 || y > 99) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.fillRect(left, top, cellSize, cellSize);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(Math.round(left) + 0.5, Math.round(top) + 0.5, Math.ceil(cellSize), Math.ceil(cellSize));
+        continue;
+      }
+
+      ctx.strokeStyle = "rgba(63, 191, 107, 0.08)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(Math.round(left) + 0.5, Math.round(top) + 0.5, Math.ceil(cellSize), Math.ceil(cellSize));
+
+      const centerX = screenX(x);
+      const centerY = screenY(y);
+
+      // 3. Vẽ Zones (dưới cùng)
+      const zone = (view.zones || []).find(z => {
+        const dx = Math.abs(x - z.pos.x), dy = Math.abs(y - z.pos.y);
+        if (z.shape === "circle") return dx + dy <= z.radius;
+        if (z.shape === "rect") return dx <= z.width/2 && dy <= z.height/2;
+        return false;
+      });
+      if (zone) {
+        ctx.save();
+        const colors = {
+          jamming: "rgba(180, 80, 220, 0.25)", radiation: "rgba(120, 220, 80, 0.25)",
+          zero_g: "rgba(150, 200, 255, 0.15)", swamp: "rgba(50, 150, 50, 0.3)", gold_rush: "rgba(255, 215, 0, 0.25)"
+        };
+        ctx.fillStyle = colors[zone.type] || "rgba(255,255,255,0.1)";
+        ctx.fillRect(left, top, cellSize, cellSize);
+        ctx.restore();
+      }
+
+      const isShip = x === view.player.position.x && y === view.player.position.y;
+      const isEarth = x === view.earth.x && y === view.earth.y;
+      const planet = view.knownPlanets.find((item) => item.position.x === x && item.position.y === y);
+      const wormhole = (view.knownWormholes || []).find(w => w.pos.x === x && w.pos.y === y);
+      const crate = (view.crates || []).find(c => c.pos.x === x && c.pos.y === y);
+
+      // 4. Vẽ Icons
+      if (isEarth) drawMapGlyph(ctx, "earth", centerX, centerY, cellSize, now);
+      if (planet) drawMapGlyph(ctx, planet.type, centerX, centerY, cellSize, now);
+      if (wormhole) drawMapGlyph(ctx, "wormhole", centerX, centerY, cellSize, now);
+      if (crate) drawMapGlyph(ctx, "crate", centerX, centerY, cellSize, now);
+      if (isShip && !isMoving) drawMapGlyph(ctx, "ship", centerX, centerY, cellSize, now);
+
+      // 5. Highlight Ô đang chọn
+      const isSelected = selectedCell?.x === x && selectedCell?.y === y;
+      const isHovered = hoverCell?.x === x && hoverCell?.y === y;
+      if (isHovered || isSelected) {
+        ctx.save();
+        if (isSelected) {
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = "#fff0a6";
+          ctx.strokeStyle = "#fff0a6";
+          ctx.lineWidth = 2.5;
+        } else {
+          ctx.strokeStyle = "rgba(255, 180, 94, 0.6)";
+          ctx.lineWidth = 1.5;
+        }
+        const inset = Math.max(2, cellSize * 0.05);
+        ctx.strokeRect(left + inset, top + inset, cellSize - inset * 2, cellSize - inset * 2);
+        ctx.restore();
+      }
+    }
   }
-  ctx.stroke();
-  const marker = (x, y, kind) => {
-    const centerX = offsetX + (x + 0.5) * cellSize;
-    const centerY = offsetY + (y + 0.5) * cellSize;
-    drawMapGlyph(ctx, kind, centerX, centerY, Math.max(12, cellSize * 3));
-  };
-  marker(view.earth.x, view.earth.y, "earth");
-  for (const planet of view.knownPlanets) marker(planet.position.x, planet.position.y, planet.type);
-  marker(view.player.position.x, view.player.position.y, "ship");
+
+  drawFeedbackEffects(ctx, width, height, cellSize, screenX, screenY, now);
+
+  // 6. Text UI (Góc màn hình)
+  ctx.fillStyle = "rgba(113, 255, 145, 0.6)";
+  ctx.font = "11px Consolas, monospace";
+  ctx.textAlign = "right";
+  ctx.fillText("X →", width - 15, 20);
+  ctx.textAlign = "left";
+  ctx.fillText("Y ↓", 15, height - 15);
+  ctx.fillStyle = "rgba(139, 164, 147, 0.8)";
+  ctx.fillText(`SYS: ${Math.round(camera.x)}, ${Math.round(camera.y)}  |  ZOOM: ${camera.zoom.toFixed(1)}×`, 15, 20);
+  
+  if (activeEffects.length && !effectFrame) {
+    effectFrame = window.requestAnimationFrame(() => {
+      effectFrame = 0;
+      drawTacticalMap();
+    });
+  }
 }
 
 function cellAtPoint(canvas, clientX, clientY) {
@@ -1323,13 +2062,45 @@ async function sendCommand() {
   if (!actionFlow.selected || actionFlow.status === "pending" || !playerView.turn.isMyTurn) return;
   const action = actionFlow.selected;
   const args = getActionArgs(action);
-  if (action === "MOVE" && !args.target) {
-    const response = { ok: false, error: { code: "TARGET_REQUIRED", message: "Hãy chọn ô mục tiêu trước." } };
-    actionFlow.result = response;
-    actionFlow.status = "error";
-    setCommandEcho(action, "Chưa chọn ô", response);
-    addLocalActionEvent(response.error.code, response.error.message);
-    playActionFeedback(action, response, playerView, playerView);
+  if (action === "OPEN_CRATE") {
+    const response = await window.gameAdapter.submitAction(action, {});
+    if (response.ok) {
+        const result = response.actionReport?.result || {};
+        if (result.kind === "CrateOpened") {
+            // Hiển thị popup chi tiết loot
+            const lootList = result.items || [];
+            const lootHtml = lootList.map(item => {
+                if (item.kind === "resources") {
+                    const parts = Object.entries(item.resources).map(([k, v]) => `${v} ${resourceLabel(k)}`).join(", ");
+                    return `<li class="loot-item">📦 Tài nguyên: ${parts}</li>`;
+                } else if (item.kind === "active_item") {
+                    return `<li class="loot-item">⚡ Vật phẩm chủ động: ${rpgItems.find(i => i.id === item.item)?.name || item.item}</li>`;
+                } else if (item.kind === "passive_item") {
+                    return `<li class="loot-item">🛡️ Vật phẩm bị động: ${rpgItems.find(i => i.id === item.item)?.name || item.item}</li>`;
+                } else if (item.kind === "augment") {
+                    return `<li class="loot-item">💎 Nâng cấp: ${getRarityLabel(item.rarity)}</li>`;
+                }
+                return "";
+            }).join("");
+            
+            const old = root.querySelector("#crate-loot-modal");
+            old?.remove();
+            const dialog = document.createElement("dialog");
+            dialog.id = "crate-loot-modal";
+            dialog.className = "terminal-dialog event-modal planet";
+            dialog.innerHTML = `<section class="dialog-card panel"><span class="eyebrow amber-eyebrow">HÒM TIẾP TẾ</span><h2>ĐÃ MỞ THÀNH CÔNG!</h2><ul style="list-style:none; padding:0; margin:1rem 0; text-align:left; color:var(--text); line-height:2;">${lootHtml}</ul><button class="primary-button" data-action="close-loot">THU THẬP</button></section>`;
+            root.append(dialog);
+            dialog.showModal();
+            dialog.addEventListener("close", () => dialog.remove(), { once: true });
+        } else if (result.kind === "CrateTrap") {
+            // Hiển thị cảnh báo bẫy
+            const trapName = result.trap.kind.toUpperCase().replace(/_/g, " ");
+            enqueueToast({ level: "error", title: "BẪY KÍCH HOẠT!", message: `Bạn đã dính ${trapName}`, code: "TRAP_TRIGGERED" });
+        }
+        playerView = response.playerView;
+    } else {
+        enqueueToast({ level: "warning", title: "LỖI", message: response.error.message, code: response.error.code });
+    }
     render("game");
     return;
   }
@@ -1541,11 +2312,14 @@ root.addEventListener("click", (event) => {
     openRpgDialog("events");
   } else if (button.dataset.action === "open-augments") {
     openRpgDialog("augments");
+  } else if (button.dataset.action === "open-objectives") {
+    openRpgDialog("objectives"); // MỚI
+  } else if (button.dataset.rpgAction === "claim") {
+    submitRpgAction("CLAIM_OBJECTIVE", { id: Number(button.dataset.id) }); // MỚI
   } else if (button.dataset.eventTab) {
     eventTab = button.dataset.eventTab;
     openRpgDialog("events");
-  } else if (button.dataset.action === "close-rpg" || button.dataset.action === "close-event") {
-    button.closest("dialog")?.close();
+  } else if (button.dataset.action === "close-rpg" || button.dataset.action === "close-event" || button.dataset.action === "close-loot") {    button.closest("dialog")?.close();
     button.closest("dialog")?.remove();
   } else if (button.dataset.action === "exit") {
     showExitDialog();

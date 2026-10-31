@@ -16,6 +16,11 @@
     cargo_empty: "Không có hàng để nộp.", not_at_earth: "Chỉ có thể sạc pin tại Trái Đất.",
     out_of_deposit_range: "Trái Đất nằm ngoài tầm nộp hàng.", battery_full: "Pin đã đầy.",
     not_enough_resources: "Kho Trái Đất không có đủ tài nguyên.", invalid_amount: "Số lượng không hợp lệ.",
+    in_jammed_zone: "Đang trong vùng nhiễu sóng — không thể quét.",
+    no_crate_here: "Không đứng trên hòm tiếp tế.",
+    objective_not_complete: "Nhiệm vụ chưa hoàn thành.",
+    objective_already_claimed: "Nhiệm vụ đã nhận thưởng rồi.",
+    objective_not_found: "Không tìm thấy nhiệm vụ.",
   };
   const listeners = { views: new Set(), notifications: new Set(), results: new Set(), states: new Set(), augment: new Set() };  let socket = null;
   let self = null;
@@ -65,6 +70,22 @@
         stock: planet.stock ? normalizeResources(planet.stock) : null,
         eventType: planet.event_type || null
       })),
+      // ▼▼▼ THÊM MỚI ▼▼▼
+      zones: (raw.zones || []).map((z) => ({
+        id: z.id, type: z.type, pos: z.pos, shape: z.shape, radius: z.radius, width: z.width, height: z.height
+      })),
+      crates: (raw.crates || []).map((c) => ({
+        id: c.id, pos: c.pos, content: c.content, spawnedRound: c.spawned_round
+      })),
+      knownWormholes: (raw.wormholes || []).map((w) => ({
+        id: w.id, pos: w.pos, pairedWith: w.paired_with
+      })),
+      objectives: (raw.objectives || []).map((o) => ({
+        id: o.id, difficulty: o.difficulty, type: o.type, reward: o.reward, completed: o.completed, claimed: o.claimed
+      })),
+      crateHere: raw.crate_here || null,
+      currentZone: raw.current_zone || null,
+      // ▲▲▲ THÊM MỚI ▲▲▲
       turn: {
         activePlayer: activePlayer === "player1" ? "Player 1" : "Player 2", round: raw.round, roundMax: raw.max_rounds,
         isMyTurn: activePlayer === me, endTime: raw.turn_end_time || null,
@@ -107,6 +128,14 @@
       deposited: { kind: "Deposited", resources: normalizeResources(source.resources), scoreAdded: Math.max(0, next.player.earthScore - previous.player.earthScore) },
       recharged: { kind: "Recharged", batteryAdded: source.amount },
       turn_ended: { kind: "TurnEnded" },
+      // ▼▼▼ THÊM MỚI ▼▼▼
+      wormhole_entered: { kind: "WormholeEntered", from: source.from, to: source.to },
+      crate_opened: { kind: "CrateOpened", items: source.items },
+      crate_trap: { kind: "CrateTrap", trap: source.trap },
+      zone_entered: { kind: "ZoneEntered", zoneType: source.zone_type },
+      zone_ended_turn: { kind: "ZoneEndedTurn", zoneType: source.zone_type, amount: source.amount },
+      objective_claimed: { kind: "ObjectiveClaimed", objectiveId: source.objective_id, reward: source.reward },
+      // ▲▲▲ THÊM MỚI ▲▲▲
     };
     const result = kinds[source.type] || { kind: "ActionAccepted" };
     const messages = {
@@ -359,6 +388,8 @@
       OBSERVE: { type: "observe" }, SCAN_AREA: { type: "scan_area" }, SCAN_NEAREST: { type: "scan_nearest" },
       SCAN_OPPONENT: { type: "scan_opponent" }, DEPOSIT: { type: "deposit" }, END_TURN: { type: "end_turn" },
       MINE: { type: "mine" },
+      OPEN_CRATE: { type: "open_crate" },             // ▼ Thêm dòng này
+      CLAIM_OBJECTIVE: { type: "claim_objective", id: Number(args.id) }, // ▼ Và dòng này cho Nhiệm Vụ
       RECHARGE: { type: "recharge", resource: String(args.resource || "Iron").replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`).replace(/^_/, "").toLowerCase(), amount: Number(args.amount) },
     };
     if (action === "MOVE") {
