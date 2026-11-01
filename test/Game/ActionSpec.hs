@@ -53,7 +53,7 @@ spec = do
   describe "Observe" $ do
     it "thay hanh tinh trong ban kinh 3, tru 1 AP 1 battery" $ do
       let (gs, rep) = ok $ run1 Observe (at1 (Pos 60 57))
-      reportResult rep `shouldBe` PlanetsFound [KnownPlanet (Pos 60 60) Mining]
+      reportResult rep `shouldBe` PlanetsFound [KnownPlanet (Pos 60 60) Mining (Just (rs [(Iron, 80), (Crystal, 30)])) Nothing]      
       (playerAP (p1 gs), playerBattery (p1 gs)) `shouldBe` (4, 99)
       Map.keys (playerKnown (p1 gs)) `shouldBe` [1]
     it "hanh tinh cach 4 o thi khong thay" $
@@ -62,7 +62,7 @@ spec = do
   describe "ScanArea" $ do
     it "thay hanh tinh cach dung 8 o, tru 2 AP 3 battery" $ do
       let (gs, rep) = ok $ run1 ScanArea (at1 (Pos 60 52))
-      reportResult rep `shouldBe` PlanetsFound [KnownPlanet (Pos 60 60) Mining]
+      reportResult rep `shouldBe` PlanetsFound [KnownPlanet (Pos 60 60) Mining Nothing Nothing]
       (playerAP (p1 gs), playerBattery (p1 gs)) `shouldBe` (3, 97)
     it "cach 9 o thi khong thay" $
       resultOf (run1 ScanArea (at1 (Pos 60 51))) `shouldBe` Right (PlanetsFound [])
@@ -111,10 +111,10 @@ spec = do
       fmap planetStock (Map.lookup 1 (gsPlanets gs)) `shouldBe` Just (rs [(Iron, 75), (Crystal, 30)])
       Map.keys (playerKnown (p1 gs)) `shouldBe` [1]
     it "chi lay duoc phan con cho trong cargo" $ do
-      let full = modifyPlayer Player1 (\p -> p { playerPos = Pos 60 60, playerCargo = rs [(Crystal, 48)] }) baseState
+      let full = modifyPlayer Player1 (\p -> p { playerPos = Pos 60 60, playerCargo = rs [(Crystal, 118)] }) baseState
       resultOf (run1 (Mine Iron) full) `shouldBe` Right (Mined Iron 2)
     it "cargo day thi bi tu choi" $ do
-      let full = modifyPlayer Player1 (\p -> p { playerPos = Pos 60 60, playerCargo = rs [(Crystal, 50)] }) baseState
+      let full = modifyPlayer Player1 (\p -> p { playerPos = Pos 60 60, playerCargo = rs [(Crystal, 120)] }) baseState      
       stateOf (run1 (Mine Iron) full) `shouldBe` Left CargoFull
     it "loai khong co tren hanh tinh thi bi tu choi" $
       stateOf (run1 (Mine RareOre) (at1 (Pos 60 60))) `shouldBe` Left PlanetHasNoSuchResource

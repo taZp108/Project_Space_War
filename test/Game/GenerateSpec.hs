@@ -25,10 +25,10 @@ spec = do
   describe "newGame (vi du cu the)" $ do
     let gs = newGame cfg 42
     it "co dung 80 hanh tinh" $
-      Map.size (gsPlanets gs) `shouldBe` 80
+      Map.size (gsPlanets gs) `shouldBe` 160
     it "so hanh tinh tung loai la 40 / 24 / 16" $ do
       let count t = length (filter ((== t) . planetType) (planetsOf gs))
-      (count Mining, count Energy, count Rare) `shouldBe` (40, 24, 16)
+      (count Mining, count Energy, count Rare) `shouldBe` (80, 50, 30)
     it "ton kho moi hanh tinh dung theo loai" $
       all (\p -> planetStock p == (cfgPlanetStock cfg Map.! planetType p)) (planetsOf gs)
         `shouldBe` True
@@ -63,7 +63,7 @@ spec = do
             ok p = let d = distance (playerPos p) earth in d >= 1 && d <= 5
         in ok (gsPlayer1 gs) && ok (gsPlayer2 gs)
       it "id hanh tinh la 1..80" $ property $ \seed ->
-        Map.keys (gsPlanets (newGame cfg seed)) == [1 .. 80]
+        Map.keys (gsPlanets (newGame cfg seed)) == [1 .. 160]
 
   describe "pickDistinct" $ do
     it "boc k phan tu khong lap tu danh sach" $ property $ \seed ->

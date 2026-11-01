@@ -40,6 +40,14 @@
       .filter(([, value]) => Number(value) > 0)
       .map(([key, value]) => [resourceNames[key] || key, Number(value)]));
   }
+
+  function mapReward(reward) {
+    if (!reward) return reward;
+    const mapped = { ...reward };
+    if (mapped.resources) mapped.resources = normalizeResources(mapped.resources);
+    if (mapped.parts) mapped.parts = mapped.parts.map(mapReward);
+    return mapped;
+  }
   function event(code, text, kind = "INFO") {
     const now = new Date();
     recentEvents.unshift({ time: `${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`, code, text, kind });
@@ -138,7 +146,8 @@
       crate_trap: { kind: "CrateTrap", trap: source.trap },
       zone_entered: { kind: "ZoneEntered", zoneType: source.zone_type },
       zone_ended_turn: { kind: "ZoneEndedTurn", zoneType: source.zone_type, amount: source.amount },
-      objective_claimed: { kind: "ObjectiveClaimed", objectiveId: source.objective_id, reward: source.reward },
+      // Sửa dòng cũ thành dòng này:
+      objective_claimed: { kind: "ObjectiveClaimed", objectiveId: source.objective_id, reward: mapReward(source.reward) },
       monolith_result: { kind: "MonolithResult", message: source.message },
       beacon_activated: { kind: "BeaconActivated", pos: source.pos },      // ▲▲▲ THÊM MỚI ▲▲▲
 

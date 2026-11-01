@@ -7,6 +7,7 @@ const defaultSettings = {
   fontSize: 16,
   sound: false,
   volume: 35,
+  sfxVolume: 70,
   reducedMotion: false,
 };
 
@@ -73,26 +74,166 @@ let cachedZonesRef = null;
 let cachedZoneMap = null;
 let canvasWithListeners = null;
 let pendingHoverRedraw = 0;
-// Khai báo nhạc nền
-const menuBgm = new Audio("bgm-menu.mp3");
-menuBgm.loop = true;
+// ═══════════════════════════════════════════════════════════════════════════
+// BGM MANAGER — crossfade mượt giữa các track (screen change + loop)
+// ═══════════════════════════════════════════════════════════════════════════
+const BGM = (() => {
+  const BASE = "assets/audio/bgm/";
+  const MENU_TRACK = BASE + "bgm-menu.mp3";
+  const GAME_TRACKS = [
+    BASE + "bgm-game-1.mp3",
+    BASE + "bgm-game-2.mp3",
+    BASE + "bgm-game-3.mp3",
+  ];
+  const CROSSFADE_MS = 1200;    // fade khi chuyển giữa 2 track
+  const FIRST_FADE_MS = 400;    // fade lần đầu bật nhạc
+  const MUTE_FADE_MS = 300;     // fade khi user tắt nhạc
+  const LOOKAHEAD_SEC = (CROSSFADE_MS + 300) / 1000;
 
-const gameBgmTracks = [
-  "bgm-game-1.mp3",
-  "bgm-game-2.mp3",
-  "bgm-game-3.mp3"
-];
-let currentGameBgmIndex = 0;
-const gameBgm = new Audio();
+  let enabled = false;
+  let targetVolume = 0.35;
+  let gameMode = false;
+  let gameTrackIdx = 0;
+  let currentEl = null;
+  let desiredSrc = MENU_TRACK;
+  let lastTriggeredEl = null;
+  let watcherRaf = 0;
+  const fadesByEl = new WeakMap();
 
-// Tự động chuyển bài khi nhạc trận đấu hết
-gameBgm.addEventListener("ended", () => {
-  currentGameBgmIndex = (currentGameBgmIndex + 1) % gameBgmTracks.length;
-  gameBgm.src = gameBgmTracks[currentGameBgmIndex];
-  if (settings.sound) gameBgm.play().catch(() => {});
-});
+  function createEl(src) {
+    const el = new Audio(src);
+    el.loop = false;              // loop do watcher quản lý
+    el.preload = "auto";
+    el.volume = 0;
+    el.dataset.src = src;
+    return el;
+  }
 
-let activeBgm = null; // Biến giữ bài nhạc đang phát
+  function fadeTo(el, to, ms, onDone) {
+    if (!el) return;
+    const prev = fadesByEl.get(el);
+    if (prev) cancelAnimationFrame(prev);
+    const from = el.volume;
+    if (ms <= 0 || Math.abs(to - from) < 0.001) {
+      el.volume = Math.max(0, Math.min(1, to));
+      if (onDone) onDone();
+      return;
+    }
+    const t0 = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - t0) / ms);
+      el.volume = Math.max(0, Math.min(1, from + (to - from) * t));
+      if (t < 1) {
+        fadesByEl.set(el, requestAnimationFrame(step));
+      } else {
+        fadesByEl.delete(el);
+        if (onDone) onDone();
+      }
+    };
+    fadesByEl.set(el, requestAnimationFrame(step));
+  }
+
+  function startTrack(src, fadeMs) {
+    if (!enabled) return;
+    const oldEl = currentEl;
+    const newEl = createEl(src);
+    newEl.volume = 0;
+    const pp = newEl.play();
+    if (pp && pp.catch) pp.catch(() => {});
+    newEl.addEventListener("ended", () => {
+      if (newEl !== currentEl) return;
+      lastTriggeredEl = newEl;
+      const nextSrc = gameMode
+        ? GAME_TRACKS[(gameTrackIdx + 1) % GAME_TRACKS.length]
+        : MENU_TRACK;
+      if (gameMode) gameTrackIdx = (gameTrackIdx + 1) % GAME_TRACKS.length;
+      desiredSrc = nextSrc;
+      startTrack(nextSrc, 200);
+    }, { once: true });
+    if (oldEl && oldEl !== newEl) {
+      fadeTo(oldEl, 0, fadeMs, () => {
+        try { oldEl.pause(); oldEl.currentTime = 0; } catch {}
+      });
+    }
+    fadeTo(newEl, targetVolume, fadeMs);
+    currentEl = newEl;
+    lastTriggeredEl = null;
+  }
+
+  function tick() {
+    watcherRaf = requestAnimationFrame(tick);
+    const el = currentEl;
+    if (!el || el === lastTriggeredEl) return;
+    if (!enabled || el.paused) return;
+    const d = el.duration;
+    if (!d || isNaN(d) || d <= 0) return;
+    const remain = d - el.currentTime;
+    if (remain > LOOKAHEAD_SEC || remain <= 0) return;
+    lastTriggeredEl = el;
+    const nextSrc = gameMode
+      ? GAME_TRACKS[(gameTrackIdx + 1) % GAME_TRACKS.length]
+      : MENU_TRACK;
+    if (gameMode) gameTrackIdx = (gameTrackIdx + 1) % GAME_TRACKS.length;
+    desiredSrc = nextSrc;
+    startTrack(nextSrc, CROSSFADE_MS);
+  }
+
+  function ensureWatcher() {
+    if (!watcherRaf) watcherRaf = requestAnimationFrame(tick);
+  }
+
+  function switchTo(isGame) {
+    const target = isGame ? GAME_TRACKS[gameTrackIdx] : MENU_TRACK;
+    const modeChanged = gameMode !== isGame;
+    gameMode = isGame;
+    if (!modeChanged && desiredSrc === target) {
+      if (enabled && currentEl && currentEl.paused) currentEl.play().catch(() => {});
+      return;
+    }
+    desiredSrc = target;
+    if (!enabled) return;
+    startTrack(target, currentEl ? CROSSFADE_MS : FIRST_FADE_MS);
+    ensureWatcher();
+  }
+
+  function setEnabled(on) {
+    const next = !!on;
+    if (next === enabled) return;
+    enabled = next;
+    if (!enabled) {
+      if (currentEl) fadeTo(currentEl, 0, MUTE_FADE_MS, () => {
+        try { currentEl.pause(); } catch {}
+      });
+      return;
+    }
+    if (currentEl) {
+      if (currentEl.paused) currentEl.play().catch(() => {});
+      fadeTo(currentEl, targetVolume, FIRST_FADE_MS);
+    } else {
+      startTrack(desiredSrc, FIRST_FADE_MS);
+    }
+    ensureWatcher();
+  }
+
+  function setTargetVolume(v) {
+    const nv = Math.max(0, Math.min(1, Number(v) || 0));
+    targetVolume = nv;
+    if (enabled && currentEl && !currentEl.paused) fadeTo(currentEl, nv, 200);
+  }
+
+  function resumeIfPaused() {
+    if (!enabled) return;
+    if (currentEl && currentEl.paused) {
+      currentEl.play().catch(() => {});
+      fadeTo(currentEl, targetVolume, FIRST_FADE_MS);
+    }
+  }
+
+  window.addEventListener("pointerdown", resumeIfPaused, { once: true, capture: true });
+  window.addEventListener("keydown", resumeIfPaused, { once: true, capture: true });
+
+  return { switchTo, setEnabled, setTargetVolume, resumeIfPaused };
+})();
 
 function saveSettings() {
   try {
@@ -101,35 +242,21 @@ function saveSettings() {
     // Preferences still work for this page session when local storage is unavailable.
   }
 }
-
-// Hàm chuyển đổi nhạc nền (Menu hoặc Game)
+// Hàm chuyển đổi nhạc nền (Menu hoặc Game) — crossfade mượt
 function updateBgm(isGameScreen) {
-  const targetBgm = isGameScreen ? gameBgm : menuBgm;
-  
-  if (activeBgm && activeBgm !== targetBgm) {
-    activeBgm.pause();
-    activeBgm.currentTime = 0;
-  }
-  activeBgm = targetBgm;
-  
-  if (isGameScreen && !gameBgm.src) {
-    gameBgm.src = gameBgmTracks[currentGameBgmIndex];
-  }
-  
-  applySettings();
+  BGM.switchTo(isGameScreen);
 }
 
 function applySettings() {
   document.documentElement.style.setProperty("--text-scale", String(settings.fontSize / 16));
   document.body.classList.toggle("reduced-motion", settings.reducedMotion);
 
-  if (activeBgm) {
-    activeBgm.volume = settings.volume / 100;
-    if (settings.sound) {
-      activeBgm.play().catch(() => {}); 
-    } else {
-      activeBgm.pause();
-    }
+  BGM.setTargetVolume(settings.volume / 100);
+  BGM.setEnabled(settings.sound);
+
+  if (window.SFX) {
+    SFX.setEnabled(settings.sound);
+    SFX.setVolume(settings.sfxVolume / 100);
   }
 }
 
@@ -185,6 +312,7 @@ function actionLabel(value) { return actionLabels[value] || String(value || "L�
 function resourceLabel(value) { return resourceLabels[value] || String(value || "TÀI NGUYÊN"); }
 Object.assign(resourceLabels, { PinkDiamond: "Kim cương hồng", Spinel: "Spinel", HollyBlueAgate: "Agate xanh", Peridot: "Peridot", Topaz: "Topaz", Carnelian: "Carnelian", Jasper: "Jasper", Amethyst: "Amethyst" });
 const resourceGlyphs = { PinkDiamond: "◆", Spinel: "●", HollyBlueAgate: "⬟", Peridot: "▲", Topaz: "✦", Carnelian: "■", Jasper: "⬢", Amethyst: "✧" };
+Object.assign(resourceGlyphs, { Iron: "●", Crystal: "⬟", EnergyCore: "▲", RareOre: "✦", ExoticMatter: "■" });
 function planetLabel(value) { return planetLabels[value] || String(value || "CHƯA RÕ"); }
 function cellStatusLabel(value) { return cellStatusLabels[value] || cellStatusLabels.UNKNOWN; }
 function resultLabel(value) { return resultLabels[value] || String(value || resultLabels["Outcome unavailable"]); }
@@ -360,8 +488,8 @@ function settingsScreen() {
           <div class="panel-heading"><div><span class="eyebrow">01 / TRỢ NĂNG</span><h2 id="display-title">Hiển thị & âm thanh</h2></div><span class="panel-code">CỤC BỘ</span></div>
           <div class="setting-row"><div class="setting-copy"><label for="font-size">Cỡ chữ</label><p>Điều chỉnh kích thước chữ giao diện.</p></div><div class="setting-control range-control"><input id="font-size" type="range" min="14" max="22" step="1" value="${settings.fontSize}" /><output id="font-size-output" for="font-size">${settings.fontSize}px</output></div></div>
           <div class="setting-row"><div class="setting-copy"><label for="sound-toggle">Âm thanh</label><p>Phát âm báo ngắn sau khi có phản hồi hành động.</p></div><label class="toggle"><input id="sound-toggle" type="checkbox" ${settings.sound ? "checked" : ""} /><span class="toggle-track" aria-hidden="true"></span><span class="toggle-value">${settings.sound ? "BẬT" : "TẮT"}</span></label></div>
-          <div class="setting-row"><div class="setting-copy"><label for="volume">Âm lượng</label><p>Điều chỉnh âm báo giao diện.</p></div><div class="setting-control range-control"><input id="volume" type="range" min="0" max="100" step="1" value="${settings.volume}" /><output id="volume-output" for="volume">${settings.volume}%</output></div></div>
-          <div class="setting-row"><div class="setting-copy"><label for="reduced-motion">Giảm chuyển động</label><p>Giảm hiệu ứng và chuyển cảnh trang trí.</p></div><label class="toggle"><input id="reduced-motion" type="checkbox" ${settings.reducedMotion ? "checked" : ""} /><span class="toggle-track" aria-hidden="true"></span><span class="toggle-value">${settings.reducedMotion ? "BẬT" : "TẮT"}</span></label></div>
+          <div class="setting-row"><div class="setting-copy"><label for="volume">Âm lượng nhạc</label><p>Điều chỉnh âm lượng nhạc nền.</p></div><div class="setting-control range-control"><input id="volume" type="range" min="0" max="100" step="1" value="${settings.volume}" /><output id="volume-output" for="volume">${settings.volume}%</output></div></div>
+          <div class="setting-row"><div class="setting-copy"><label for="sfx-volume">Âm lượng hiệu ứng</label><p>Điều chỉnh tiếng nút và sự kiện.</p></div><div class="setting-control range-control"><input id="sfx-volume" type="range" min="0" max="100" step="1" value="${settings.sfxVolume}" /><output id="sfx-volume-output" for="sfx-volume">${settings.sfxVolume}%</output></div></div>          <div class="setting-row"><div class="setting-copy"><label for="reduced-motion">Giảm chuyển động</label><p>Giảm hiệu ứng và chuyển cảnh trang trí.</p></div><label class="toggle"><input id="reduced-motion" type="checkbox" ${settings.reducedMotion ? "checked" : ""} /><span class="toggle-track" aria-hidden="true"></span><span class="toggle-value">${settings.reducedMotion ? "BẬT" : "TẮT"}</span></label></div>
         </section>
       </div>
       <p class="screen-footnote">TÙY CHỌN ĐƯỢC LƯU TRÊN TRÌNH DUYỆT NÀY.</p>
@@ -488,7 +616,8 @@ function targetPreviewPanel(view) {
   }
 
   const glyph = info.status === "EARTH" ? "⊕" : info.status === "OWN SHIP" ? "▲" : "□";
-  return `<div class="target-state ${info.status === "UNKNOWN" ? "target-unknown" : ""}"><span class="target-glyph" aria-hidden="true">${glyph}</span><div><span class="field-label">TRẠNG THÁI Ô</span><strong>${cellStatusLabel(info.status)}</strong><span class="target-coordinate">(${selectedCell.x}, ${selectedCell.y})</span></div></div>${info.status === "UNKNOWN" ? '<p class="target-note">Chưa có thông tin về ô này.</p>' : ""}`;
+  const statusClass = info.status === "EARTH" ? "target-earth" : info.status === "OWN SHIP" ? "target-own-ship" : info.status === "UNKNOWN" ? "target-unknown" : "";
+  return `<div class="target-state ${statusClass}"><span class="target-glyph" aria-hidden="true">${glyph}</span><div><span class="field-label">TRẠNG THÁI Ô</span><strong>${cellStatusLabel(info.status)}</strong><span class="target-coordinate">(${selectedCell.x}, ${selectedCell.y})</span></div></div>${info.status === "UNKNOWN" ? '<p class="target-note">Chưa có thông tin về ô này.</p>' : ""}`;
 }
 
 const commandDefinitions = [
@@ -498,9 +627,9 @@ const commandDefinitions = [
   ["SCAN_NEAREST", "2 AP · 3 PIN", ""],
   ["SCAN_OPPONENT", "3 AP · 3 PIN", ""],
   ["MINE", "2 AP · 1 PIN", ""],
-  ["OPEN_CRATE", "0 AP · 0 PIN", ""], // ▼▼ MỚI ▼▼
   ["DEPOSIT", "1 AP · 0–2 PIN", ""],
   ["RECHARGE", "1 AP · 0 PIN", ""],
+  ["OPEN_CRATE", "0 AP · 0 PIN", ""],
   ["INTERACT_MONOLITH", "0 AP · 20 PIN", ""],
   ["ACTIVATE_BEACON", "1 AP · 0 PIN", ""],
   ["END_TURN", "0 AP · 0 PIN", ""],
@@ -563,51 +692,52 @@ function rpgDialogMarkup(view, mode) {
     const list = view.objectives || [];
     return `<dialog class="terminal-dialog rpg-dialog" id="rpg-dialog"><section class="dialog-card panel"><span class="eyebrow amber-eyebrow">CƠ SỞ DỮ LIỆU</span><h2>NHIỆM VỤ</h2><div class="rpg-items">${list.map((o) => {
       
-      // ── XỬ LÝ LOẠI NHIỆM VỤ ──
-      // Lấy dữ liệu từ nhiều nguồn có thể có của Server
-      let rawKind = (o.type?.kind || o.type?.tag || o.type || "").toString().toLowerCase();
-      let n = o.type?.n || o.type?.contents || o.type?.amount || o.type?.value || 0;
+      // ── XỬ LÝ TOÀN BỘ 19 LOẠI NHIỆM VỤ TỪ SERVER ──
+      const typeData = o.type || {};
+      const rawKind = String(typeData.kind || "").toLowerCase();
+      const n = typeData.n || 0;
+      const pos = typeData.pos;
       
-      // Chuẩn hóa từ khóa (chống mọi kiểu viết của server)
-      let kind = "unknown";
-      if (rawKind.includes("move")) kind = "move_cells";
-      else if (rawKind.includes("mine")) kind = "mine_times";
-      else if (rawKind.includes("scan")) kind = "scan_times";
-      else if (rawKind.includes("crate")) kind = "open_crates";
-      else if (rawKind.includes("wormhole")) kind = "use_wormholes";
+      let desc = "";
+      let isUnknown = false;
 
-      // Tạo câu mô tả
-      let desc = `Nhiệm vụ chưa xác định (Data: ${JSON.stringify(o.type)})`; // Hiện data thô nếu lỗi
-      if (kind === "move_cells") desc = `Di chuyển ${n} ô trong 1 lượt`;
-      else if (kind === "mine_times") desc = `Khai thác ${n} lần trong 1 lượt`;
-      else if (kind === "scan_times") desc = `Quét ${n} lần trong 1 lượt`;
-      else if (kind === "open_crates") desc = `Mở ${n} hòm tiếp tế`;
-      else if (kind === "use_wormholes") desc = `Đi qua ${n} cổng không gian`;
-      
-      // ── XỬ LÝ PHẦN THƯỞNG ──
+      switch (rawKind) {
+          case "mine_times": desc = `Khai thác ${n} lần trong 1 lượt`; break;
+          case "move_cells": desc = `Di chuyển ${n} ô trong 1 lượt`; break;
+          case "scan_times": desc = `Quét ${n} lần trong 1 lượt`; break;
+          case "open_crates": desc = `Mở ${n} hòm tiếp tế`; break;
+          case "use_wormholes": desc = `Đi qua ${n} cổng không gian`; break;
+          case "deposit_times": desc = `Nộp hàng về Trái Đất ${n} lần`; break;
+          case "craft_items": desc = `Chế tạo ${n} vật phẩm`; break;
+          case "use_items": desc = `Sử dụng ${n} vật phẩm`; break;
+          case "mine_resources": desc = `Khai thác tổng cộng ${n} tài nguyên`; break;
+          case "do_nothing": desc = `Kết thúc lượt mà không làm gì cả`; break;
+          case "visit_planets": desc = `Ghé thăm ${n} hành tinh khác nhau`; break;
+          case "spend_battery": desc = `Tiêu hao ${n} pin`; break;
+          case "gain_earth_score": desc = `Kiếm ${n} điểm Trái Đất trong lượt`; break;
+          case "visit_planet_types": desc = `Ghé thăm ${n} loại hành tinh khác nhau`; break;
+          case "reach_cell": 
+              desc = pos ? `Đi đến tọa độ (${pos.x}, ${pos.y})` : `Đi đến một tọa độ bí ẩn`; 
+              break;
+          case "do_all_four": desc = `Thực hiện đủ 4 hành động: Di chuyển, Quét, Khai thác, Chế tạo`; break;
+          case "craft_different": desc = `Chế tạo ${n} loại vật phẩm khác nhau`; break;
+          case "end_in_radiation": desc = `Kết thúc lượt khi đang ở trong vùng phóng xạ`; break;
+          case "square_dance": desc = `Đi theo hình vuông (Phải, Xuống, Trái, Lên)`; break;
+          default: 
+              desc = `Nhiệm vụ chưa xác định (Data: ${JSON.stringify(o.type)})`;
+              isUnknown = true;
+      }
+            // ── XỬ LÝ PHẦN THƯỞNG (Dùng parseRewardData) ──
       let rewardHtml = "";
       if (o.reward) {
-        let rewards = [];
-        // Trường hợp 1: Phần thưởng là object resources { Iron: 5, Crystal: 2 }
-        let resObj = o.reward.resources || o.reward;
-        if (resObj && typeof resObj === 'object') {
-          for (const [res, amt] of Object.entries(resObj)) {
-            if (typeof amt === 'number' && amt > 0) {
-              rewards.push(`<span class="reward-item">${resourceGlyphs[res] || "◆"} ${resourceLabel(res)} ×${amt}</span>`);
-            }
+        const parsed = parseRewardData(o.reward);
+        const rewards = parsed.map(r => {
+          if (r.type === 'resource') {
+            return `<span class="reward-item">${resourceGlyphs[r.id] || "◆"} ${resourceLabel(r.id)} ×${r.amount}</span>`;
+          } else {
+            return `<span class="reward-item" style="color:${r.color};">${r.icon} ${r.name}</span>`;
           }
-        }
-        // Trường hợp 2: Phần thưởng là item (chủ động/bị động)
-        if (o.reward.item || o.reward.active_item || o.reward.passive_item) {
-          let itemId = o.reward.item || o.reward.active_item || o.reward.passive_item;
-          let itemInfo = rpgItems.find(i => i.id === itemId);
-          rewards.push(`<span class="reward-item" style="color:var(--green);">⚡ ${itemInfo ? itemInfo.name : itemId}</span>`);
-        }
-        // Trường hợp 3: Phần thưởng là augment
-        if (o.reward.augment) {
-           rewards.push(`<span class="reward-item" style="color:#00ffff;">💎 Nâng cấp ${getRarityLabel(o.reward.augment)}</span>`);
-        }
-        
+        });
         if (rewards.length > 0) {
           rewardHtml = `<div class="reward-box">🎁 THƯỞNG: ${rewards.join(" · ")}</div>`;
         }
@@ -622,8 +752,8 @@ function rpgDialogMarkup(view, mode) {
           <span style="margin-bottom: 0.25rem;">${desc}</span>
           ${rewardHtml}
         </div>
-        <button class="primary-button" data-rpg-action="claim" data-id="${o.id}" ${(!o.completed || o.claimed || kind === "unknown") ? "disabled" : ""} style="${kind === "unknown" ? "border-color: var(--danger); color: var(--danger);" : ""}">
-          ${kind === "unknown" ? "LỖI DATA" : o.claimed ? "ĐÃ NHẬN" : o.completed ? "NHẬN" : "CHƯA XONG"}
+        <button class="primary-button" data-rpg-action="claim" data-id="${o.id}" ${(!o.completed || o.claimed || isUnknown) ? "disabled" : ""} style="${isUnknown ? "border-color: var(--danger); color: var(--danger);" : ""}">
+          ${isUnknown ? "LỖI DATA" : o.claimed ? "ĐÃ NHẬN" : o.completed ? "NHẬN" : "CHƯA XONG"}
         </button>
       </article>`;
     }).join("")}</div><button class="utility-button" data-action="close-rpg">ĐÓNG</button></section></dialog>`;
@@ -699,9 +829,95 @@ function updateTurnDeadline(view) {
   activeTurnToken = token;
 }
 
+// ═══ HÀM HIỂN THỊ POPUP PHẦN THƯỞNG NHIỆM VỤ ═══
+function parseRewardData(reward) {
+  let results = [];
+  if (!reward) return results;
+  
+  if (reward.parts && Array.isArray(reward.parts)) {
+    reward.parts.forEach(p => results.push(...parseRewardData(p)));
+    return results;
+  }
+
+  if (reward.kind === "resources" && reward.resources) {
+    for (const [res, amt] of Object.entries(reward.resources)) {
+      results.push({ type: 'resource', id: res, amount: amt });
+    }
+  } else if (reward.resources && typeof reward.resources === 'object' && !reward.kind) {
+    for (const [res, amt] of Object.entries(reward.resources)) {
+      results.push({ type: 'resource', id: res, amount: amt });
+    }
+  } else if (reward.kind === "battery") {
+    results.push({ type: 'text', icon: '⚡', name: `+${reward.amount} Pin`, color: '#ffd700' });
+  } else if (reward.kind === "ap") {
+    results.push({ type: 'text', icon: '⚙️', name: `+${reward.amount} AP`, color: '#71ff91' });
+  } else if (reward.kind === "active_item" || reward.kind === "passive_item") {
+    let itemInfo = rpgItems.find(i => i.id === reward.item);
+    results.push({ type: 'text', icon: itemInfo ? itemInfo.icon : '⚡', name: itemInfo ? itemInfo.name : reward.item, color: '#71ff91' });
+  } else if (reward.kind === "augment") {
+    results.push({ type: 'text', icon: '💎', name: `Nâng cấp ${getRarityLabel(reward.rarity)}`, color: '#00ffff' });
+  }
+  return results;
+}
+
+function showObjectiveRewardPopup(rewardData) {
+  const old = document.querySelector("#objective-reward-modal");
+  old?.remove();
+
+  const resourceColors = {
+    PinkDiamond: "#ff76dc", Spinel: "#ff6969", HollyBlueAgate: "#79d7ff",
+    Peridot: "#a7f36b", Topaz: "#ffcc5f", Carnelian: "#f28b55",
+    Jasper: "#bc88ff", Amethyst: "#d1a8ff", Iron: "#d2e5d7", 
+    Crystal: "#79d7ff", EnergyCore: "#ffcc5f", RareOre: "#ff76dc", ExoticMatter: "#f28b55"
+  };
+
+  const items = parseRewardData(rewardData);
+  
+  const itemsHtml = items.map(r => {
+    if (r.type === 'resource') {
+      const color = resourceColors[r.id] || '#fff';
+      const glyph = resourceGlyphs[r.id] || '◆';
+      return `<div style="display:flex; align-items:center; gap:12px; font-size:1.1rem; background:rgba(0,0,0,0.4); padding:10px 16px; border:1px solid ${color}44; border-radius:4px;">
+        <span style="color:${color}; font-size:1.4rem; text-shadow:0 0 10px ${color};">${glyph}</span>
+        <span style="color:#fff;">${resourceLabel(r.id)}</span>
+        <span style="color:${color}; font-weight:bold; margin-left:auto;">×${r.amount}</span>
+      </div>`;
+    } else {
+      return `<div style="display:flex; align-items:center; gap:12px; font-size:1.1rem; background:rgba(0,0,0,0.4); padding:10px 16px; border:1px solid ${r.color}44; border-radius:4px;">
+        <span style="color:${r.color}; font-size:1.4rem; text-shadow:0 0 10px ${r.color};">${r.icon}</span>
+        <span style="color:#fff;">${r.name}</span>
+      </div>`;
+    }
+  }).join("");
+
+  const dialog = document.createElement("dialog");
+  dialog.id = "objective-reward-modal";
+  dialog.className = "terminal-dialog event-modal planet";
+  dialog.innerHTML = `<section class="dialog-card panel" style="padding: 1.5rem; min-width: 300px; text-align:center;">
+    <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:1.5rem; align-items:stretch;">
+      ${itemsHtml || '<p>Không có phần thưởng</p>'}
+    </div>
+    <button class="primary-button" data-action="close-reward" style="width:100%; justify-content:center;">TUYỆT VỜI</button>
+  </section>`;
+  
+  document.body.append(dialog);
+  dialog.showModal();
+
+  const closeBtn = dialog.querySelector('[data-action="close-reward"]');
+  closeBtn.addEventListener("click", () => dialog.close());
+  dialog.addEventListener("close", () => dialog.remove(), { once: true });
+}
 
 async function submitRpgAction(action, item) {
-  if (pendingAction || !playerView?.turn.isMyTurn) return;
+  // 1. BÁO LỖI RÕ RÀNG NẾU ĐANG BẬN HOẶC SAI LƯỢT
+  if (pendingAction) {
+    enqueueToast({ level: "warning", title: "ĐANG XỬ LÝ", message: "Vui lòng đợi máy chủ phản hồi lệnh trước đó.", code: "ACTION_PENDING" });
+    return;
+  }
+  if (!playerView?.turn.isMyTurn) {
+    enqueueToast({ level: "warning", title: "SAI LƯỢT", message: "Chưa đến lượt của bạn để thực hiện hành động này.", code: "NOT_YOUR_TURN" });
+    return;
+  }
   
   const dialog = document.querySelector("#rpg-dialog");
   if (dialog) {
@@ -713,8 +929,9 @@ async function submitRpgAction(action, item) {
   const previous = playerView;
 
   try {
-    const result = await window.gameAdapter.submitAction(action, { item });
-
+    // Với CLAIM_OBJECTIVE, tham số `item` đóng vai trò là args chứa { id: ... }
+    const args = action === "CLAIM_OBJECTIVE" ? item : { item };
+    const result = await window.gameAdapter.submitAction(action, args);
     // XỬ LÝ SỬ DỤNG VẬT PHẨM
     if (action === "USE_ITEM" && result.ok && result.playerView) {
       playerView = result.playerView;
@@ -746,7 +963,13 @@ async function submitRpgAction(action, item) {
     if (action === "CLAIM_OBJECTIVE" && result.ok && result.playerView) {
        playerView = result.playerView;
        playActionFeedback(action, result, previous, playerView);
-       enqueueToast({ level: "success", title: "HOÀN THÀNH NHIỆM VỤ", message: "Đã nhận thưởng thành công!", code: "OBJECTIVE_CLAIMED" });
+       
+       // Lấy dữ liệu phần thưởng từ server, nếu server không gửi thì lấy từ view cũ
+       const claimedObjId = item.id;
+       const oldObj = previous?.objectives?.find(o => o.id === claimedObjId);
+       const rewardData = result.actionReport?.result?.reward || oldObj?.reward;
+       showObjectiveRewardPopup(rewardData);
+       
        return;
     }
 
@@ -754,10 +977,12 @@ async function submitRpgAction(action, item) {
       playerView = result.playerView; 
       playActionFeedback(action, result, previous, playerView); 
     } else {
+      // 2. XÓA CACHE LỖI CŨ ĐỂ THÔNG BÁO LỖI LUÔN HIỂN THỊ
+      recentToastKeys.clear(); 
       enqueueToast({ 
         level: "warning", 
         title: "HÀNH ĐỘNG BỊ TỪ CHỐI", 
-        message: result.error?.message || result.error?.code || "Không thể hoàn tất.", 
+        message: result.error?.message || result.error?.code || "Không thể hoàn tất. (Có thể do đối thủ không có vật phẩm để đánh cắp, hoặc lỗi từ server)", 
         code: result.error?.code || "RPG_ACTION_FAILED" 
       });
     }
@@ -774,6 +999,7 @@ async function submitRpgAction(action, item) {
     render("game");
   }
 }
+
 
 function updateTurnCountdown() {
   const node = root.querySelector("#turn-countdown");
@@ -938,10 +1164,14 @@ function showEventDialog(notice) {
     enqueueToast({ level: notice.level || "info", title: notice.title || "SERVER NOTICE", message: notice.message || "", code: notice.code || "SERVER_NOTIFICATION" });
   });
 }
-
 function playPlanetEventAnimation(eventCode, onComplete) {
+  const PLANET_ANIM_DURATION = 3000;
   const eventName = eventCode.replace("EVENT_", "");
-
+  if (window.SFX && eventName.startsWith("EV_")) {
+    const kebab = eventName.replace("EV_", "").replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
+    SFX.playBounded("event/planet/PlanetEvent", PLANET_ANIM_DURATION, {
+      fallback: [`event/planet/${kebab}`],
+    });  }
   // Xoá overlay cũ nếu còn sót
   document.querySelector("#event-animation-overlay")?.remove();
 
@@ -976,7 +1206,7 @@ function playPlanetEventAnimation(eventCode, onComplete) {
   const cx = w / 2;
   const cy = h / 2;
   const startTime = performance.now();
-  const DURATION = 3000; // 3 giây cho animation
+  const DURATION = PLANET_ANIM_DURATION;
 
   const particles = [];
   for (let i = 0; i < 100; i++) {
@@ -1300,96 +1530,40 @@ function playPlanetEventAnimation(eventCode, onComplete) {
 }
 
 function playFeedbackTone(isSuccess) {
-  if (!settings.sound || settings.volume <= 0) return;
-  const AudioContextType = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextType) return;
-  try {
-    audioContext ||= new AudioContextType();
-    if (audioContext.state === "suspended") audioContext.resume().catch(() => {});
-    const oscillator = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-    const now = audioContext.currentTime;
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(isSuccess ? 660 : 235, now);
-    oscillator.frequency.exponentialRampToValueAtTime(isSuccess ? 880 : 175, now + 0.12);
-    gain.gain.setValueAtTime((settings.volume / 100) * 0.035, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-    oscillator.connect(gain);
-    gain.connect(audioContext.destination);
-    oscillator.start(now);
-    oscillator.stop(now + 0.17);
-  } catch {
-    // Audio is optional; visual response feedback remains available.
-  }
+  if (window.SFX) SFX.playBounded(isSuccess ? "command/success" : "command/fail", 600);
 }
 
-// ═══ ÂM THANH RIÊNG CHO TỪNG VẬT PHẨM KHI SỬ DỤNG ═══
-function playItemUseSound(itemId) {
-  if (!settings.sound || settings.volume <= 0) return;
-  const AudioContextType = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextType) return;
-  try {
-    audioContext ||= new AudioContextType();
-    if (audioContext.state === "suspended") audioContext.resume().catch(() => {});
-    const ac = audioContext;
-    const now = ac.currentTime;
-    const masterGain = ac.createGain();
-    masterGain.gain.setValueAtTime((settings.volume / 100) * 0.05, now);
-    masterGain.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
-    masterGain.connect(ac.destination);
-
-    const playTone = (freqStart, freqEnd, type, duration, delay = 0) => {
-      const osc = ac.createOscillator();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freqStart, now + delay);
-      osc.frequency.exponentialRampToValueAtTime(Math.max(1, freqEnd), now + delay + duration);
-      osc.connect(masterGain);
-      osc.start(now + delay);
-      osc.stop(now + delay + duration + 0.05);
-    };
-
-    switch (itemId) {
-      case "it_teleport":
-        playTone(180, 1400, "sine", 0.6);
-        playTone(1400, 240, "sine", 0.9, 0.4);
-        break;
-      case "it_battery":
-        playTone(520, 1040, "square", 0.35);
-        playTone(880, 1320, "square", 0.25, 0.15);
-        break;
-      case "it_ap":
-      case "it_ap_boost":
-        playTone(660, 990, "triangle", 0.35);
-        playTone(990, 1320, "triangle", 0.35, 0.2);
-        break;
-      case "it_black_hole":
-        playTone(120, 22, "sawtooth", 1.4);
-        break;
-      case "it_swap_pos":
-        playTone(880, 220, "triangle", 0.5);
-        playTone(220, 880, "triangle", 0.5, 0.4);
-        break;
-      case "it_scarecrow":
-        playTone(1400, 180, "square", 0.3);
-        playTone(400, 200, "sawtooth", 0.7, 0.25);
-        break;
-      case "it_steal":
-        playTone(660, 880, "sine", 0.2);
-        playTone(880, 330, "sine", 0.6, 0.2);
-        break;
-      case "it_magnet":
-        playTone(180, 380, "triangle", 0.9);
-        playTone(380, 720, "triangle", 0.7, 0.3);
-        break;
-    }
-  } catch {
-    // Âm thanh là tùy chọn; hiệu ứng hình ảnh vẫn đủ để truyền đạt.
+function playItemUseSound(itemId, maxDurationMs) {
+  const itemSfx = {
+    it_teleport: "item/teleport",
+    it_battery: "item/battery",
+    it_ap: "item/ap",
+    it_ap_boost: "item/ap",
+    it_black_hole: "item/black-hole",
+    it_swap_pos: "item/swap-pos",
+    it_scarecrow: "item/scarecrow",
+    it_steal: "item/steal",
+    it_magnet: "item/magnet",
+  };
+  if (!window.SFX) return;
+  // Ưu tiên file chung ItemUse.mp3, nếu không có thì thử file riêng của item.
+  const specific = itemSfx[itemId];
+  const fallback = specific ? [specific] : [];
+  if (maxDurationMs && SFX.playBounded) {
+    SFX.playBounded("item/ItemUse", maxDurationMs, { fallback });
+  } else {
+    SFX.play("item/ItemUse", { fallback });
   }
 }
 
 function playCanonEventAnimation(eventCode, onComplete) {
+  const CANON_ANIM_DURATION = 4200;
   const eventName = eventCode.replace("EVENT_", "");
-
+  if (window.SFX && eventName.startsWith("CE_")) {
+    const kebab = eventName.replace("CE_", "").replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
+    SFX.playBounded("event/canon/CanonEvent", CANON_ANIM_DURATION, {
+      fallback: [`event/canon/${kebab}`],
+    });  }
   const overlay = document.createElement("div");
   overlay.id = "event-animation-overlay";
   overlay.style.cssText = `
@@ -1420,7 +1594,7 @@ function playCanonEventAnimation(eventCode, onComplete) {
   const cx = w / 2;
   const cy = h / 2;
   const startTime = performance.now();
-  const DURATION = 4200; // 4.2s cho canon events — hoành tráng, lâu hơn planet
+  const DURATION = CANON_ANIM_DURATION;
 
   // Particle pool chung
   const particles = [];
@@ -2292,6 +2466,8 @@ function playCanonEventAnimation(eventCode, onComplete) {
 // ITEM USE ANIMATIONS — 9 vật phẩm chủ động, mỗi cái có 4 phase đặc trưng
 // ═══════════════════════════════════════════════════════════════════════════
 function playItemUseAnimation(itemId, response, previousView, nextView, onComplete) {
+  const ITEM_ANIM_DURATION = 3600;
+  playItemUseSound(itemId, ITEM_ANIM_DURATION);
   if (settings.reducedMotion) {
     if (onComplete) onComplete();
     return;
@@ -2321,9 +2497,7 @@ function playItemUseAnimation(itemId, response, previousView, nextView, onComple
   const cx = w / 2;
   const cy = h / 2;
   const startTime = performance.now();
-  const DURATION = 3600;
-
-  playItemUseSound(itemId);
+  const DURATION = ITEM_ANIM_DURATION;
 
   // ═══ Helpers ═══
   function drawGlow(x, y, radius, innerColor, outerColor, alpha = 1) {
@@ -2914,11 +3088,23 @@ function startActionEffects(action, previousView, nextView, actionReport) {
     });
   }
   if (action === "MINE") {
+    const result = actionReport?.result || {};
+    // Normalize both legacy `Mined` (single) and current `MinedAll` (multi).
+    const minedList = [];
+    if (result.kind === "MinedAll" && result.resources && typeof result.resources === "object") {
+      for (const [res, amt] of Object.entries(result.resources)) {
+        const n = Number(amt);
+        if (n > 0) minedList.push({ resource: res, amount: n });
+      }
+    } else if (result.resource && Number(result.amount) > 0) {
+      minedList.push({ resource: result.resource, amount: Number(result.amount) });
+    }
     activeEffects.push({ 
       type: "mine", 
       center: { ...previousView.player.position }, 
+      minedList,
       startedAt, 
-      duration: 1400 
+      duration: 1800
     });
   }
   if (action === "DEPOSIT") {
@@ -3004,13 +3190,10 @@ function setCommandEcho(action, target, response) {
 
 function playActionFeedback(action, response, previousView, nextView) {
   const report = response.actionReport || {};
-  const found = response.ok && report.result?.kind === "PlanetsFound" ? (report.result.planets || []) : [];
-  const wormholed = response.ok && report.result?.kind === "WormholeEntered" ? report.result : null;
+  const result = report.result || {};
+  const found = response.ok && result.kind === "PlanetsFound" ? (result.planets || []) : [];
+  const wormholed = response.ok && result.kind === "WormholeEntered" ? result : null;
   if (response.ok) {
-    
-    // ▼▼ THÊM DÒNG NÀY ĐỂ KÍCH HOẠT MEME ▼▼
-    if (action === "END_TURN") playEndTurnMeme();
-    
     startActionEffects(action, previousView, nextView, report);
     const discovered = found.length > 0;
     if (wormholed) {
@@ -3028,7 +3211,6 @@ function playActionFeedback(action, response, previousView, nextView) {
         code: discovered ? "PLANET_DISCOVERED" : report.code,
       });
     }
-    // Xử lý event đi kèm trong action report (nếu server không gửi event_triggered riêng)
     if (report.event && report.event.kind === "planet") {
       showAdapterNotification({
         code: `EVENT_${report.event.name}`,
@@ -3042,6 +3224,51 @@ function playActionFeedback(action, response, previousView, nextView) {
     }
   } else {
     enqueueToast({ level: "warning", title: "HÀNH ĐỘNG BỊ TỪ CHỐI", message: `${response.error.code} · ${localizeText(response.error.message)}`, code: response.error.code });
+  }
+
+  if (window.SFX) {
+    // Bound mọi action SFX theo duration hiệu ứng canvas (xem startActionEffects)
+    const ACTION_SFX_BOUNDS = {
+      MOVE: 700,                                              // move effect: 620ms
+      OBSERVE: 1450, SCAN_AREA: 1450,                         // scan effect: 1400ms
+      SCAN_NEAREST: 2650, SCAN_OPPONENT: 2650,                // scan + direction_pulse: 2600ms
+      MINE: 1850,                                             // 1800ms
+      DEPOSIT: 1650,                                          // 1600ms
+      RECHARGE: 1650,                                         // 1600ms
+      OPEN_CRATE: 1250,                                       // 1200ms
+      INTERACT_MONOLITH: 1550,                                // 1500ms
+      ACTIVATE_BEACON: 2050,                                  // 2000ms
+      CLAIM_OBJECTIVE: 1000,                                  // không có canvas, bound ngắn
+    };
+    if (!response.ok) {
+      SFX.playBounded("command/fail", 600);
+    } else {
+      const trapTriggered = result.kind === "CrateTrap";
+      if (wormholed) {
+        SFX.playBounded("action/wormhole", 800);              // teleport effect: 800ms
+      } else if (trapTriggered) {
+        SFX.playBounded("action/crate-trap", 1250);
+      } else {
+        const actionSfx = {
+          MOVE: "action/move",
+          OBSERVE: "action/scan", SCAN_AREA: "action/scan",
+          SCAN_NEAREST: "action/scan", SCAN_OPPONENT: "action/scan",
+          MINE: "action/mine", DEPOSIT: "action/deposit", RECHARGE: "action/recharge",
+          OPEN_CRATE: "action/crate-open", INTERACT_MONOLITH: "action/monolith",
+          ACTIVATE_BEACON: "action/beacon",
+          // CRAFT bỏ — đã phát trong playCraftingAnimation
+          // USE_ITEM bỏ — đã phát trong playItemUseAnimation
+          // END_TURN bỏ — xử lý bởi checkTurnChange
+          CLAIM_OBJECTIVE: "action/objective-claim",
+        };
+        const name = actionSfx[action] || "command/success";
+        const bound = ACTION_SFX_BOUNDS[action] ?? 1200;
+        SFX.playBounded(name, bound);
+      }
+      if (Array.isArray(result.planets) && result.planets.length > 0) {
+        SFX.playBounded("action/discovery", 1100);            // discovery effect: 1050ms
+      }
+    }
   }
   playFeedbackTone(response.ok);
 }
@@ -3196,18 +3423,64 @@ function gameScreen() {
       <div class="game-grid">
         <aside class="ship-hud panel" aria-labelledby="ship-hud-title">
           <div class="panel-heading"><h2 id="ship-hud-title">THÔNG TIN TÀU</h2></div>
-          <div class="hud-content">
-            <section class="hud-position"><span class="field-label">VỊ TRÍ TÀU</span><strong>(${player.position.x}, ${player.position.y})</strong></section>
+                    <div class="hud-content">
             
-            <div class="meter-block"><div class="meter-label"><span>AP</span><strong>${player.ap} <small>/ ${player.apMax}</small></strong></div><div class="meter-track meter-green" role="progressbar" aria-label="Điểm hành động" aria-valuemin="0" aria-valuemax="${player.apMax}" aria-valuenow="${player.ap}"><span style="width:${apWidth}%"></span></div></div>
+            <!-- VỊ TRÍ TÀU (RADAR COORDINATES) -->
+            <section class="hud-position">
+              <span class="field-label">VỊ TRÍ TÀU</span>
+              <div class="radar-coord">
+                <span class="bracket">[</span>
+                <strong>${String(player.position.x).padStart(2, '0')} : ${String(player.position.y).padStart(2, '0')}</strong>
+                <span class="bracket">]</span>
+              </div>
+            </section>
             
-            <div class="meter-block"><div class="meter-label"><span>BATTERY</span><strong>${player.battery} <small>/ ${player.batteryMax}</small></strong></div><div class="meter-track meter-amber" role="progressbar" aria-label="Pin" aria-valuemin="0" aria-valuemax="${player.batteryMax}" aria-valuenow="${player.battery}"><span style="width:${batteryWidth}%"></span></div></div>
+            <!-- AP METER -->
+            <div class="meter-block">
+              <div class="meter-label">
+                <span class="tech-label">SYS // AP</span>
+                <strong>${player.ap} <small>/ ${player.apMax}</small></strong>
+              </div>
+              <div class="meter-track meter-green" role="progressbar" aria-label="Điểm hành động" aria-valuemin="0" aria-valuemax="${player.apMax}" aria-valuenow="${player.ap}">
+                <span style="width:${apWidth}%"></span>
+                <div class="meter-glow"></div>
+              </div>
+            </div>
             
-            <div class="hud-section-title"><span>KHO CHỨA</span><span>${player.cargoUsed} / ${player.cargoCapacity}</span></div>
-            <div class="meter-track cargo-meter" role="progressbar" aria-label="Sức chứa hàng hóa" aria-valuemin="0" aria-valuemax="${player.cargoCapacity}" aria-valuenow="${player.cargoUsed}"><span style="width:${cargoWidth}%"></span></div>
+            <!-- BATTERY METER -->
+            <div class="meter-block">
+              <div class="meter-label">
+                <span class="tech-label">PWR // BAT</span>
+                <strong>${player.battery} <small>/ ${player.batteryMax}</small></strong>
+              </div>
+              <div class="meter-track meter-amber" role="progressbar" aria-label="Pin" aria-valuemin="0" aria-valuemax="${player.batteryMax}" aria-valuenow="${player.battery}">
+                <span style="width:${batteryWidth}%"></span>
+                <div class="meter-glow"></div>
+              </div>
+            </div>
+            
+            <!-- CARGO METER -->
+            <div class="hud-section-title">
+              <span class="tech-label">SYS // CARGO</span>
+              <span>${player.cargoUsed} / ${player.cargoCapacity}</span>
+            </div>
+            <div class="meter-track cargo-meter" role="progressbar" aria-label="Sức chứa hàng hóa" aria-valuemin="0" aria-valuemax="${player.cargoCapacity}" aria-valuenow="${player.cargoUsed}">
+              <span style="width:${cargoWidth}%"></span>
+              <div class="meter-glow"></div>
+            </div>
             <ul class="cargo-list">${cargoRows}</ul>
             
-            <section class="score-block"><div class="meter-label"><span>SCORE</span><strong>${player.earthScore} <small>/ ${player.earthScoreTarget}</small></strong></div><div class="meter-track score-meter" role="progressbar" aria-label="Điểm Trái Đất đến mục tiêu chiến thắng" aria-valuemin="0" aria-valuemax="${player.earthScoreTarget}" aria-valuenow="${player.earthScore}"><span style="width:${scoreWidth}%"></span></div></section>
+            <!-- SCORE METER -->
+            <section class="score-block">
+              <div class="meter-label">
+                <span class="tech-label">SYS // SCORE</span>
+                <strong>${player.earthScore} <small>/ ${player.earthScoreTarget}</small></strong>
+              </div>
+              <div class="meter-track score-meter" role="progressbar" aria-label="Điểm Trái Đất đến mục tiêu chiến thắng" aria-valuemin="0" aria-valuemax="${player.earthScoreTarget}" aria-valuenow="${player.earthScore}">
+                <span style="width:${scoreWidth}%"></span>
+                <div class="meter-glow"></div>
+              </div>
+            </section>
           </div>
         </aside>
 
@@ -3746,6 +4019,7 @@ function drawFeedbackEffects(ctx, width, height, cellSize, screenX, screenY, now
       }
 
       // 4. Chớp sáng kết thúc (Flash) ở 0.85 -> 1.0
+      // 4. Chớp sáng kết thúc (Flash) ở 0.85 -> 1.0
       if (progress > 0.85) {
         const flashAlpha = 1 - (progress - 0.85) / 0.15;
         ctx.fillStyle = `rgba(113, 255, 145, ${flashAlpha * 0.4})`;
@@ -3753,8 +4027,92 @@ function drawFeedbackEffects(ctx, width, height, cellSize, screenX, screenY, now
         ctx.arc(cx, cy, cellSize * 1.5 * (1 - flashAlpha), 0, Math.PI * 2);
         ctx.fill();
       }
-      ctx.restore();
-    } else if (effect.type === "deposit") {
+
+           // ═══════════════════════════════════════════════════════════════
+      // FLOATING LOOT TEXT — supports Mined (single) and MinedAll (multi)
+      // ═══════════════════════════════════════════════════════════════
+      if (Array.isArray(effect.minedList) && effect.minedList.length > 0 && progress > 0.1) {
+        const textProgress = (progress - 0.1) / 0.9;
+        const baseFloatY = cy - cellSize * 1.2 - (textProgress * cellSize * 3.5);
+
+        let alpha = 1;
+        if (textProgress > 0.6) alpha = 1 - ((textProgress - 0.6) / 0.4);
+        alpha = Math.max(0, alpha);
+
+        if (alpha > 0) {
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+
+          const colorMap = {
+            PinkDiamond: "#ff76dc", Spinel: "#ff6969", HollyBlueAgate: "#79d7ff",
+            Peridot: "#a7f36b", Topaz: "#ffcc5f", Carnelian: "#f28b55",
+            Jasper: "#bc88ff", Amethyst: "#d1a8ff",
+            Iron: "#d2e5d7", Crystal: "#79d7ff", EnergyCore: "#ffcc5f",
+            RareOre: "#ff76dc", ExoticMatter: "#f28b55"
+          };
+
+          const maxRows = 4;
+          const visibleRows = Math.min(effect.minedList.length, maxRows);
+          const rowGap = cellSize * 0.9;
+          const topY = baseFloatY - (visibleRows - 1) * rowGap;
+
+          for (let i = 0; i < visibleRows; i++) {
+            const item = effect.minedList[i];
+            const rowY = topY + i * rowGap;
+            const themeColor = colorMap[item.resource] || "#71ff91";
+            const glyph = resourceGlyphs[item.resource] || "◆";
+
+            ctx.font = `bold ${Math.max(18, cellSize * 0.55)}px sans-serif`;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = themeColor;
+            ctx.fillStyle = themeColor;
+            ctx.fillText(glyph, cx, rowY - cellSize * 0.28);
+
+            const label = `+${item.amount} ${resourceLabel(item.resource)}`;
+            ctx.font = `bold ${Math.max(14, cellSize * 0.36)}px Consolas, monospace`;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = themeColor;
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(label, cx, rowY + cellSize * 0.2);
+          }
+
+          if (effect.minedList.length > maxRows) {
+            const extra = effect.minedList.length - maxRows;
+            ctx.font = `bold ${Math.max(12, cellSize * 0.32)}px Consolas, monospace`;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = "#ffb45e";
+            ctx.fillStyle = "#ffb45e";
+            ctx.fillText(`+${extra} loại khác`, cx, baseFloatY + rowGap);
+          }
+
+          for (let k = 0; k < 8; k++) {
+            const sparkX = cx + (Math.random() - 0.5) * cellSize * 2.5;
+            const sparkY = baseFloatY + (Math.random() - 0.5) * cellSize * 2;
+            const sparkSize = Math.random() * cellSize * 0.06 + 1.5;
+            const sparkColor = k < visibleRows
+              ? (colorMap[effect.minedList[k].resource] || "#ffffff")
+              : "#ffffff";
+            ctx.fillStyle = Math.random() > 0.5 ? "#ffffff" : sparkColor;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = sparkColor;
+            ctx.beginPath();
+            ctx.moveTo(sparkX, sparkY - sparkSize);
+            ctx.lineTo(sparkX + sparkSize, sparkY);
+            ctx.lineTo(sparkX, sparkY + sparkSize);
+            ctx.lineTo(sparkX - sparkSize, sparkY);
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          ctx.restore();
+        }
+      }
+      // ═══════════════════════════════════════════════════════════════
+
+      ctx.restore(); // Giữ nguyên dòng này
+    } else if (effect.type === "deposit") { // Giữ nguyên dòng này
       // ── HIỆU ỨNG NỘP TÀI NGUYÊN: DATA STREAM UPLINK ──
       const fromX = screenX(effect.from.x), fromY = screenY(effect.from.y);
       const toX = screenX(effect.to.x), toY = screenY(effect.to.y);
@@ -5469,6 +5827,16 @@ function beginMatchFromView(view) {
   camera.y = playerView.player.position.y;
   camera.zoom = 1;
   try {
+    if (window.SFX) {
+      SFX.preload([
+        "ui/click", "ui/tab-switch", "ui/dialog-open", "ui/dialog-close", "ui/error",
+        "command/select", "command/send", "command/success", "command/fail",
+        "action/move", "action/scan", "action/mine", "action/deposit",
+        "action/recharge", "action/discovery", "action/wormhole",
+        "action/crate-open", "action/crate-trap",
+        "turn/turn-start", "turn/turn-end",
+      ]);
+    }
     render("game");
     matchViewInitialized = true;
     checkTurnChange(null, playerView);
@@ -5772,6 +6140,7 @@ function showAugmentUI(offers) {
     renderAugmentOverlay();
     if (augmentTimerInterval) clearInterval(augmentTimerInterval);
     augmentTimerInterval = setInterval(updateAugmentCountdown, 100);
+    if (window.SFX) SFX.play("augment/offer");
 }
 
 function hideAugmentUI() {
@@ -5903,7 +6272,6 @@ function pickAugment(index) {
       const r = el.getBoundingClientRect();
       return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height };
     });
-
   augmentOffers = null;
   window.gameAdapter.submitAugment(index);
 
@@ -6013,29 +6381,28 @@ function playTurnTransition(isMyTurn) {
     setTimeout(() => overlay.remove(), 1900);
 }
 
-
 function playEndTurnMeme() {
+  // Xóa animation cũ nếu đang chạy
   document.querySelector("#end-turn-meme-overlay")?.remove();
-  
+  document.querySelector("#turn-end-fast-overlay")?.remove();
+
+  // Tạo overlay mới
   const overlay = document.createElement("div");
-  overlay.id = "end-turn-meme-overlay";
-  
-  // Random vị trí chữ "ゴゴゴゴ" (Menacing) cho nó tự nhiên
-  const topLeft = Math.random() * 20 + 10;
-  const bottomRight = Math.random() * 20 + 10;
-  
+  overlay.id = "turn-end-fast-overlay";
+  overlay.className = "turn-end-fast-overlay";
+
   overlay.innerHTML = `
-    <div class="menacing-text" style="top: ${topLeft}%; left: 15%;">ゴゴゴゴ</div>
-    <div class="menacing-text" style="bottom: ${bottomRight}%; right: 10%;">ゴゴゴゴ</div>
-    <div class="jojo-arrow-container">
-      <span class="jojo-arrow-text">TO BE CONTINUED</span>
+    <div class="turn-end-fast-stripe">
+      <div class="turn-end-fast-text">TURN ENDED</div>
     </div>
-    <div class="waiting-text">VUI LÒNG CHỜ ĐỐI THỦ...</div>
   `;
-  
+
   document.body.appendChild(overlay);
-  setTimeout(() => overlay.remove(), 1700);
+  
+  // Tự động dọn dẹp sau 1.3 giây (khớp với thời gian animation)
+  setTimeout(() => overlay.remove(), 1300);
 }
+
 function checkTurnChange(previousView, nextView) {
     if (!nextView || !nextView.turn) return;
     const token = `${nextView.turn.round}:${nextView.turn.activePlayer}`;
@@ -6046,31 +6413,32 @@ function checkTurnChange(previousView, nextView) {
     const isMyTurn = Boolean(nextView.turn?.isMyTurn);
 
     if (wasMyTurn !== isMyTurn) {
+        if (window.SFX) SFX.playBounded(isMyTurn ? "turn/turn-start" : "turn/turn-end", 1900);
         if (!isMyTurn) {
-            // Vừa mất lượt -> Hiện End Turn ngay
-            playTurnTransition(false);
+            playEndTurnMeme();
         } else {
-            // Vừa tới lượt -> Đưa vào hàng đợi chờ Augment/Canon
             pendingTurnStartAnim = true;
-            setTimeout(checkPendingTurnStart, 300); // Đợi 300ms xem có Augment/Event không
+            setTimeout(checkPendingTurnStart, 300);
         }
     }
 }
 
 
 function playAugmentSelectionAnimation(config, onComplete) {
-
+  const AUGMENT_ANIM_DURATION = 4200;
+  const { chosenCenter, chosenRect, chosenOffer, otherCards } = config;
+  if (window.SFX && chosenOffer) {
+    SFX.playBounded(`augment/pick-${chosenOffer.rarity}`, AUGMENT_ANIM_DURATION);
+  }
   if (settings.reducedMotion) {
     if (onComplete) onComplete();
     return;
   }
 
-  const { chosenCenter, chosenRect, chosenOffer, otherCards } = config;
   const rarity = chosenOffer.rarity;
   const type = chosenOffer.type;
   const info = getAugmentInfo(type, rarity);
 
-  // ═══ Bảng màu theo rarity ═══
   const rarityColors = {
     silver:  { primary: "#c8d8ec", secondary: "#ffffff", glow: "#a0c0e0", accent: "#e8f0ff" },
     gold:    { primary: "#ffd700", secondary: "#ffffa0", glow: "#ffb000", accent: "#ffffe0" },
@@ -6078,7 +6446,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
   };
   const colors = rarityColors[rarity] || rarityColors.gold;
 
-  // ═══ Overlay toàn màn hình ═══
   const overlay = document.createElement("div");
   overlay.id = "augment-anim-overlay";
   overlay.style.cssText = "position:fixed;inset:0;z-index:10000;pointer-events:auto;cursor:wait;";
@@ -6102,9 +6469,8 @@ function playAugmentSelectionAnimation(config, onComplete) {
   resize();
 
   const startTime = performance.now();
-  const DURATION = 4200;
+  const DURATION = AUGMENT_ANIM_DURATION;
 
-  // Kích thước đích của card ở giữa màn hình
   const startW = chosenRect.w;
   const startH = chosenRect.h;
   const targetW = Math.min(w * 0.32, 380);
@@ -6112,7 +6478,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
   const cardCenterX = w / 2;
   const cardCenterY = h / 2;
 
-  // ═══ Hạt vỡ từ 2 thẻ không chọn ═══
   const shatterParticles = [];
   otherCards.forEach((card, ci) => {
     const otherColors = ["#ffd700", "#00ffff", "#c8d8ec"];
@@ -6131,7 +6496,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
     }
   });
 
-  // ═══ Hạt orbital xoay quanh card ═══
   const orbitals = [];
   for (let i = 0; i < 12; i++) {
     orbitals.push({
@@ -6141,7 +6505,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
     });
   }
 
-  // ═══ 24 tia sáng bắn ra ═══
   const beams = [];
   for (let i = 0; i < 24; i++) {
     beams.push({
@@ -6150,7 +6513,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
     });
   }
 
-  // ═══ Easing functions ═══
   const easeOutCubic = (x) => 1 - Math.pow(1 - x, 3);
   const easeOutQuint = (x) => 1 - Math.pow(1 - x, 5);
   const easeInOutCubic = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
@@ -6161,18 +6523,15 @@ function playAugmentSelectionAnimation(config, onComplete) {
     return `rgba(${r},${g},${b},${alpha})`;
   };
 
-  // ═══ Vẽ card hologram ═══
   function drawHoloCard(cx, cy, cw, ch, alpha, glow, rotation) {
     const rx = cx - cw / 2;
     const ry = cy - ch / 2;
-
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(rotation);
     ctx.translate(-cx, -cy);
     ctx.globalAlpha = alpha;
 
-    // Aura nền
     const auraR = Math.max(cw, ch) * 0.9;
     const auraGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, auraR);
     auraGrad.addColorStop(0, hex2rgba(colors.glow, 0.5 * glow));
@@ -6183,7 +6542,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
     ctx.arc(cx, cy, auraR, 0, Math.PI * 2);
     ctx.fill();
 
-    // Thân card
     ctx.shadowBlur = 40 * glow;
     ctx.shadowColor = colors.glow;
     const bodyGrad = ctx.createLinearGradient(rx, ry, rx + cw, ry + ch);
@@ -6194,7 +6552,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
     ctx.roundRect(rx, ry, cw, ch, 10);
     ctx.fill();
 
-    // Viền rarity phát sáng
     ctx.shadowBlur = 25 * glow;
     ctx.shadowColor = colors.primary;
     ctx.strokeStyle = colors.primary;
@@ -6203,7 +6560,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
     ctx.roundRect(rx, ry, cw, ch, 10);
     ctx.stroke();
 
-    // Viền trong mờ
     ctx.shadowBlur = 0;
     ctx.strokeStyle = `rgba(255,255,255,0.2)`;
     ctx.lineWidth = 1;
@@ -6211,7 +6567,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
     ctx.roundRect(rx + 7, ry + 7, cw - 14, ch - 14, 6);
     ctx.stroke();
 
-    // Icon phát sáng
     const iconY = cy - ch * 0.1;
     const iconR = Math.min(cw, ch) * 0.32;
     const iconGrad = ctx.createRadialGradient(cx, iconY, 0, cx, iconY, iconR);
@@ -6223,7 +6578,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
     ctx.arc(cx, iconY, iconR, 0, Math.PI * 2);
     ctx.fill();
 
-    // Emoji icon
     ctx.font = `${Math.max(24, iconR * 1.3)}px serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -6232,14 +6586,12 @@ function playAugmentSelectionAnimation(config, onComplete) {
     ctx.fillStyle = "#fff";
     ctx.fillText(info.icon, cx, iconY);
 
-    // Tên augment
     ctx.shadowBlur = 15;
     ctx.shadowColor = colors.primary;
     ctx.fillStyle = colors.primary;
     ctx.font = `bold ${Math.max(14, cw * 0.062)}px Consolas, monospace`;
     ctx.fillText(info.name, cx, cy + ch * 0.2);
 
-    // Độ hiếm
     ctx.shadowBlur = 8;
     ctx.shadowColor = colors.secondary;
     ctx.fillStyle = colors.secondary;
@@ -6249,18 +6601,15 @@ function playAugmentSelectionAnimation(config, onComplete) {
     ctx.restore();
   }
 
-  // ═══ Main animation loop ═══
   function animate(now) {
     const elapsed = now - startTime;
     const t = Math.min(1, elapsed / DURATION);
     ctx.clearRect(0, 0, w, h);
 
-    // Nền mờ
     const dimAlpha = Math.min(0.75, t * 4);
     ctx.fillStyle = `rgba(0,0,0,${dimAlpha})`;
     ctx.fillRect(0, 0, w, h);
 
-    // ═══ PHA 1: CHỚP LÓE (0-630ms) ═══
     if (t < 0.15) {
       const fp = t / 0.15;
       const fa = Math.sin(fp * Math.PI);
@@ -6273,7 +6622,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
       ctx.fillRect(0, 0, w, h);
     }
 
-    // ═══ PHA 2: THẺ KHÔNG CHỌN VỠ TAN (80-1260ms) ═══
     if (t > 0.02) {
       const shT = Math.min(1, (t - 0.02) / 0.3);
       shatterParticles.forEach((p) => {
@@ -6300,7 +6648,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
       });
     }
 
-    // ═══ PHA 3: CARD BAY LÊN GIỮA (210-1470ms) ═══
     let curX = chosenCenter.x;
     let curY = chosenCenter.y;
     let curW = startW;
@@ -6322,11 +6669,8 @@ function playAugmentSelectionAnimation(config, onComplete) {
       glowIntensity = 1 + Math.sin((t - 0.25) * Math.PI * 6) * 0.5;
     }
 
-    // ═══ PHA 4: VÒNG NĂNG LƯỢNG + ORBITAL ═══
     if (t > 0.3) {
       const ringT = Math.min(1, (t - 0.3) / 0.3);
-
-      // 3 vòng sóng lan
       for (let i = 0; i < 3; i++) {
         const rp = (t - 0.3 - i * 0.15) / 0.5;
         if (rp <= 0 || rp >= 1) continue;
@@ -6339,8 +6683,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
         ctx.arc(curX, curY, r, 0, Math.PI * 2);
         ctx.stroke();
       }
-
-      // 12 hạt orbital có trail
       if (ringT > 0) {
         orbitals.forEach((o) => {
           const orbR = Math.max(curW, curH) * 0.72 + ringT * 130;
@@ -6362,7 +6704,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
       }
     }
 
-    // Vẽ card hologram
     if (t < 0.88) {
       const cardAlpha = 1 - Math.max(0, (t - 0.8) / 0.08);
       if (cardAlpha > 0) {
@@ -6370,7 +6711,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
       }
     }
 
-    // ═══ PHA 5: 24 TIA SÁNG (1970-3280ms) ═══
     if (t > 0.47 && t < 0.78) {
       const bT = (t - 0.47) / 0.31;
       const bAlpha = Math.sin(bT * Math.PI);
@@ -6405,7 +6745,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
       });
     }
 
-    // ═══ PHA 6: CARD TAN RÃ (2770-3780ms) ═══
     if (t > 0.66 && t < 0.9) {
       const dT = (t - 0.66) / 0.24;
       const numP = 80;
@@ -6427,7 +6766,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
       }
     }
 
-    // ═══ PHA 7: CHỚP TRẮNG + SÓNG XUNG KÍCH (3400-4200ms) ═══
     if (t > 0.81) {
       const fT = (t - 0.81) / 0.19;
       if (fT < 0.5) {
@@ -6446,7 +6784,6 @@ function playAugmentSelectionAnimation(config, onComplete) {
       ctx.stroke();
     }
 
-    // ═══ Loop hoặc kết thúc ═══
     if (t < 1) {
       requestAnimationFrame(animate);
     } else {
@@ -6469,13 +6806,15 @@ function playAugmentSelectionAnimation(config, onComplete) {
 
   const fallbackTimer = setTimeout(finishAnimation, 5000);
   requestAnimationFrame(animate);
-} 
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CRAFTING ANIMATION (GLOBAL SCOPE)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function playCraftingAnimation(itemId, isPassive, onComplete) {
+  const CRAFT_ANIM_DURATION = 4500;
+  if (window.SFX) SFX.playBounded("action/craft", CRAFT_ANIM_DURATION);
   if (settings.reducedMotion) {
     if (onComplete) onComplete();
     return;
@@ -6506,7 +6845,7 @@ function playCraftingAnimation(itemId, isPassive, onComplete) {
   const cx = w / 2;
   const cy = h / 2;
   const startTime = performance.now();
-  const DURATION = 4500;
+  const DURATION = CRAFT_ANIM_DURATION;
 
   const particles = [];
   for (let i = 0; i < 150; i++) {
@@ -6779,7 +7118,19 @@ function playCraftingAnimation(itemId, isPassive, onComplete) {
 root.addEventListener("click", (event) => {
   const button = event.target.closest("button");
   if (!button) return;
-  if (settings.sound && activeBgm && activeBgm.paused) activeBgm.play().catch(() => {});
+  if (settings.sound) BGM.resumeIfPaused();
+  if (window.SFX && button.dataset.sfx !== "none") {
+    let sfxId = "ui/click";
+    if (button.dataset.command) sfxId = "command/select";
+    else if (button.dataset.action === "send-command" || button.dataset.action === "confirm-command") sfxId = "command/send";
+    else if (["close-rpg", "close-event", "close-loot", "cancel-confirmation", "dismiss-toast"].includes(button.dataset.action)) sfxId = "ui/dialog-close";
+    else if (["open-crafting", "open-inventory", "open-events", "open-augments", "open-objectives", "open-overview"].includes(button.dataset.action)) sfxId = "ui/dialog-open";
+    else if (button.dataset.action === "toggle-event-log") sfxId = "ui/tab-switch";
+    else if (button.dataset.action === "real-match" || button.dataset.action === "mock-match") sfxId = "command/send";
+    else if (button.dataset.rpgAction === "use") sfxId = "ui/click";
+    else if (button.dataset.rpgAction === "claim") sfxId = "action/objective-claim";
+    SFX.play(sfxId);
+  }
   if (button.dataset.screen) {
     if (pendingAction) return;
     render(button.dataset.screen);
@@ -6858,6 +7209,13 @@ root.addEventListener("click", (event) => {
       render("game");
     }
   } else if (button.dataset.action === "confirm-command") {
+    // ĐÓNG HỘP THOẠI XÁC NHẬN TRƯỚC ĐỂ NÓ KHÔNG CHE ANIMATION
+    const dialog = document.querySelector("#action-confirm-dialog");
+    if (dialog) {
+      dialog.close();
+      dialog.remove();
+    }
+    
     if (actionFlow.selected === "END_TURN") playEndTurnMeme();
     sendCommand();
   } else if (button.dataset.action === "cancel-confirmation") {
@@ -6919,7 +7277,12 @@ root.addEventListener("input", (event) => {
   } else if (control.id === "volume") {
     settings.volume = Number(control.value);
     root.querySelector("#volume-output").value = `${settings.volume}%`;
-    if (activeBgm) activeBgm.volume = settings.volume / 100;
+    BGM.setTargetVolume(settings.volume / 100);
+    saveSettings();
+  } else if (control.id === "sfx-volume") {
+    settings.sfxVolume = Number(control.value);
+    root.querySelector("#sfx-volume-output").value = `${settings.sfxVolume}%`;
+    if (window.SFX) SFX.setVolume(settings.sfxVolume / 100);
     saveSettings();
   }
 });
@@ -6990,6 +7353,12 @@ window.gameAdapter.subscribeAugmentEvents((event) => {
 window.gameAdapter.subscribeMatchResults((result) => {
   matchResult = result;
   summaryNotice = "ĐÃ NHẬN KẾT QUẢ TRẬN";
+  if (window.SFX) {
+    const outcome = result?.outcome || "";
+    if (outcome === "Victory") SFX.play("match/victory");
+    else if (outcome === "Defeat") SFX.play("match/defeat");
+    else if (outcome === "Draw") SFX.play("match/draw");
+  }
   render("match-result");
 });
 
@@ -7024,6 +7393,10 @@ window.addEventListener("resize", () => {
 
 // ═══ Pause glyph animation khi tab bị ẩn, resume khi quay lại ═══
 document.addEventListener("visibilitychange", () => {
+  if (window.SFX) {
+    if (document.hidden) SFX.suspend();
+    else SFX.resume();
+  }
   if (document.hidden) {
     // Cancel loop để tiết kiệm pin khi tab ẩn
     if (effectFrame) {

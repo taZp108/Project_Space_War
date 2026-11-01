@@ -55,18 +55,18 @@ spec = do
   describe "thang bang du diem" $ do
     it "Deposit lam kho Earth dat 500 diem thi thang" $ do
       -- 20 Exotic Matter = 500 diem
-      let gs = ok (step Player1 Deposit (carrying (Pos 50 50) (rs [(ExoticMatter, 20)])))
+      let gs = ok (step Player1 Deposit (carrying (Pos 50 50) (rs [(ExoticMatter, 40)])))
       gsPhase gs `shouldBe` Finished (Winner Player1 ReachedTarget)
     it "chua du diem thi tran tiep tuc" $ do
-      let gs = ok (step Player1 Deposit (carrying (Pos 50 50) (rs [(ExoticMatter, 19)])))
+      let gs = ok (step Player1 Deposit (carrying (Pos 50 50) (rs [(ExoticMatter, 39)])))
       gsPhase gs `shouldBe` InProgress
     it "thang truoc thua: dat 500 diem cung luc battery ve 0 thi van thang" $ do
-      let gs0 = modifyPlayer Player1 (\p -> p { playerBattery = 2 }) (carrying (Pos 52 50) (rs [(ExoticMatter, 20)]))
+      let gs0 = modifyPlayer Player1 (\p -> p { playerBattery = 2 }) (carrying (Pos 52 50) (rs [(ExoticMatter, 40)]))
           gs = ok (step Player1 Deposit gs0)
       playerBattery (getPlayer Player1 gs) `shouldBe` 0
       gsPhase gs `shouldBe` Finished (Winner Player1 ReachedTarget)
     it "diem tich luy tu cac lan Deposit truoc cung duoc tinh" $ do
-      let gs0 = modifyPlayer Player1 (\p -> p { playerStorage = rs [(ExoticMatter, 19)] })
+      let gs0 = modifyPlayer Player1 (\p -> p { playerStorage = rs [(ExoticMatter, 39)] })
                   (carrying (Pos 50 50) (rs [(Iron, 25)]))
           gs = ok (step Player1 Deposit gs0)
       gsPhase gs `shouldBe` Finished (Winner Player1 ReachedTarget)
@@ -85,7 +85,7 @@ spec = do
       step Player1 EndTurn gs `shouldBe` Left GameNotInProgress
 
   describe "het so vong" $ do
-    let lastRound = baseState { gsRound = 100, gsCurrent = Player2 }
+    let lastRound = baseState { gsRound = 150, gsCurrent = Player2 }
         withScores a b =
           modifyPlayer Player1 (\p -> p { playerStorage = a })
             (modifyPlayer Player2 (\p -> p { playerStorage = b }) lastRound)

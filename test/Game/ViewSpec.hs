@@ -26,13 +26,13 @@ spec = do
       viewPos v `shouldBe` Pos 50 50
       (viewBattery v, viewBatteryMax v) `shouldBe` (100, 100)
       (viewAP v, viewApMax v) `shouldBe` (5, 5)
-      viewCargoCapacity v `shouldBe` 50
+      viewCargoCapacity v `shouldBe` 120
       viewEarth v `shouldBe` Pos 50 50
       (viewMapWidth v, viewMapHeight v) `shouldBe` (100, 100)
-      (viewRound v, viewMaxRounds v) `shouldBe` (1, 100)
+      (viewRound v, viewMaxRounds v) `shouldBe` (1, 150)
       viewCurrent v `shouldBe` Player1
       viewPhase v `shouldBe` InProgress
-      (viewScore v, viewScoreTarget v) `shouldBe` (0, 500)
+      (viewScore v, viewScoreTarget v) `shouldBe` (0, 1000)
     it "Player2 thay trang thai cua chinh Player2" $ do
       let v = view2 baseState
       viewSelf v `shouldBe` Player2
@@ -79,7 +79,7 @@ spec = do
     it "sau Observe thi hanh tinh vao danh sach da kham pha, khong kem ton kho" $ do
       let gs0 = modifyPlayer Player1 (\p -> p { playerPos = Pos 60 57 }) baseState
           (gs, _) = ok (performAction cfg Player1 Observe gs0)
-      viewKnown (view1 gs) `shouldBe` Map.singleton 1 (KnownPlanet (Pos 60 60) Mining)
+      viewKnown (view1 gs) `shouldBe` Map.singleton 1 (KnownPlanet (Pos 60 60) Mining (Just (rs [(Iron, 80), (Crystal, 30)])) Nothing)
       viewHere (view1 gs) `shouldBe` Nothing
 
   describe "summaryOf" $ do

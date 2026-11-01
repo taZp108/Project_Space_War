@@ -482,18 +482,193 @@ h1 span { color: var(--green); text-shadow: 0 0 28px rgba(113, 255, 145, 0.16); 
 .target-details dd { margin: 0; color: #a6b7aa; font-size: 0.65rem; }
 .target-details .unknown-value { color: #8b9d90; }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   DIEGETIC SALVAGE CONSOLE — Command Console Redesign
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-.command-console { display: flex; min-height: 0; flex-direction: column; }
-.command-console .panel-heading { min-height: 49px; padding: 0.7rem 0.75rem; }
-.command-console .panel-heading h2 { color: var(--green); font-size: 0.94rem; letter-spacing: 0.08em; }
-.command-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 0.42rem; padding: 0.55rem 0.7rem 0.35rem; }
-.command-option { display: grid; min-width: 0; min-height: 58px; align-content: center; justify-items: center; gap: 0.35rem; padding: 0.48rem; border: 1px solid rgba(63, 191, 107, 0.18); background: rgba(3, 8, 5, 0.5); color: var(--text); text-align: center; font-family: var(--font-mono); cursor: pointer; }
-.command-option:hover:not(:disabled), .command-option[aria-pressed="true"] { border-color: var(--amber-soft); background: rgba(255, 180, 94, 0.07); }
-.command-option:focus-visible, .action-controls button:focus-visible, .command-idle .clear-target-button:focus-visible, .recharge-controls input:focus-visible, .recharge-controls select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.command-option strong { color: #c5d4c9; font-size: 0.67rem; font-weight: 500; letter-spacing: 0.06em; }
-.command-option span { color: #9eae9f; font-size: 0.53rem; }
-.command-option small { color: #73897b; font-size: 0.4rem; line-height: 1.35; }
-.command-option:disabled { opacity: 0.55; cursor: not-allowed; }
+.command-console { 
+  display: flex; 
+  min-height: 0; 
+  flex-direction: column; 
+  position: relative;
+  overflow: hidden;
+  background-color: #030605;
+  background-image: 
+    linear-gradient(rgba(63, 191, 107, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(63, 191, 107, 0.03) 1px, transparent 1px);
+  background-size: 12px 12px;
+  border: 1px solid #1a3324;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8), 0 0 10px rgba(63, 191, 107, 0.05);
+}
+
+.command-console::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px, 
+    rgba(0, 0, 0, 0.15) 3px, rgba(0, 0, 0, 0.15) 4px
+  );
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.6;
+}
+
+.command-console .panel-heading,
+.command-list,
+.command-interaction {
+  position: relative;
+  z-index: 1;
+}
+
+.command-console .panel-heading { 
+  min-height: 49px; 
+  padding: 0.7rem 0.75rem; 
+  border-bottom: 1px solid rgba(63, 191, 107, 0.1);
+}
+
+.command-console .panel-heading h2 { 
+  color: var(--green); 
+  font-size: 0.94rem; 
+  letter-spacing: 0.08em; 
+}
+
+.command-list { 
+  display: grid; 
+  grid-template-columns: repeat(2, minmax(0, 1fr)); 
+  align-content: start; 
+  gap: 0.55rem; 
+  padding: 0.75rem 0.7rem 0.5rem; 
+}
+
+.command-option { 
+  position: relative;
+  display: grid; 
+  min-width: 0; 
+  min-height: 58px; 
+  align-content: center; 
+  justify-items: center; 
+  gap: 0.35rem; 
+  padding: 0.48rem; 
+  background: linear-gradient(145deg, #0b1410 0%, #060a08 100%);
+  border: 1px solid #2a4a35;
+  border-radius: 2px;
+  clip-path: polygon(
+    0 8px, 8px 0, 
+    calc(100% - 0px) 0, 100% 8px, 
+    100% calc(100% - 8px), calc(100% - 8px) 100%, 
+    8px 100%, 0 calc(100% - 8px)
+  );
+  color: var(--text);
+  text-align: center;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.1s ease;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+    0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.command-option::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--green-soft);
+  box-shadow: 0 0 4px var(--green-soft);
+  opacity: 0.7;
+  animation: ledBlink 2s infinite;
+}
+
+.command-option:hover:not(:disabled) { 
+  border-color: var(--amber-soft); 
+  background: linear-gradient(145deg, #121f18 0%, #080e0b 100%);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+    0 0 12px rgba(255, 180, 94, 0.15);
+  transform: translateY(-1px);
+}
+
+.command-option:hover:not(:disabled)::before {
+  background: var(--amber);
+  box-shadow: 0 0 8px var(--amber);
+  opacity: 1;
+}
+
+.command-option:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.8),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+  border-color: var(--green-soft);
+  transition: all 0.05s ease;
+}
+
+.command-option[aria-pressed="true"] { 
+  border-color: var(--amber); 
+  background: linear-gradient(145deg, #1a2a1f 0%, #0a120d 100%); 
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.6),
+    0 0 18px rgba(255, 180, 94, 0.2); 
+}
+
+.command-option:focus-visible, .action-controls button:focus-visible, .command-idle .clear-target-button:focus-visible, .recharge-controls input:focus-visible, .recharge-controls select:focus-visible { 
+  outline: 2px solid var(--focus); 
+  outline-offset: 2px; 
+}
+
+.command-option:disabled { 
+  opacity: 0.45; 
+  cursor: not-allowed; 
+  filter: grayscale(0.8);
+}
+
+.command-option:disabled::before {
+  animation: none;
+  background: #444;
+  box-shadow: none;
+}
+
+.command-option strong { 
+  color: #d4f0dc; 
+  font-size: 0.7rem; 
+  font-weight: 600; 
+  letter-spacing: 0.08em; 
+  text-shadow: 0 0 6px rgba(113, 255, 145, 0.3);
+}
+
+.command-option span { 
+  color: #8bb59a; 
+  font-size: 0.55rem; 
+  letter-spacing: 0.05em; 
+}
+
+.command-option small { 
+  color: #5a7a65; 
+  font-size: 0.42rem; 
+}
+
+@keyframes ledBlink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.command-console:hover {
+  animation: subtleGlitch 3s infinite;
+}
+
+@keyframes subtleGlitch {
+  0%, 94%, 100% { transform: translateX(0); }
+  95% { transform: translateX(-1px) skewX(1deg); }
+  96% { transform: translateX(1px) skewX(-1deg); }
+  97% { transform: translateX(0); }
+}
 .command-interaction { margin-top: auto; padding: 0.55rem 0.8rem 0.7rem; border-top: var(--line); }
 .command-idle { display: flex; justify-content: flex-end; }
 .command-note { display: flex; align-items: center; gap: 0.45rem; min-height: 36px; margin: 0; color: #8c9c8e; font-size: 0.46rem; line-height: 1.5; }
@@ -1332,4 +1507,1142 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
       0 0 30px rgba(255, 0, 0, 0.6),
       0 0 50px rgba(255, 0, 0, 0.4);
   }
+}
+
+
+
+/* ═══════════════════════════════════════════════════════════════
+   CYBERPUNK SHIP HUD (CĂN GIỮA - DẢI NĂNG LƯỢNG)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Canh giữa toàn bộ nội dung HUD */
+.hud-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 0.8rem;
+  align-items: stretch;
+}
+
+/* Vị trí tàu (Radar) */
+.hud-position {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0 1rem 0;
+  border-bottom: 1px dashed rgba(63, 191, 107, 0.3);
+}
+
+.hud-position .field-label {
+  margin-bottom: 0.5rem;
+  color: var(--green-soft);
+  letter-spacing: 0.2em;
+}
+
+.radar-coord {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+}
+
+.radar-coord .bracket {
+  color: var(--green);
+  font-size: 1.5rem;
+  opacity: 0.5;
+  animation: pulse-bracket 2s infinite alternate;
+}
+
+.radar-coord strong {
+  font-size: 1.6rem;
+  color: var(--green);
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 15px rgba(113, 255, 145, 0.6);
+}
+
+/* Các nhãn hệ thống (SYS // AP) */
+.tech-label {
+  color: #5a7a65;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  font-weight: bold;
+}
+
+/* Thanh đo (Meters) */
+.meter-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.meter-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.meter-label strong {
+  font-size: 1.1rem;
+  color: var(--green);
+  text-shadow: 0 0 10px rgba(113, 255, 145, 0.4);
+  line-height: 1;
+}
+
+.meter-label small {
+  font-size: 0.65rem;
+  color: #6a8775;
+  font-weight: normal;
+}
+
+/* Dải năng lượng (Track) */
+.meter-track {
+  position: relative;
+  height: 8px;
+  border-radius: 0;
+  background: #030604;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  /* Tạo vạch kẻ dọc (Segmented bar) */
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 4px,
+    rgba(0, 0, 0, 0.8) 4px,
+    rgba(0, 0, 0, 0.8) 6px
+  );
+}
+
+/* Thanh fill (Phần chạy) */
+.meter-track > span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+/* Hiệu ứng phát sáng ở đầu mút thanh fill */
+.meter-track > span::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #fff;
+  box-shadow: 0 0 10px #fff, 0 0 20px currentColor;
+}
+
+/* Màu sắc từng thanh */
+.meter-green > span { background: var(--green-soft); color: var(--green); }
+.meter-amber > span { background: var(--amber-soft); color: var(--amber); }
+.score-meter > span { background: #d97a29; color: #ffb45e; } 
+.cargo-meter > span { background: #2c87c4; color: #79d7ff; } 
+
+/* Thêm hiệu ứng scanline chạy ngầm trên thanh track */
+.meter-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  z-index: 2;
+  transform: translateX(-100%);
+  animation: scan-bar 3s infinite;
+}
+
+/* Tiêu đề Kho chứa */
+.hud-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.hud-section-title span:last-child {
+  font-size: 0.7rem;
+  color: #79d7ff;
+  text-shadow: 0 0 5px rgba(121, 215, 255, 0.4);
+}
+
+/* Danh sách hàng hóa */
+.cargo-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.cargo-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(63, 191, 107, 0.05);
+  border: 1px solid rgba(63, 191, 107, 0.2);
+  padding: 0.2rem 0.4rem;
+  font-size: 0.65rem;
+  color: #a3b8a8;
+  border-radius: 2px;
+}
+
+.cargo-list b { color: var(--green); }
+
+/* Khối Điểm (Score) */
+.score-block {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed rgba(63, 191, 107, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.score-block .meter-label strong {
+  color: var(--amber);
+  text-shadow: 0 0 10px rgba(255, 180, 94, 0.4);
+}
+
+/* Animations */
+@keyframes scan-bar {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes pulse-bracket {
+  0% { opacity: 0.3; transform: scale(0.95); }
+  100% { opacity: 0.8; transform: scale(1.05); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CYBERPUNK HOLOGRAPHIC TARGET PANEL — UNIVERSAL REDESIGN
+   (Đã cố định chiều cao khung, tự động thu nhỏ text để vừa vặn)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 1. Nền bảng & CỐ ĐỊNH CHIỀU CAO TUYỆT ĐỐI */
+.target-panel {
+  position: relative;
+  overflow: hidden;
+  /* KHÓA CỨNG CHIỀU CAO: Khung sẽ không bao giờ bị giãn ra */
+  height: 260px; 
+  min-height: 260px;
+  max-height: 260px;
+  display: flex;
+  flex-direction: column;
+  background: 
+    radial-gradient(circle at center, rgba(63, 191, 107, 0.05) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(6, 15, 10, 0.95), rgba(3, 7, 5, 0.98));
+  border: 1px solid rgba(63, 191, 107, 0.2);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+}
+
+.target-panel .panel-heading {
+  flex: 0 0 auto; /* Header giữ nguyên kích thước */
+}
+
+/* Lưới tọa độ mờ */
+.target-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(63, 191, 107, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(63, 191, 107, 0.05) 1px, transparent 1px);
+  background-size: 15px 15px;
+  background-position: center;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.7;
+}
+
+/* Làn sóng quét (Radar Sweep) */
+.target-panel::after {
+  content: "";
+  position: absolute;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background: linear-gradient(to bottom, transparent, rgba(113, 255, 145, 0.08), transparent);
+  animation: radarSweepTarget 5s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes radarSweepTarget {
+  0% { top: -50px; }
+  100% { top: 100%; }
+}
+
+/* 2. VÙNG NỘI DUNG (Tự co giãn trong khung) */
+.target-content {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* ĐỔI TỪ CENTER SANG FLEX-START ĐỂ KÉO LÊN TRÊN */
+  align-items: center;
+  text-align: center;
+  min-height: 0; 
+  padding: 1.2rem 0.8rem 0.5rem; /* Tăng padding-top để không sát mép trên quá */
+  overflow-y: auto;
+}
+
+/* Thanh cuộn cyberpunk siêu mỏng */
+.target-content::-webkit-scrollbar { width: 3px; }
+.target-content::-webkit-scrollbar-thumb { background: rgba(113, 255, 145, 0.3); }
+
+/* 3. ĐỒNG BỘ ICON (GLYPH) VÀ TEXT NHỎ GỌN */
+.target-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.2rem;
+  width: 100%;
+  animation: targetFadeIn 0.3s ease-out;
+  margin-bottom: 0.2rem;
+  position: relative; /* Cần thiết để chứa các vòng xoay bên ngoài */
+}
+
+@keyframes targetFadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ULTIMATE HOLOGRAPHIC PROJECTION GATE (Icon Frame 100x Complexity)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 1. Khung chính (Icon): Hình bát giác, nền lưới dữ liệu, đế chiếu phát sáng */
+.target-glyph {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin: 0 0 25px 0; /* BỎ MARGIN TRÊN, TĂNG MARGIN DƯỚI ĐỂ CHỪA CHỖ CHO VÒNG XOAY */
+  font-size: 1.2rem;
+  color: currentColor;
+  background-color: rgba(0, 0, 0, 0.85);
+  
+  /* Cắt góc hình bát giác (Octagon) */
+  clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+  
+  /* Đổ bóng phát sáng (Drop-shadow không bị cắt bởi clip-path) */
+  filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 6px 6px currentColor);
+  z-index: 2;
+}
+
+/* 2. Lưới dữ liệu bên trong (Matrix Grid) */
+.target-glyph::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: 
+    /* Các điểm nút dữ liệu phát sáng */
+    radial-gradient(circle at 20% 20%, currentColor 1.5px, transparent 1.5px),
+    radial-gradient(circle at 80% 80%, currentColor 1.5px, transparent 1.5px),
+    radial-gradient(circle at 20% 80%, currentColor 1.5px, transparent 1.5px),
+    radial-gradient(circle at 80% 20%, currentColor 1.5px, transparent 1.5px),
+    /* Lưới ô vuông mờ */
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 8px 8px, 8px 8px;
+  z-index: 0;
+  animation: gridPulse 3s infinite alternate;
+}
+
+/* 3. Tia Laser quét dọc & Viền Neon bên trong */
+.target-glyph::after {
+  content: "";
+  position: absolute;
+  inset: 2px; /* Cách viền ngoài 2px */
+  border: 1px solid currentColor;
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.2);
+  
+  /* Tia sáng quét dọc */
+  background: linear-gradient(to bottom, transparent 40%, rgba(255, 255, 255, 0.7) 50%, transparent 60%);
+  background-size: 100% 200%;
+  animation: innerScan 2s linear infinite;
+  
+  /* Cắt góc bát giác cho viền trong */
+  clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+  z-index: 1;
+}
+
+/* 4. Vòng xoay ngoài 1: Nét đứt (Dashed Ring) */
+.target-state::before {
+  content: "";
+  position: absolute;
+  top: -7px; /* TOÁN LẠI ĐỂ VÒNG TRÒN ÔM KHÍT ICON 42px */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 56px;
+  border: 1px dashed currentColor; /* LÀM MỎNG VIỀN */
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: spinRingRight 10s linear infinite;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 5. Vòng xoay ngoài 2: Hình lục giác (Hexagon Ring) */
+.target-state::after {
+  content: "";
+  position: absolute;
+  top: -14px; /* TOÁN LẠI ĐỂ VÒNG LỤC GIÁC BAO QUANH VÒNG NÉT ĐỨT */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70px;
+  height: 70px;
+  border: 1px solid currentColor;
+  opacity: 0.35;
+  /* Cắt hình lục giác */
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  animation: spinRingLeft 15s linear infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 6. Các Góc nhắm mục tiêu (Targeting Brackets) - Vươn ra ngoài khung */
+.target-glyph {
+  /* Thu nhỏ khoảng cách vươn ra để khớp với icon nhỏ hơn */
+  box-shadow: 
+    -16px -16px 0 -14px currentColor, 
+    16px -16px 0 -14px currentColor,
+    -16px 16px 0 -14px currentColor,
+    16px 16px 0 -14px currentColor;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes gridPulse {
+  0% { opacity: 0.4; }
+  100% { opacity: 0.8; }
+}
+
+@keyframes innerScan {
+  0% { background-position: 0 -100%; }
+  100% { background-position: 0 200%; }
+}
+
+@keyframes spinRingRight {
+  0% { transform: translateX(-50%) rotate(0deg); }
+  100% { transform: translateX(-50%) rotate(360deg); }
+}
+
+@keyframes spinRingLeft {
+  0% { transform: translateX(-50%) rotate(0deg); }
+  100% { transform: translateX(-50%) rotate(-360deg); }
+}
+
+.target-state .field-label {
+  margin: 0.2rem 0 0 0;
+  font-size: 0.45rem;
+  letter-spacing: 0.15em;
+  color: #8ba493;
+}
+
+.target-state strong {
+  font-family: var(--font-mono);
+  font-size: 0.75rem; /* Thu nhỏ để cân đối hơn */
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #fff;
+  text-shadow: 0 0 8px currentColor, 0 0 15px currentColor;
+  margin-bottom: 0.1rem;
+  line-height: 1.1;
+}
+
+/* Khung tọa độ nhỏ gọn */
+.target-coordinate {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.55rem !important; 
+  letter-spacing: 0.05em;
+  padding: 0.1rem 0.4rem;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #a2b4a7;
+  clip-path: polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px);
+}
+
+/* 4. THÔNG TIN CHI TIẾT (Sự kiện, Tài nguyên) */
+.target-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+  margin: 0.2rem 0 0 0;
+}
+
+.target-details div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.target-details dt {
+  color: #667d6d;
+  font-size: 0.4rem;
+  letter-spacing: 0.08em;
+}
+
+.target-details dd {
+  margin: 0;
+  color: #a6b7aa;
+  font-size: 0.5rem; /* Chữ chi tiết thu nhỏ để nhét vừa 2 dòng */
+  line-height: 1.2;
+  text-align: center;
+  padding: 0 0.2rem;
+}
+
+.target-details .unknown-value {
+  color: #8b9d90;
+  font-style: italic;
+}
+
+.target-note {
+  font-size: 0.5rem;
+  color: #91a497;
+  line-height: 1.3;
+  margin-top: 0.3rem;
+  padding: 0.2rem 0.4rem;
+  background: rgba(63, 191, 107, 0.05);
+  border-left: 2px solid rgba(63, 191, 107, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. MÀU SẮC TỪNG LOẠI MỤC TIÊU
+   ═══════════════════════════════════════════════════════════════════════════ */
+.target-state.target-earth { color: #4fafff; }
+.target-state.target-earth .target-coordinate { color: #4fafff; border-color: rgba(79, 175, 255, 0.3); background: rgba(79, 175, 255, 0.1); }
+.target-state.target-own-ship { color: #71ff91; }
+.target-state.target-own-ship .target-coordinate { color: #71ff91; border-color: rgba(113, 255, 145, 0.3); background: rgba(113, 255, 145, 0.1); }
+.target-state.target-known { color: #ffb45e; }
+.target-state.target-known .target-coordinate { color: #ffb45e; border-color: rgba(255, 180, 94, 0.3); background: rgba(255, 180, 94, 0.1); }
+.target-state.target-unknown { color: #819487; }
+.target-state.target-unknown .target-coordinate { color: #819487; border-color: rgba(129, 148, 135, 0.2); }
+.target-state.target-monolith { color: #d1a8ff; }
+.target-state.target-monolith .target-coordinate { color: #d1a8ff; border-color: rgba(209, 168, 255, 0.3); background: rgba(209, 168, 255, 0.1); }
+.target-state.target-beacon { color: #ffd700; }
+.target-state.target-beacon .target-coordinate { color: #ffd700; border-color: rgba(255, 215, 0, 0.3); background: rgba(255, 215, 0, 0.1); }
+.target-state.target-crate { color: #e6a85c; }
+.target-state.target-crate .target-coordinate { color: #e6a85c; border-color: rgba(230, 168, 92, 0.3); background: rgba(230, 168, 92, 0.1); }
+.target-state.target-wormhole { color: #79d7ff; }
+.target-state.target-wormhole .target-coordinate { color: #79d7ff; border-color: rgba(121, 215, 255, 0.3); background: rgba(121, 215, 255, 0.1); }
+.target-state.target-zone.zone-jamming { color: #d1a8ff; }
+.target-state.target-zone.zone-radiation { color: #a7f36b; }
+.target-state.target-zone.zone-zero_g { color: #8bc3ff; }
+.target-state.target-zone.zone-swamp { color: #79b87c; }
+.target-state.target-zone.zone-gold_rush { color: #ffcc5f; }
+
+.target-state strong:hover {
+  animation: glitchText 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+}
+
+@keyframes glitchText {
+  0% { transform: translate(0); }
+  20% { transform: translate(-1px, 1px); }
+  40% { transform: translate(-1px, -1px); }
+  60% { transform: translate(1px, 1px); }
+  80% { transform: translate(1px, -1px); }
+  100% { transform: translate(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ẨN KHUNG THÔNG BÁO VÀ THU NHỎ KHUNG THANH TRÊN CÙNG
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1. Ẩn hoàn toàn khung thông báo cảnh báo màu đỏ */
+.toast-region {
+  display: none !important;
+}
+
+/* 2. Ép lại chiều cao của Grid Row đầu tiên (từ 64px xuống 45px) */
+.game-screen {
+  grid-template-rows: 45px auto minmax(700px, 1fr) 26px auto !important;
+}
+
+/* 3. Ép chiều cao của thanh turnbar xuống 45px, bỏ padding dọc */
+.game-turnbar {
+  min-height: 45px !important;
+  height: 45px !important;
+  padding-block: 0 !important; 
+  padding-inline: 0.8rem !important;
+}
+
+/* 4. (Tùy chọn) Nếu mày thấy cái nút "RỜI TRẬN" nó bị thừa khoảng trắng trên dưới, 
+      tao thu nhỏ nó lại một chút cho vừa vặn với khung 45px */
+.game-turnbar .game-leave-button {
+  min-height: 26px !important;
+  padding: 0 0.6rem !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   CYBERPUNK SHIP HUD (RECESSED HARDWARE - KHÔNG ĐỔI SIZE KHUNG)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1. Khung tổng: Nền lưới, viền kỹ thuật, góc cắt xéo */
+.ship-hud {
+  position: relative;
+  background-color: #030605;
+  background-image: 
+    linear-gradient(rgba(63, 191, 107, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(63, 191, 107, 0.03) 1px, transparent 1px);
+  background-size: 10px 10px;
+  border: 1px solid rgba(63, 191, 107, 0.25) !important;
+  box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.9) !important;
+  overflow: hidden;
+}
+
+/* Tạo 4 góc nhắm mục tiêu (Targeting Brackets) cho cả bảng */
+.ship-hud::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  background: 
+    linear-gradient(to right, var(--green) 2px, transparent 2px) 0 0,
+    linear-gradient(to bottom, var(--green) 2px, transparent 2px) 0 0,
+    linear-gradient(to left, var(--green) 2px, transparent 2px) 100% 0,
+    linear-gradient(to bottom, var(--green) 2px, transparent 2px) 100% 0,
+    linear-gradient(to right, var(--green) 2px, transparent 2px) 0 100%,
+    linear-gradient(to top, var(--green) 2px, transparent 2px) 0 100%,
+    linear-gradient(to left, var(--green) 2px, transparent 2px) 100% 100%,
+    linear-gradient(to top, var(--green) 2px, transparent 2px) 100% 100%;
+  background-repeat: no-repeat;
+  background-size: 10px 10px;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.6;
+}
+
+/* Đường quét dọc (Scanline) trên khung */
+.ship-hud::after {
+  content: "";
+  position: absolute;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(to bottom, transparent, rgba(113, 255, 145, 0.08), transparent);
+  animation: radarSweepTarget 6s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Header */
+.ship-hud .panel-heading {
+  position: relative;
+  z-index: 2;
+  border-bottom: 1px dashed rgba(63, 191, 107, 0.3);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.ship-hud .panel-heading h2 {
+  text-shadow: 0 0 10px rgba(113, 255, 145, 0.5);
+  letter-spacing: 0.15em;
+}
+
+/* 2. Vùng nội dung */
+.hud-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1rem 0.8rem;
+  align-items: stretch;
+}
+
+/* 3. Tọa độ Radar (Căn giữa, phát sáng) */
+.hud-position {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0 1rem 0;
+  border-bottom: 1px dashed rgba(63, 191, 107, 0.3);
+  position: relative;
+}
+
+.hud-position .field-label {
+  margin-bottom: 0.4rem;
+  color: #4a755c;
+  letter-spacing: 0.3em;
+  font-size: 0.5rem;
+}
+
+.radar-coord {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+}
+
+.radar-coord .bracket {
+  color: var(--green);
+  font-size: 1.6rem;
+  opacity: 0.8;
+  text-shadow: 0 0 10px var(--green);
+  animation: pulse-bracket 1.5s infinite alternate;
+}
+
+.radar-coord strong {
+  font-size: 1.8rem;
+  color: #fff;
+  letter-spacing: 0.1em;
+  text-shadow: 
+    0 0 5px #fff,
+    0 0 15px var(--green),
+    0 0 30px var(--green);
+  animation: textGlitch 4s infinite;
+}
+
+/* 4. Các thanh đo (Meters) - Biến thành tế bào năng lượng */
+.meter-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.meter-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.tech-label {
+  color: #5a7a65;
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  font-weight: bold;
+}
+
+.meter-label strong {
+  font-size: 1.2rem;
+  color: #fff;
+  text-shadow: 0 0 8px currentColor;
+  line-height: 1;
+}
+
+.meter-label small {
+  font-size: 0.6rem;
+  color: #6a8775;
+  font-weight: normal;
+}
+
+/* Đường ray năng lượng (Track) */
+.meter-track {
+  position: relative;
+  height: 10px; /* Dày hơn xíu cho ngầu */
+  border-radius: 0;
+  background: #010302;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  /* Vạch kẻ ô vuông */
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 6px,
+    rgba(0, 0, 0, 0.9) 6px,
+    rgba(0, 0, 0, 0.9) 8px
+  );
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+}
+
+/* Thanh fill (Phần chạy) */
+.meter-track > span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+  /* Cắt góc đầu mút thanh fill */
+  clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
+}
+
+/* Hiệu ứng đầu mút phát sáng */
+.meter-track > span::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #fff;
+  box-shadow: 0 0 10px #fff, 0 0 20px currentColor;
+}
+
+/* Luồng sáng quét qua thanh bar */
+.meter-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  z-index: 2;
+  transform: translateX(-100%);
+  animation: scan-bar 2.5s infinite;
+}
+
+/* Màu sắc từng thanh (Neon hóa) */
+.meter-green > span { background: var(--green-soft); color: var(--green); }
+.meter-amber > span { background: var(--amber-soft); color: var(--amber); }
+.score-meter > span { background: #d97a29; color: #ffb45e; } 
+.cargo-meter > span { background: #2c87c4; color: #79d7ff; } 
+
+/* 5. Khoang hàng (Cargo) */
+.hud-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.hud-section-title span:last-child {
+  font-size: 0.75rem;
+  color: #79d7ff;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(121, 215, 255, 0.6);
+}
+
+/* Danh sách tài nguyên (Cargo List) - Chừa không gian rộng rãi */
+.cargo-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+  padding: 0;
+  list-style: none;
+  min-height: 40px; /* Chừa sẵn không gian cho đồ rớt vào */
+  align-content: flex-start;
+}
+
+.cargo-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(121, 215, 255, 0.08);
+  border: 1px solid rgba(121, 215, 255, 0.3);
+  padding: 0.2rem 0.4rem;
+  font-size: 0.65rem;
+  color: #cceeff;
+  border-radius: 2px;
+  /* Cắt góc nhỏ */
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%);
+  box-shadow: inset 0 0 8px rgba(121, 215, 255, 0.1);
+}
+
+.cargo-list b { 
+  color: #fff; 
+  text-shadow: 0 0 5px #79d7ff;
+}
+
+/* 6. Điểm số (Score) - Đặt ở dưới cùng */
+.score-block {
+  margin-top: auto; /* Đẩy xuống đáy */
+  padding-top: 0.8rem;
+  border-top: 1px dashed rgba(255, 180, 94, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.score-block .meter-label strong {
+  color: var(--amber);
+  text-shadow: 0 0 10px rgba(255, 180, 94, 0.6);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes radarSweepTarget {
+  0% { top: -50px; }
+  100% { top: 100%; }
+}
+
+@keyframes scan-bar {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes pulse-bracket {
+  0% { opacity: 0.3; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1.05); text-shadow: 0 0 15px var(--green), 0 0 25px var(--green); }
+}
+
+@keyframes textGlitch {
+  0%, 100% { transform: translate(0); }
+  2%, 64% { transform: translate(0); }
+  4%, 14%, 20%, 84% { transform: translate(-1px, 1px); }
+  6%, 10%, 16%, 18%, 82%, 86% { transform: translate(1px, -1px); }
+  8%, 12% { transform: translate(-1px, -1px); }
+}
+
+
+/* 4. Các thanh đo (Meters) - HIGH-TECH PLASMA CONDUIT */
+.meter-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  position: relative;
+}
+
+.meter-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  position: relative;
+  z-index: 2;
+}
+
+.tech-label {
+  color: #5a7a65;
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(90, 122, 101, 0.5);
+}
+
+.meter-label strong {
+  font-size: 1.2rem;
+  color: #fff;
+  text-shadow: 
+    0 0 5px currentColor,
+    0 0 15px currentColor,
+    0 0 25px currentColor;
+  line-height: 1;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.meter-label small {
+  font-size: 0.6rem;
+  color: #6a8775;
+  font-weight: normal;
+}
+
+/* Đường ống dẫn năng lượng (Track) */
+.meter-track {
+  position: relative;
+  height: 12px; /* Dày lên để chứa nhiều chi tiết */
+  border-radius: 1px;
+  background: #020403;
+  border: 1px solid #1a3324;
+  box-shadow: 
+    inset 0 2px 10px rgba(0, 0, 0, 0.9),
+    0 0 10px rgba(63, 191, 107, 0.05);
+  overflow: hidden;
+  
+  /* Vạch kẻ chéo cảnh báo (Hazard Stripes) ở đáy ống */
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgba(63, 191, 107, 0.05) 4px,
+    rgba(63, 191, 107, 0.05) 8px
+  );
+}
+
+/* Thanh Fill (Lõi Plasma) */
+.meter-track > span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 1;
+  
+  /* Gradient phức tạp tạo cảm giác phát sáng từ trong ra ngoài */
+  background: linear-gradient(
+    90deg, 
+    rgba(255,255,255,0.1) 0%, 
+    currentColor 50%, 
+    #ffffff 100%
+  );
+  box-shadow: 0 0 15px currentColor;
+  
+  /* Cắt góc nhọn hoắt kiểu Cyberpunk */
+  clip-path: polygon(0 0, 100% 0, 97% 100%, 0% 100%);
+  
+  /* Hiệu ứng nhiễu sóng (Glitch) */
+  animation: barGlitch 4s infinite linear;
+}
+
+/* Cụm đèn LED ở đầu mút thanh fill */
+.meter-track > span::before {
+  content: "";
+  position: absolute;
+  right: 3%;
+  top: 2px;
+  bottom: 2px;
+  width: 4px;
+  background: #fff;
+  box-shadow: 
+    0 0 8px #fff,
+    0 0 15px currentColor;
+  animation: ledPulse 0.5s infinite alternate;
+}
+
+/* Tia lửa điện (Spark) bắn ra từ đầu mút */
+.meter-track > span::after {
+  content: "";
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 4px;
+  height: 4px;
+  background: #fff;
+  box-shadow: 0 0 10px #fff, 0 0 20px currentColor;
+}
+
+/* Luồng sáng quét (Data Sweep) - Sắc lẹm và nhanh */
+.meter-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.4) 45%, 
+    rgba(255, 255, 255, 0.8) 50%, 
+    rgba(255, 255, 255, 0.4) 55%, 
+    transparent 100%
+  );
+  z-index: 2;
+  transform: translateX(-100%);
+  animation: dataSweep 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+/* Màu sắc từng thanh (Giữ nguyên class nhưng đổi màu Neon) */
+.meter-green > span { color: #71ff91; }  /* Xanh lá neon */
+.meter-amber > span { color: #ffb45e; }  /* Hổ phách neon */
+.score-meter > span { color: #ffb45e; }  /* Cam cháy */
+.cargo-meter > span { color: #79d7ff; }  /* Xanh lơ (Cyan) */
+
+/* ═══════════════════════════════════════════════════════════════
+   KEYFRAMES CHO THANH NĂNG LƯỢNG
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Hiệu ứng giật nhiễu (Glitch) của thanh bar */
+@keyframes barGlitch {
+  0%, 100% { filter: brightness(1); }
+  48% { filter: brightness(1.3) hue-rotate(10deg); }
+  49% { filter: brightness(0.8) hue-rotate(-10deg); transform: translateX(1px); }
+  50% { filter: brightness(1.5); transform: translateX(-1px); }
+  51% { filter: brightness(1); transform: translateX(0); }
+}
+
+/* Nhấp nháy của đèn LED ở đầu mút */
+@keyframes ledPulse {
+  0% { opacity: 0.6; box-shadow: 0 0 5px #fff, 0 0 10px currentColor; }
+  100% { opacity: 1; box-shadow: 0 0 15px #fff, 0 0 25px currentColor; }
+}
+
+/* Tốc độ quét của luồng sáng */
+@keyframes dataSweep {
+  0% { transform: translateX(-100%); }
+  60%, 100% { transform: translateX(100%); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   FAST TURN END ANIMATION (CYBERPUNK PURGE)
+   ═══════════════════════════════════════════════════════════════ */
+
+.turn-end-fast-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9990; /* Thấp hơn Augment (9999) và Event (9998) để không đè lên chúng */
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Dải băng cảnh báo chéo */
+.turn-end-fast-stripe {
+  position: absolute;
+  width: 200vw;
+  height: 120px;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 101, 101, 0.9),
+    rgba(255, 101, 101, 0.9) 20px,
+    #000 20px,
+    #000 40px
+  );
+  box-shadow: 0 0 40px rgba(255, 101, 101, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scaleX(0);
+  animation: stripeSweep 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+/* Lớp phủ mờ (làm tối màn hình) */
+.turn-end-fast-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 9, 7, 0.6);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  animation: fadeInOut 1.2s ease-in-out forwards;
+}
+
+/* Chữ TURN ENDED */
+.turn-end-fast-text {
+  position: relative;
+  font-family: var(--font-mono);
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  background: #000;
+  padding: 0.5rem 2rem;
+  border: 2px solid #fff;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  transform: skewX(-15deg);
+  animation: textGlitchFast 1.2s steps(2, end) forwards;
+}
+
+/* Keyframes */
+@keyframes stripeSweep {
+  0% { transform: scaleX(0); opacity: 1; }
+  30% { transform: scaleX(1); opacity: 1; }
+  80% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1) translateY(-100px); opacity: 0; }
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes textGlitchFast {
+  0% { opacity: 0; transform: skewX(-15deg) translateY(20px); }
+  10% { opacity: 1; transform: skewX(-15deg) translateY(0); text-shadow: 4px 0 #ff6565, -4px 0 #79d7ff; }
+  15% { text-shadow: -4px 0 #ff6565, 4px 0 #79d7ff; }
+  20% { text-shadow: 0 0 10px #fff; }
+  80% { opacity: 1; transform: skewX(-15deg) scale(1); }
+  90% { opacity: 1; transform: skewX(-15deg) scale(1.1); }
+  100% { opacity: 0; transform: skewX(-15deg) scale(1.2); }
 }

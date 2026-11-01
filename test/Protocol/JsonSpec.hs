@@ -144,7 +144,7 @@ spec = do
       toJSON (NearestPlanet Nothing) `shouldBe`
         object ["type" .= typeOf "nearest_planet", "found" .= False]
     it "PlanetsFound" $
-      toJSON (PlanetsFound [KnownPlanet (Pos 60 60) Mining]) `shouldBe`
+      toJSON (PlanetsFound [KnownPlanet (Pos 60 60) Mining Nothing Nothing]) `shouldBe`
         object [ "type" .= typeOf "planets_found"
                , "planets" .= [ object [ "pos" .= object ["x" .= (60 :: Int), "y" .= (60 :: Int)]
                                        , "type" .= typeOf "mining" ] ] ]
@@ -175,7 +175,8 @@ spec = do
         [ "you", "map_width", "map_height", "earth", "round", "max_rounds"
         , "current_player", "phase", "pos", "battery", "battery_max", "ap", "ap_max"
         , "cargo", "cargo_capacity", "storage", "score", "score_target"
-        , "known_planets", "planet_here", "inventory", "luck", "max_cargo", "max_battery", "active_event", "can_craft", "turn_end_time" ]
+        , "known_planets", "planet_here", "inventory", "luck", "max_cargo", "max_battery", "active_event", "can_craft", "turn_end_time"
+        , "augments", "zones", "crates", "wormholes", "objectives", "crate_here", "current_zone", "monoliths", "beacons", "monolith_here", "beacon_here" ]
     it "mot so gia tri" $ do
       let v = toJSON viewP1
       field "you" v `shouldBe` Just (String "player1")
@@ -186,7 +187,7 @@ spec = do
       let gs = baseState
           here = Just testPlanet
           v = toJSON ((viewFor cfg Player1 gs) { viewHere = here })
-      fmap keysOf (field "planet_here" v) `shouldBe` Just (sort ["id", "pos", "type", "stock", "event_triggered"])
+      fmap keysOf (field "planet_here" v) `shouldBe` Just (sort ["id", "pos", "type", "stock", "event_triggered", "event_type"])
 
   describe "ServerMsg" $ do
     it "Welcome" $
