@@ -13,6 +13,7 @@ module Game.View
     ) where
 
 import qualified Data.Map.Strict as Map
+import Data.List (find)  -- ▼▼▼ THÊM DÒNG NÀY ▼▼▼
 
 import Game.Action (crateAt)
 import Game.Config
@@ -57,6 +58,10 @@ data PlayerView = PlayerView
     , viewObjectives     :: [Objective]         -- ^ 3 nhiem vu hien tai
     , viewCrateHere      :: Maybe Crate         -- ^ hom dang dung tren (neu co)
     , viewCurrentZone    :: Maybe ZoneType      -- ^ zone dang dung trong (neu co)
+    , viewMonoliths      :: [Monolith]
+    , viewBeacons        :: [Beacon]
+    , viewMonolithHere   :: Maybe Monolith
+    , viewBeaconHere     :: Maybe Beacon
     } deriving (Show, Eq)
 
 -- | Thong tin cuoi cung cua mot nguoi choi, lo ra khi tran ket thuc.
@@ -110,6 +115,10 @@ viewFor cfg pid gs = PlayerView
     , viewObjectives     = playerObjectives me
     , viewCrateHere      = crateAt (playerPos me) gs
     , viewCurrentZone    = findZoneAt (playerPos me) gs
+    , viewMonoliths      = Map.elems (gsMonoliths gs)
+    , viewBeacons        = Map.elems (gsBeacons gs)
+    , viewMonolithHere   = find ((== playerPos me) . monolithPos) (Map.elems (gsMonoliths gs))
+    , viewBeaconHere     = find ((== playerPos me) . beaconPos) (Map.elems (gsBeacons gs))
     }
   where
     me = getPlayer pid gs

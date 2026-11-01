@@ -39,6 +39,8 @@
   }
   function costFor(action, args, view) {
     if (action === "DEPOSIT" && distance(view.player.position, view.earth) > 0) return [1, 2];
+    // Miễn phí AP cho các action ngoài giao diện
+    if (action === "USE_ITEM" || action === "CRAFT" || action === "CLAIM_OBJECTIVE") return [0, 0];
     return costs[action] || null;
   }
 
@@ -125,7 +127,29 @@
       player.battery += gained; player.ap -= cost[0];
       addEvent("RECHARGE_CONFIRMED", `Battery recharged by ${gained}; Earth storage consumed ${amount} ${type}.`, "INFO");
       actionResult = { kind: "Recharged", batteryAdded: gained, resource: type, amount };
-    } else if (action === "END_TURN") {
+    } 
+
+    else if (action === "USE_ITEM") {
+      const inv = player.inventory || { passives: {}, actives: [] };
+      player.inventory = inv;
+      inv.actives = (inv.actives || []).filter(i => i.toLowerCase() !== args.item.toLowerCase());
+      addEvent("ITEM_USED", `Đã sử dụng ${args.item}.`, "INFO");
+      actionResult = { kind: "ItemUsed", item: args.item };
+      
+    } else if (action === "CRAFT") {
+      const inv = player.inventory || { passives: {}, actives: [] };
+      player.inventory = inv;
+      if (args.item.includes("passive")) {
+        inv.passives = inv.passives || {};
+        inv.passives[args.item] = (inv.passives[args.item] || 0) + 1;
+      } else {
+        inv.actives = inv.actives || [];
+        inv.actives.push(args.item);
+      }
+      addEvent("ITEM_CRAFTED", `Đã chế tạo ${args.item}.`, "INFO");
+      actionResult = { kind: "ItemCrafted", item: args.item };
+    }
+    else if (action === "END_TURN") {
       player.ap -= cost[0]; player.battery -= cost[1];
       next.turn.isMyTurn = false;
       next.turn.activePlayer = "Player 2";

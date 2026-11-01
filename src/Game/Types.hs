@@ -65,7 +65,9 @@ module Game.Types
     , Objective (..)
     , ObjectiveTrackers (..)
     , emptyTrackers
-    ) where
+    , Monolith (..)
+    , Beacon (..)
+    ) where 
 
 import qualified Data.Map.Strict as Map
 import System.Random (StdGen)
@@ -194,6 +196,8 @@ data GameState = GameState
     , gsNextCrateId   :: Int
     , gsNextZoneId    :: Int
     , gsNextObjId     :: Int
+    , gsMonoliths     :: Map.Map Int Monolith
+    , gsBeacons       :: Map.Map Int Beacon
     } deriving (Show, Eq)
 
 
@@ -214,6 +218,8 @@ data Action
     | EndTurn
     | OpenCrate                   -- ^ mo hom tiep te dang dung tren (0 AP)
     | ClaimObjective Int          -- ^ nhan thuong nhiem vu da hoan thanh (0 AP)
+    | InteractMonolith            -- ^ tuong tac bia da (0 AP, -20 pin)
+    | ActivateBeacon              -- ^ kich hoat hai dang (1 AP)
     deriving (Show, Eq)
 
 -- | Ly do mot action bi tu choi (khi bi tu choi thi khong mat gi).
@@ -239,6 +245,9 @@ data GameError
     | ObjectiveNotComplete    -- ^ nhiem vu chua hoan thanh, khong the nhan thuong
     | ObjectiveAlreadyClaimed -- ^ nhiem vu da nhan thuong
     | ObjectiveNotFound       -- ^ khong co nhiem vu voi id do
+    | NotOnMonolith           -- ^ khong dung tren bia da
+    | NotOnBeacon             -- ^ khong dung tren hai dang
+    | BeaconAlreadyActivated  -- ^ hai dang da duoc kich hoat
     deriving (Show, Eq)
 
 -- | Thong bao gui cho doi thu khi ban lam mot action.
@@ -266,8 +275,10 @@ data ActionResult
     | ZoneEntered ZoneType                   -- ^ thong bao vao zone
     | ZoneEndedTurn ZoneType Int             -- ^ radiation drain cuoi luot
     | ObjectiveClaimed Int ObjectiveReward   -- ^ objectiveId, reward
+    | MonolithResult String                  -- ^ ket qua tuong tac bia da
+    | BeaconActivated Pos                    -- ^ vi tri hai dang vua kich hoat
     deriving (Show, Eq)
-
+    
 -- | Bao cao cua mot action thanh cong.
 data ActionReport = ActionReport
     { reportResult :: ActionResult
@@ -501,3 +512,15 @@ emptyTrackers = ObjectiveTrackers
     , otMoveSequence = [], otEndedInRadiation = False
     , otReachedTargetPos = False
     }
+
+
+data Monolith = Monolith
+    { monolithId  :: Int
+    , monolithPos :: Pos
+    } deriving (Show, Eq)
+
+data Beacon = Beacon
+    { beaconId     :: Int
+    , beaconPos    :: Pos
+    , beaconActive :: Bool
+    } deriving (Show, Eq)

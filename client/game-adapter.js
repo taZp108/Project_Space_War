@@ -52,9 +52,12 @@
       const raw = await actions.checkResultAfterDisconnect();
       return raw?.ok ? { ok: true, data: { result: raw.result } } : { ok: false, error: errorFrom(raw?.error) };
     },
+    submitAugment: (_choice) => {},
     subscribePlayerViews: (listener) => { viewListeners.add(listener); return () => viewListeners.delete(listener); },
     subscribeNotifications: (_listener) => () => {},
     subscribeMatchResults: (_listener) => () => {},
+    subscribeAugmentEvents: (_listener) => () => {},
+    subscribeConnectionStates: (_listener) => () => {},
     resourceValue: (resourceType) => actions.resourceValues[resourceType] || 0,
   });
 

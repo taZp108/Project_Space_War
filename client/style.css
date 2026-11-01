@@ -990,3 +990,346 @@ body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::aft
   50% { opacity: 0.4; text-shadow: 0 0 10px var(--amber); }
   100% { opacity: 1; }
 }
+
+
+/* ═══ TURN TRANSITION ANIMATIONS ═══ */
+.turn-transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.turn-transition-text {
+  font-family: var(--font-mono);
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0;
+}
+
+.turn-end-anim {
+  background: radial-gradient(circle, rgba(5,9,7,0) 0%, rgba(5,9,7,0.9) 100%);
+  animation: turnEndBg 1.5s ease-out forwards;
+}
+
+.turn-end-anim .turn-transition-text {
+  color: var(--text-muted);
+  text-shadow: 0 0 30px rgba(0,0,0,0.9);
+  animation: turnEndText 1.5s ease-out forwards;
+}
+
+.turn-start-anim {
+  background: radial-gradient(circle, rgba(63,191,107,0.15) 0%, rgba(5,9,7,0) 70%);
+  animation: turnStartBg 1.5s ease-out forwards;
+}
+
+.turn-start-anim .turn-transition-text {
+  color: var(--green);
+  text-shadow: 0 0 40px rgba(113,255,145,0.6);
+  animation: turnStartText 1.5s ease-out forwards;
+}
+
+@keyframes turnEndBg {
+  0% { opacity: 0; backdrop-filter: blur(0px); }
+  30% { opacity: 1; backdrop-filter: blur(4px); }
+  100% { opacity: 0; backdrop-filter: blur(0px); }
+}
+
+@keyframes turnEndText {
+  0% { opacity: 0; transform: translateY(30px); }
+  30% { opacity: 1; transform: translateY(0); }
+  70% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-30px); }
+}
+
+@keyframes turnStartBg {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes turnStartText {
+  0% { opacity: 0; transform: scale(0.8); }
+  30% { opacity: 1; transform: scale(1.05); }
+  40% { transform: scale(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+
+
+/* CSS CHO NHIỆM VỤ */
+.reward-box {
+  margin-top: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  background: rgba(255, 180, 94, 0.1);
+  border: 1px dashed rgba(255, 180, 94, 0.4);
+  border-radius: 4px;
+  color: var(--amber);
+  font-size: 0.65rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.reward-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+
+
+/* ═══ END TURN MEME OVERLAY ═══ */
+#end-turn-meme-overlay {
+  position: fixed; inset: 0; z-index: 99999; pointer-events: none;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: grayscale(0.8) contrast(1.2);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  opacity: 0; animation: memeFadeInOut 1.6s ease-in-out forwards;
+}
+
+.jojo-arrow-container {
+  position: absolute; bottom: 25%; left: -100%;
+  width: 90%; height: 100px; background: #ffcc00;
+  -webkit-clip-path: polygon(0% 50%, 8% 0%, 100% 0%, 100% 100%, 8% 100%);
+  clip-path: polygon(0% 50%, 8% 0%, 100% 0%, 100% 100%, 8% 100%);
+  display: flex; align-items: center; justify-content: flex-end; padding-right: 5%;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+  animation: arrowSlideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s forwards;
+}
+
+.jojo-arrow-text {
+  color: #000; font-family: "Impact", "Arial Black", sans-serif;
+  font-size: clamp(2rem, 5vw, 4rem); font-weight: 900;
+  letter-spacing: 0.1em; transform: scaleX(1.2);
+  text-transform: uppercase; text-shadow: 2px 2px 0 #fff;
+}
+
+.menacing-text {
+  position: absolute; color: #fff; font-family: monospace;
+  font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 900; 
+  text-shadow: 0 0 15px #000, 0 0 5px #000;
+  animation: menacingFloat 0.8s ease-in-out infinite alternate;
+}
+
+.waiting-text {
+  position: absolute; bottom: 12%; color: #fff; font-family: var(--font-mono);
+  font-size: clamp(1rem, 2vw, 1.5rem); letter-spacing: 0.2em; font-weight: bold;
+  background: rgba(0,0,0,0.7); padding: 0.5rem 1rem; border: 1px solid rgba(255,255,255,0.3);
+  animation: pulseOpacity 1s ease-in-out infinite alternate;
+}
+
+@keyframes memeFadeInOut {
+  0% { opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; }
+}
+@keyframes arrowSlideIn {
+  0% { left: -100%; } 100% { left: 5%; }
+}
+@keyframes menacingFloat {
+  0% { transform: translateY(0) scale(1); opacity: 0.6; }
+  100% { transform: translateY(-15px) scale(1.1); opacity: 1; }
+}
+@keyframes pulseOpacity {
+  0% { opacity: 0.5; } 100% { opacity: 1; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK / ALIEN VIBE CHO BẢNG HÀNH ĐỘNG
+   ═══════════════════════════════════════════════════════════════ */
+
+.empty-terminal-vibe {
+  text-align: center;
+  color: rgba(255, 100, 100, 0.4);
+  font-family: monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  padding: 2rem 0;
+  animation: terminalBlink 2s infinite;
+}
+
+.action-summary.dark-vibe {
+  background: radial-gradient(circle at center, #1a0b12 0%, #050907 100%);
+  border: 1px solid #4a1525;
+  box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.1), 0 0 15px rgba(0, 0, 0, 0.8);
+  padding: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Tạo hiệu ứng lưới mờ đằng sau */
+.action-summary.dark-vibe::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 0, 0, 0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 0, 0, 0.05) 1px, transparent 1px);
+  background-size: 10px 10px;
+  pointer-events: none;
+}
+
+/* Tiêu đề tên lệnh (Căn giữa) */
+.action-summary-title {
+  width: 100%;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px dashed rgba(255, 0, 0, 0.3);
+  text-align: center;
+}
+
+
+
+/* Khối chi tiết (Mục tiêu, Chi phí) Căn giữa */
+.action-summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+  font-family: var(--font-mono);
+}
+
+.action-summary-details > div {
+  display: flex;
+  justify-content: center; /* Căn giữa nội dung */
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.action-summary-details span {
+  color: #888;
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+}
+
+.action-summary-details strong {
+  color: #fff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+}
+
+/* Phần Recharge (nếu có) căn giữa */
+.action-summary.dark-vibe .recharge-controls {
+  width: 100%;
+  margin-top: 0.8rem;
+  justify-content: center;
+}
+
+/* Nút Gửi Lệnh Hình Lục Giác Cắt Xéo */
+.alien-button-container {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.alien-execute-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  padding: 12px 40px;
+  color: #ff4d4d;
+  font-family: var(--font-mono);
+  font-weight: 900;
+  font-size: 1.1rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  cursor: pointer;
+  clip-path: polygon(15% 0, 100% 0, 85% 100%, 0 100%);
+  transition: all 0.2s;
+  isolation: isolate;
+}
+
+/* Viền ngoài phát sáng */
+.alien-execute-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #ff0000;
+  z-index: -2;
+  clip-path: polygon(15% 0, 100% 0, 85% 100%, 0 100%);
+}
+
+/* Nền đen bên trong để tạo viền */
+.alien-execute-btn::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  background: #0a0505;
+  z-index: -1;
+  clip-path: polygon(15% 0, 100% 0, 85% 100%, 0 100%);
+  transition: all 0.2s;
+}
+
+/* Hover: Nền chuyển đỏ rực, chữ đổi màu */
+.alien-execute-btn:hover:not(:disabled) {
+  color: #000;
+  text-shadow: none;
+  box-shadow: 0 0 30px #ff0000;
+}
+
+.alien-execute-btn:hover:not(:disabled)::after {
+  background: #ff4d4d;
+}
+
+.alien-execute-btn:disabled {
+  filter: grayscale(1) opacity(0.5);
+  cursor: not-allowed;
+}
+
+/* Hiệu ứng Scanline chạy dọc nút */
+.scanline {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to bottom, transparent 50%, rgba(255, 0, 0, 0.1) 51%);
+  background-size: 100% 4px;
+  z-index: 1;
+  pointer-events: none;
+  animation: scan 4s linear infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CYBER TITLE (NEON GLOW) - CĂN GIỮA HOÀN HẢO
+   ═══════════════════════════════════════════════════════════════ */
+
+.action-summary-title .cyber-title {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: #ffffff;
+  text-transform: uppercase;
+  /* Bóng đổ tỏa đều 4 hướng, không bị lệch */
+  text-shadow: 
+    0 0 5px rgba(255, 0, 0, 0.8),
+    0 0 10px rgba(255, 0, 0, 0.6),
+    0 0 20px rgba(255, 0, 0, 0.4),
+    0 0 40px rgba(255, 0, 0, 0.2);
+  animation: neonPulse 2s infinite alternate;
+}
+
+@keyframes neonPulse {
+  0% {
+    opacity: 0.85;
+    text-shadow: 
+      0 0 5px rgba(255, 0, 0, 0.5),
+      0 0 10px rgba(255, 0, 0, 0.4),
+      0 0 20px rgba(255, 0, 0, 0.2);
+  }
+  100% {
+    opacity: 1;
+    text-shadow: 
+      0 0 5px rgba(255, 0, 0, 1),
+      0 0 15px rgba(255, 0, 0, 0.8),
+      0 0 30px rgba(255, 0, 0, 0.6),
+      0 0 50px rgba(255, 0, 0, 0.4);
+  }
+}

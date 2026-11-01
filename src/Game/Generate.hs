@@ -9,6 +9,8 @@ module Game.Generate
     , generateObjectives
     , generateAugments
     , pickWeightedResource
+    , generateMonoliths
+    , generateBeacons
     ) where
 
 import qualified Data.Map.Strict as Map
@@ -29,11 +31,13 @@ newGame cfg seed = gsFinal
     (spawn1, g2) = pickOne earth spawnCells g1
     (spawn2, g3) = pickOne earth spawnCells g2
     (whs, g4)    = generateWormholes cfg planets g3
-    (zones, g5)  = generateZones cfg planets whs g4
+    (mons, g4a)  = generateMonoliths cfg planets whs g4
+    (beas, g4b)  = generateBeacons cfg planets whs mons g4a
+    (zones, g5)  = generateZones cfg planets whs g4b
     (objs1, g6)  = generateObjectives cfg spawn1 0 g5
     (objs2, g7)  = generateObjectives cfg spawn2 100 g6
-    p1 = (newPlayer cfg spawn1) { playerObjectives = objs1 }
-    p2 = (newPlayer cfg spawn2) { playerObjectives = objs2 }
+    p1 = (newPlayer cfg spawn1) { playerObjectives = objs1, playerKnownWormholes = whs }
+    p2 = (newPlayer cfg spawn2) { playerObjectives = objs2, playerKnownWormholes = whs }
     gs0 = GameState
         { gsMapWidth  = cfgMapWidth cfg
         , gsMapHeight = cfgMapHeight cfg
@@ -54,6 +58,8 @@ newGame cfg seed = gsFinal
         , gsNextCrateId   = 1
         , gsNextZoneId    = 1 + maximum (0 : Map.keys zones)
         , gsNextObjId     = 1 + maximum (0 : map objId (objs1 ++ objs2))
+        , gsMonoliths     = mons
+        , gsBeacons       = beas
         }
     (crates, nextCrateId, g8) = generateCrates cfg gs0 1
     (firstAugs, g9) = generateAugments g8
@@ -467,3 +473,34 @@ generateAugments g0 = go 0 g0
                 augT = toEnum typeIdx
                 (rest, g3) = go (n + 1) g2
             in (AugmentOffer n augT rarity : rest, g3)
+
+
+
+
+generateMonoliths :: Config -> Map.Map PlanetId Planet -> Map.Map WormholeId Wormhole -> StdGen -> (Map.Map Int Monolith, StdGen)
+generateMonoliths cfg planets whs g0 = go (cfgMonolithCount cfg) 1 Map.empty g0
+  where
+    occupied = map planetPos (Map.elems planets) ++ map wormholePos (Map.elems whs)
+    valid = [ p | p <- allCells cfg, p `notElem` occupied ]
+    go 0 _ acc g = (acc, g)
+    go n cid acc g
+      | null valid = (acc, g)
+      | otherwise =
+          let (i, g1) = randomR (0, length valid - 1) g
+              pos = valid !! i
+              mon = Monolith cid pos
+          in go (n - 1) (cid + 1) (Map.insert cid mon acc) g1
+
+generateBeacons :: Config -> Map.Map PlanetId Planet -> Map.Map WormholeId Wormhole -> Map.Map Int Monolith -> StdGen -> (Map.Map Int Beacon, StdGen)
+generateBeacons cfg planets whs mons g0 = go (cfgBeaconCount cfg) 1 Map.empty g0
+  where
+    occupied = map planetPos (Map.elems planets) ++ map wormholePos (Map.elems whs) ++ map monolithPos (Map.elems mons)
+    valid = [ p | p <- allCells cfg, p `notElem` occupied ]
+    go 0 _ acc g = (acc, g)
+    go n bid acc g
+      | null valid = (acc, g)
+      | otherwise =
+          let (i, g1) = randomR (0, length valid - 1) g
+              pos = valid !! i
+              bea = Beacon bid pos False
+          in go (n - 1) (bid + 1) (Map.insert bid bea acc) g1

@@ -85,6 +85,10 @@
       })),
       crateHere: raw.crate_here || null,
       currentZone: raw.current_zone || null,
+      monoliths: (raw.monoliths || []).map(m => ({ id: m.id, pos: m.pos })),
+      beacons: (raw.beacons || []).map(b => ({ id: b.id, pos: b.pos, active: b.active })),
+      monolithHere: raw.monolith_here || null,
+      beaconHere: raw.beacon_here || null,
       // ▲▲▲ THÊM MỚI ▲▲▲
       turn: {
         activePlayer: activePlayer === "player1" ? "Player 1" : "Player 2", round: raw.round, roundMax: raw.max_rounds,
@@ -135,7 +139,12 @@
       zone_entered: { kind: "ZoneEntered", zoneType: source.zone_type },
       zone_ended_turn: { kind: "ZoneEndedTurn", zoneType: source.zone_type, amount: source.amount },
       objective_claimed: { kind: "ObjectiveClaimed", objectiveId: source.objective_id, reward: source.reward },
-      // ▲▲▲ THÊM MỚI ▲▲▲
+      monolith_result: { kind: "MonolithResult", message: source.message },
+      beacon_activated: { kind: "BeaconActivated", pos: source.pos },      // ▲▲▲ THÊM MỚI ▲▲▲
+
+      use_item: { kind: "ItemUsed" },
+      craft: { kind: "ItemCrafted" },
+      objective_claimed: { kind: "ObjectiveClaimed" }
     };
     const result = kinds[source.type] || { kind: "ActionAccepted" };
     const messages = {
@@ -388,8 +397,10 @@
       OBSERVE: { type: "observe" }, SCAN_AREA: { type: "scan_area" }, SCAN_NEAREST: { type: "scan_nearest" },
       SCAN_OPPONENT: { type: "scan_opponent" }, DEPOSIT: { type: "deposit" }, END_TURN: { type: "end_turn" },
       MINE: { type: "mine" },
-      OPEN_CRATE: { type: "open_crate" },             // ▼ Thêm dòng này
-      CLAIM_OBJECTIVE: { type: "claim_objective", id: Number(args.id) }, // ▼ Và dòng này cho Nhiệm Vụ
+      OPEN_CRATE: { type: "open_crate" },
+      CLAIM_OBJECTIVE: { type: "claim_objective", id: Number(args.id) },
+      INTERACT_MONOLITH: { type: "interact_monolith" },
+      ACTIVATE_BEACON: { type: "activate_beacon" },
       RECHARGE: { type: "recharge", resource: String(args.resource || "Iron").replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`).replace(/^_/, "").toLowerCase(), amount: Number(args.amount) },
     };
     if (action === "MOVE") {

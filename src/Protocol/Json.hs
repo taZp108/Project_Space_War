@@ -286,6 +286,12 @@ instance ToJSON Crate where
         , "spawned_round" .= crateSpawnedRound c
         ]
 
+instance ToJSON Monolith where
+    toJSON m = object ["id" .= monolithId m, "pos" .= monolithPos m]
+
+instance ToJSON Beacon where
+    toJSON b = object ["id" .= beaconId b, "pos" .= beaconPos b, "active" .= beaconActive b]
+
 instance ToJSON ObjectiveDifficulty where
     toJSON ObjEasy   = String "easy"
     toJSON ObjMedium = String "medium"
@@ -406,7 +412,8 @@ instance ToJSON Action where
     toJSON Deposit          = tagged "deposit" []
     toJSON (Recharge res n) = tagged "recharge" ["resource" .= res, "amount" .= n]
     toJSON EndTurn          = tagged "end_turn" []
-
+    toJSON InteractMonolith = tagged "interact_monolith" []
+    toJSON ActivateBeacon   = tagged "activate_beacon" []
 instance FromJSON Action where
     parseJSON = withObject "Action" $ \o -> do
         kind <- o .: "type" :: Parser Text
@@ -426,7 +433,9 @@ instance FromJSON Action where
             "deposit"       -> pure Deposit
             "recharge"      -> Recharge <$> o .: "resource" <*> o .: "amount"
             "end_turn"      -> pure EndTurn
-            "open_crate"      -> pure OpenCrate
+            "interact_monolith" -> pure InteractMonolith
+            "activate_beacon"   -> pure ActivateBeacon
+            "open_crate"        -> pure OpenCrate
             "claim_objective" -> ClaimObjective <$> o .: "id"
             other           -> fail ("unknown action: " ++ T.unpack other)
 
@@ -453,7 +462,8 @@ instance ToJSON ActionResult where
     toJSON (ZoneEntered ty) = tagged "zone_entered" ["zone_type" .= ty]
     toJSON (ZoneEndedTurn ty amount) = tagged "zone_ended_turn" ["zone_type" .= ty, "amount" .= amount]
     toJSON (ObjectiveClaimed oid reward) = tagged "objective_claimed" ["objective_id" .= oid, "reward" .= reward]
-
+    toJSON (MonolithResult msg) = tagged "monolith_result" ["message" .= msg]
+    toJSON (BeaconActivated pos) = tagged "beacon_activated" ["pos" .= pos]
 
 instance ToJSON ActionReport where
     toJSON rep = object
@@ -500,6 +510,10 @@ instance ToJSON PlayerView where
         , "objectives"       .= viewObjectives v
         , "crate_here"       .= viewCrateHere v
         , "current_zone"     .= viewCurrentZone v
+        , "monoliths"        .= viewMonoliths v
+        , "beacons"          .= viewBeacons v
+        , "monolith_here"    .= viewMonolithHere v
+        , "beacon_here"      .= viewBeaconHere v
         ]
 instance ToJSON PlayerFinal where
     toJSON f = object

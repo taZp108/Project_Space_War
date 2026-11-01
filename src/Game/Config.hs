@@ -87,7 +87,12 @@ data Config = Config
     , cfgCrateMinEarthDist      :: Int
     , cfgCrateTrapChance        :: Int   -- ^ % xac suat hom la trap
       -- * Objectives (Phase 4)
-    , cfgObjectiveCount         :: Int   -- ^ so nhiem vu moi nguoi moi vong (3)
+    , cfgObjectiveCount         :: Int
+      -- * Monolith & Beacon (Phase 5)
+    , cfgMonolithCount          :: Int
+    , cfgBeaconCount            :: Int
+    , cfgBeaconRadius           :: Int
+    , cfgMonolithBatteryCost    :: Int
     } deriving (Show, Eq)
 
 -- | Cau hinh mac dinh theo spec v1.0.
@@ -95,7 +100,7 @@ defaultConfig :: Config
 defaultConfig = Config
     { cfgMapWidth         = 100
     , cfgMapHeight        = 100
-    , cfgPlanetCounts     = Map.fromList [(Mining, 40), (Energy, 24), (Rare, 16)]
+    , cfgPlanetCounts     = Map.fromList [(Mining, 80), (Energy, 50), (Rare, 30)]
     , cfgPlanetStock      = Map.fromList
         [ (Mining, Map.fromList [(Iron, 80), (Crystal, 30)])
         , (Energy, Map.fromList [(EnergyCore, 30), (Iron, 20), (Jasper, 10), (Amethyst, 20)])
@@ -182,6 +187,11 @@ defaultConfig = Config
     , cfgCrateTrapChance        = 30    -- tăng 20→30: 30% crate là trap
       -- * Objectives (Phase 4)
     , cfgObjectiveCount         = 3
+      -- * Monolith & Beacon (Phase 5)
+    , cfgMonolithCount          = 8
+    , cfgBeaconCount            = 8
+    , cfgBeaconRadius           = 15
+    , cfgMonolithBatteryCost    = 20
     }
 
 -- | Cau hinh v2: AP toi da tang len 10 de cho phep di chuyen xa hon trong 1 luot.

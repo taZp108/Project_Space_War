@@ -19,7 +19,7 @@ import qualified Data.Map.Strict as Map
 import System.Random (StdGen, randomR)
 
 import Game.Config
-import Game.Generate (pickDistinct, pickWeightedResource)
+import Game.Generate (pickDistinct, pickWeightedResource, generateAugments)
 import Game.State
 import Game.Types
 import Game.World
@@ -45,6 +45,8 @@ performAction cfg pid action gs = case action of
     EndTurn        -> Right (gs, report TurnEnded)
     OpenCrate        -> doOpenCrate cfg pid gs
     ClaimObjective i -> doClaimObjective cfg pid i gs
+    InteractMonolith -> doInteractMonolith cfg pid gs
+    ActivateBeacon   -> doActivateBeacon cfg pid gs
 
 -- | Bao cao khong kem thong bao cho doi thu.
 report :: ActionResult -> ActionReport
@@ -808,3 +810,82 @@ isObjectiveDone _cfg action obj tr currentScore currentPos gs = case objType obj
     isSq [DirUp, DirRight, DirDown, DirLeft] = True
     isSq _ = False
     windows n xs = if length xs < n then [] else take n xs : windows n (drop 1 xs)
+
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- PHASE 5: MONOLITH & BEACON
+-- ═══════════════════════════════════════════════════════════════════════════
+
+doInteractMonolith :: Config -> PlayerId -> GameState -> Either GameError (GameState, ActionReport)
+doInteractMonolith cfg pid gs = do
+    let player = getPlayer pid gs
+    mon <- maybe (Left NotOnMonolith) Right (find ((== playerPos player) . monolithPos) (Map.elems (gsMonoliths gs)))
+    when (playerBattery player < cfgMonolithBatteryCost cfg) (Left NotEnoughBattery)
+    
+    -- Tru pin
+    let p0 = player { playerBattery = playerBattery player - cfgMonolithBatteryCost cfg }
+        (roll, g1) = randomR (1, 100 :: Int) (gsRng gs)
+        gs1 = gs { gsRng = g1, gsMonoliths = Map.delete (monolithId mon) (gsMonoliths gs) } -- Bia da bien mat
+        
+        -- 40% Tot, 60% Xau
+        (p1, resultMsg, gFinal) = if roll <= 40
+            then
+                let (rewardRoll, g2) = randomR (1, 100 :: Int) g1
+                in if rewardRoll <= 50 
+                   then 
+                        let (augs, g3) = generateAugments g2
+                            selected = head augs -- Lay augment dau tien
+                            p' = p0 { playerAugments = selected : playerAugments p0 }
+                        in (p', "Nhan 1 Augment: " ++ show (augType selected) ++ " (" ++ show (augRarity selected) ++ ")", g3)
+                   else if rewardRoll <= 80
+                   then
+                        let p' = p0 { playerCargo = Map.insertWith (+) PinkDiamond 1 (playerCargo p0) }
+                        in (p', "Nhan 1 Kim Cuong Hong (Pink Diamond).", g2)
+                   else
+                        let p' = p0 { playerCargo = Map.insertWith (+) Topaz 5 (playerCargo p0) }
+                        in (p', "Nhan 5 Quang hiem (Topaz).", g2)
+            else
+                let (punishRoll, g2) = randomR (1, 100 :: Int) g1
+                in if punishRoll <= 33
+                   then
+                        let p' = p0 { playerBattery = max 0 (playerBattery p0 - 20) }
+                        in (p', "Bi nguyen rua: Mat them 20 Pin.", g2)
+                   else if punishRoll <= 66
+                   then
+                        case invActives (playerInventory p0) of
+                            [] -> (p0, "Bi nguyen rua: Mat 1 vat pham chu dong (Tui do trong).", g2)
+                            (item:_) -> 
+                                let p' = p0 { playerInventory = (playerInventory p0) { invActives = removeFirst item (invActives (playerInventory p0)) } }
+                                in (p', "Bi nguyen rua: Mat 1 vat pham chu dong.", g2)
+                   else
+                        let p' = p0 { playerPos = gsEarth gs }
+                        in (p', "Bi nguyen rua: Bi dich chuyen ve Trai Dat.", g2)
+                        
+        finalGs = setPlayer pid p1 (gs1 { gsRng = gFinal })
+    Right (finalGs, report (MonolithResult resultMsg))
+
+doActivateBeacon :: Config -> PlayerId -> GameState -> Either GameError (GameState, ActionReport)
+doActivateBeacon cfg pid gs = do
+    let player = getPlayer pid gs
+    bea <- maybe (Left NotOnBeacon) Right (find ((== playerPos player) . beaconPos) (Map.elems (gsBeacons gs)))
+    when (beaconActive bea) (Left BeaconAlreadyActivated)
+    
+    paid <- payCost (Cost 1 0) player
+    let radius = cfgBeaconRadius cfg
+        reveal pl = withinRadius radius (beaconPos bea) (planetPos pl)
+        revealWh wh = withinRadius radius (beaconPos bea) (wormholePos wh)
+        
+        -- Cập nhật known planets
+        newKnownPlanets p = foldr (\pl m -> Map.insert (planetId pl) (toKnown pl) m) (playerKnown p) (filter reveal (Map.elems (gsPlanets gs)))
+        
+        -- Cập nhật known wormholes
+        newKnownWh p = foldr (\wh m -> Map.insert (wormholeId wh) wh m) (playerKnownWormholes p) (filter revealWh (Map.elems (gsWormholes gs)))
+        
+        p1 = paid { playerKnown = newKnownPlanets paid, playerKnownWormholes = newKnownWh paid }
+        p2 = let p2' = getPlayer (otherPlayer pid) gs in p2' { playerKnown = newKnownPlanets p2', playerKnownWormholes = newKnownWh p2' }
+        
+        newBea = bea { beaconActive = True }
+        gs1 = setPlayer (otherPlayer pid) p2 (setPlayer pid p1 (gs { gsBeacons = Map.insert (beaconId bea) newBea (gsBeacons gs) }))
+    Right (gs1, report (BeaconActivated (beaconPos bea)))
+
