@@ -1,0 +1,313 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | Sinh map, hanh tinh va vi tri xuat phat tu mot seed ngau nhien.</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.Generate.html"><span class="hs-identifier">Game.Generate</span></a></span><span>
+</span><span id="line-3"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Game.Generate.html#newGame"><span class="hs-identifier">newGame</span></a></span><span>
+</span><span id="line-4"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Generate.html#generatePlanets"><span class="hs-identifier">generatePlanets</span></a></span><span>
+</span><span id="line-5"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Generate.html#pickDistinct"><span class="hs-identifier">pickDistinct</span></a></span><span>
+</span><span id="line-6"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Random</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">StdGen</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">mkStdGen</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">randomR</span></span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Config.html"><span class="hs-identifier">Game.Config</span></a></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Types.html"><span class="hs-identifier">Game.Types</span></a></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.World.html"><span class="hs-identifier">Game.World</span></a></span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- | Tao mot tran moi (da du hai nguoi, Player1 di truoc, vong 1).</span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- Cung cau hinh va cung seed luon ra cung ket qua.</span><span>
+</span><span id="line-17"></span><span class="annot"><a href="Game.Generate.html#newGame"><span class="hs-identifier hs-type">newGame</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span>
+</span><span id="line-18"></span><span id="newGame"><span class="annot"><span class="annottext">newGame :: Config -&gt; PlanetId -&gt; GameState
+</span><a href="Game.Generate.html#newGame"><span class="hs-identifier hs-var hs-var">newGame</span></a></span></span><span> </span><span id="local-6989586621679111012"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111012"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111013"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111013"><span class="hs-identifier hs-var">seed</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">gsMapWidth :: PlanetId
+</span><a href="Game.Types.html#gsMapWidth"><span class="hs-identifier hs-var">gsMapWidth</span></a></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgMapWidth"><span class="hs-identifier hs-var">cfgMapWidth</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111012"><span class="hs-identifier hs-var">cfg</span></a></span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">gsMapHeight :: PlanetId
+</span><a href="Game.Types.html#gsMapHeight"><span class="hs-identifier hs-var">gsMapHeight</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgMapHeight"><span class="hs-identifier hs-var">cfgMapHeight</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111012"><span class="hs-identifier hs-var">cfg</span></a></span><span>
+</span><span id="line-21"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">gsEarth :: Pos
+</span><a href="Game.Types.html#gsEarth"><span class="hs-identifier hs-var">gsEarth</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111020"><span class="hs-identifier hs-var">earth</span></a></span><span>
+</span><span id="line-22"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">gsPlanets :: Map PlanetId Planet
+</span><a href="Game.Types.html#gsPlanets"><span class="hs-identifier hs-var">gsPlanets</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Map PlanetId Planet
+</span><a href="#local-6989586621679111022"><span class="hs-identifier hs-var">planets</span></a></span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">gsPlayer1 :: Player
+</span><a href="Game.Types.html#gsPlayer1"><span class="hs-identifier hs-var">gsPlayer1</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Pos -&gt; Player
+</span><a href="Game.Generate.html#newPlayer"><span class="hs-identifier hs-var">newPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111012"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111025"><span class="hs-identifier hs-var">spawn1</span></a></span><span>
+</span><span id="line-24"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">gsPlayer2 :: Player
+</span><a href="Game.Types.html#gsPlayer2"><span class="hs-identifier hs-var">gsPlayer2</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Pos -&gt; Player
+</span><a href="Game.Generate.html#newPlayer"><span class="hs-identifier hs-var">newPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111012"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111027"><span class="hs-identifier hs-var">spawn2</span></a></span><span>
+</span><span id="line-25"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">gsCurrent :: PlayerId
+</span><a href="Game.Types.html#gsCurrent"><span class="hs-identifier hs-var">gsCurrent</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player1"><span class="hs-identifier hs-var">Player1</span></a></span><span>
+</span><span id="line-26"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">gsRound :: PlanetId
+</span><a href="Game.Types.html#gsRound"><span class="hs-identifier hs-var">gsRound</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><span class="hs-number">1</span></span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">gsPhase :: GamePhase
+</span><a href="Game.Types.html#gsPhase"><span class="hs-identifier hs-var">gsPhase</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GamePhase
+</span><a href="Game.Types.html#InProgress"><span class="hs-identifier hs-var">InProgress</span></a></span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">gsRng :: StdGen
+</span><a href="Game.Types.html#gsRng"><span class="hs-identifier hs-var">gsRng</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111034"><span class="hs-identifier hs-var">g3</span></a></span><span>
+</span><span id="line-29"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-31"></span><span>    </span><span id="local-6989586621679111020"><span class="annot"><span class="annottext">earth :: Pos
+</span><a href="#local-6989586621679111020"><span class="hs-identifier hs-var hs-var">earth</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Pos
+</span><a href="Game.Config.html#earthPosition"><span class="hs-identifier hs-var">earthPosition</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111012"><span class="hs-identifier hs-var">cfg</span></a></span><span>
+</span><span id="line-32"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679111022"><span class="annot"><span class="annottext">Map PlanetId Planet
+</span><a href="#local-6989586621679111022"><span class="hs-identifier hs-var">planets</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111036"><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111036"><span class="hs-identifier hs-var">g1</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; StdGen -&gt; (Map PlanetId Planet, StdGen)
+</span><a href="Game.Generate.html#generatePlanets"><span class="hs-identifier hs-var">generatePlanets</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111012"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlanetId -&gt; StdGen
+</span><span class="hs-identifier hs-var">mkStdGen</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111013"><span class="hs-identifier hs-var">seed</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span>    </span><span id="local-6989586621679111037"><span class="annot"><span class="annottext">spawnCells :: [Pos]
+</span><a href="#local-6989586621679111037"><span class="hs-identifier hs-var hs-var">spawnCells</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Pos -&gt; PlanetId -&gt; PlanetId -&gt; [Pos]
+</span><a href="Game.World.html#ringCells"><span class="hs-identifier hs-var">ringCells</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111012"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111020"><span class="hs-identifier hs-var">earth</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgSpawnMinDist"><span class="hs-identifier hs-var">cfgSpawnMinDist</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111012"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgSpawnMaxDist"><span class="hs-identifier hs-var">cfgSpawnMaxDist</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111012"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679111025"><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111025"><span class="hs-identifier hs-var">spawn1</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111041"><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111041"><span class="hs-identifier hs-var">g2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Pos -&gt; [Pos] -&gt; StdGen -&gt; (Pos, StdGen)
+forall a. a -&gt; [a] -&gt; StdGen -&gt; (a, StdGen)
+</span><a href="Game.Generate.html#pickOne"><span class="hs-identifier hs-var">pickOne</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111020"><span class="hs-identifier hs-var">earth</span></a></span><span> </span><span class="annot"><span class="annottext">[Pos]
+</span><a href="#local-6989586621679111037"><span class="hs-identifier hs-var">spawnCells</span></a></span><span> </span><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111036"><span class="hs-identifier hs-var">g1</span></a></span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679111027"><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111027"><span class="hs-identifier hs-var">spawn2</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111034"><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111034"><span class="hs-identifier hs-var">g3</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Pos -&gt; [Pos] -&gt; StdGen -&gt; (Pos, StdGen)
+forall a. a -&gt; [a] -&gt; StdGen -&gt; (a, StdGen)
+</span><a href="Game.Generate.html#pickOne"><span class="hs-identifier hs-var">pickOne</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111020"><span class="hs-identifier hs-var">earth</span></a></span><span> </span><span class="annot"><span class="annottext">[Pos]
+</span><a href="#local-6989586621679111037"><span class="hs-identifier hs-var">spawnCells</span></a></span><span> </span><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111041"><span class="hs-identifier hs-var">g2</span></a></span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span class="annot"><span class="hs-comment">-- | Nguoi choi moi: day battery, day AP, kho trong, chua kham pha gi.</span></span><span>
+</span><span id="line-38"></span><span class="annot"><a href="Game.Generate.html#newPlayer"><span class="hs-identifier hs-type">newPlayer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span>
+</span><span id="line-39"></span><span id="newPlayer"><span class="annot"><span class="annottext">newPlayer :: Config -&gt; Pos -&gt; Player
+</span><a href="Game.Generate.html#newPlayer"><span class="hs-identifier hs-var hs-var">newPlayer</span></a></span></span><span> </span><span id="local-6989586621679111043"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111043"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111044"><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111044"><span class="hs-identifier hs-var">pos</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Game.Types.html#Player"><span class="hs-identifier hs-type">Player</span></a></span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">playerPos :: Pos
+</span><a href="Game.Types.html#playerPos"><span class="hs-identifier hs-var">playerPos</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111044"><span class="hs-identifier hs-var">pos</span></a></span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">playerBattery :: PlanetId
+</span><a href="Game.Types.html#playerBattery"><span class="hs-identifier hs-var">playerBattery</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgBatteryMax"><span class="hs-identifier hs-var">cfgBatteryMax</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111043"><span class="hs-identifier hs-var">cfg</span></a></span><span>
+</span><span id="line-42"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">playerAP :: PlanetId
+</span><a href="Game.Types.html#playerAP"><span class="hs-identifier hs-var">playerAP</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgApMax"><span class="hs-identifier hs-var">cfgApMax</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111043"><span class="hs-identifier hs-var">cfg</span></a></span><span>
+</span><span id="line-43"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">playerCargo :: Resources
+</span><a href="Game.Types.html#playerCargo"><span class="hs-identifier hs-var">playerCargo</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Resources
+forall k a. Map k a
+</span><span class="hs-identifier hs-var">Map.empty</span></span><span>
+</span><span id="line-44"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">playerStorage :: Resources
+</span><a href="Game.Types.html#playerStorage"><span class="hs-identifier hs-var">playerStorage</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Resources
+forall k a. Map k a
+</span><span class="hs-identifier hs-var">Map.empty</span></span><span>
+</span><span id="line-45"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">playerKnown :: Map PlanetId KnownPlanet
+</span><a href="Game.Types.html#playerKnown"><span class="hs-identifier hs-var">playerKnown</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Map PlanetId KnownPlanet
+forall k a. Map k a
+</span><span class="hs-identifier hs-var">Map.empty</span></span><span>
+</span><span id="line-46"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- | Sinh cac hanh tinh: dung so luong tung loai, o khac nhau,</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- khong nam gan Earth hon 'cfgPlanetMinEarthDist'.</span><span>
+</span><span id="line-50"></span><span class="annot"><a href="Game.Generate.html#generatePlanets"><span class="hs-identifier hs-type">generatePlanets</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StdGen</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Map.Map</span></span><span> </span><span class="annot"><a href="Game.Types.html#PlanetId"><span class="hs-identifier hs-type">PlanetId</span></a></span><span> </span><span class="annot"><a href="Game.Types.html#Planet"><span class="hs-identifier hs-type">Planet</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StdGen</span></span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span id="generatePlanets"><span class="annot"><span class="annottext">generatePlanets :: Config -&gt; StdGen -&gt; (Map PlanetId Planet, StdGen)
+</span><a href="Game.Generate.html#generatePlanets"><span class="hs-identifier hs-var hs-var">generatePlanets</span></a></span></span><span> </span><span id="local-6989586621679111056"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111056"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111057"><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111057"><span class="hs-identifier hs-var">g0</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[(PlanetId, Planet)] -&gt; Map PlanetId Planet
+forall k a. Ord k =&gt; [(k, a)] -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.fromList</span></span><span> </span><span class="hs-special">[</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Planet -&gt; PlanetId
+</span><a href="Game.Types.html#planetId"><span class="hs-identifier hs-var">planetId</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111060"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111060"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679111060"><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679111060"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[Planet]
+</span><a href="#local-6989586621679111061"><span class="hs-identifier hs-var">planets</span></a></span><span> </span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111062"><span class="hs-identifier hs-var">g2</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-53"></span><span>    </span><span id="local-6989586621679111063"><span class="annot"><span class="annottext">earth :: Pos
+</span><a href="#local-6989586621679111063"><span class="hs-identifier hs-var hs-var">earth</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; Pos
+</span><a href="Game.Config.html#earthPosition"><span class="hs-identifier hs-var">earthPosition</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111056"><span class="hs-identifier hs-var">cfg</span></a></span><span>
+</span><span id="line-54"></span><span>    </span><span id="local-6989586621679111066"><span class="annot"><span class="annottext">typeList :: [PlanetType]
+</span><a href="#local-6989586621679111066"><span class="hs-identifier hs-var hs-var">typeList</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[[PlanetType]] -&gt; [PlanetType]
+forall (t :: * -&gt; *) a. Foldable t =&gt; t [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">concat</span></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetType -&gt; [PlanetType]
+forall a. PlanetId -&gt; a -&gt; [a]
+</span><span class="hs-identifier hs-var">replicate</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111069"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetType
+</span><a href="#local-6989586621679111070"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679111070"><span class="annot"><span class="annottext">PlanetType
+</span><a href="#local-6989586621679111070"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111069"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111069"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Map PlanetType PlanetId -&gt; [(PlanetType, PlanetId)]
+forall k a. Map k a -&gt; [(k, a)]
+</span><span class="hs-identifier hs-var">Map.toList</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Map PlanetType PlanetId
+</span><a href="Game.Config.html#cfgPlanetCounts"><span class="hs-identifier hs-var">cfgPlanetCounts</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111056"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-55"></span><span>    </span><span id="local-6989586621679111074"><span class="annot"><span class="annottext">candidates :: [Pos]
+</span><a href="#local-6989586621679111074"><span class="hs-identifier hs-var hs-var">candidates</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111075"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679111075"><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111075"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Config -&gt; [Pos]
+</span><a href="Game.World.html#allCells"><span class="hs-identifier hs-var">allCells</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111056"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Pos -&gt; Pos -&gt; PlanetId
+</span><a href="Game.World.html#distance"><span class="hs-identifier hs-var">distance</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111075"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111063"><span class="hs-identifier hs-var">earth</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Config -&gt; PlanetId
+</span><a href="Game.Config.html#cfgPlanetMinEarthDist"><span class="hs-identifier hs-var">cfgPlanetMinEarthDist</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111056"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-56"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679111079"><span class="annot"><span class="annottext">[PlanetType]
+</span><a href="#local-6989586621679111079"><span class="hs-identifier hs-var">shuffledTypes</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111080"><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111080"><span class="hs-identifier hs-var">g1</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; [PlanetType] -&gt; StdGen -&gt; ([PlanetType], StdGen)
+forall a. PlanetId -&gt; [a] -&gt; StdGen -&gt; ([a], StdGen)
+</span><a href="Game.Generate.html#pickDistinct"><span class="hs-identifier hs-var">pickDistinct</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[PlanetType] -&gt; PlanetId
+forall a. [a] -&gt; PlanetId
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; PlanetId
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[PlanetType]
+</span><a href="#local-6989586621679111066"><span class="hs-identifier hs-var">typeList</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[PlanetType]
+</span><a href="#local-6989586621679111066"><span class="hs-identifier hs-var">typeList</span></a></span><span> </span><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111057"><span class="hs-identifier hs-var">g0</span></a></span><span>
+</span><span id="line-57"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679111083"><span class="annot"><span class="annottext">[Pos]
+</span><a href="#local-6989586621679111083"><span class="hs-identifier hs-var">cells</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111062"><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111062"><span class="hs-identifier hs-var">g2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; [Pos] -&gt; StdGen -&gt; ([Pos], StdGen)
+forall a. PlanetId -&gt; [a] -&gt; StdGen -&gt; ([a], StdGen)
+</span><a href="Game.Generate.html#pickDistinct"><span class="hs-identifier hs-var">pickDistinct</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[PlanetType] -&gt; PlanetId
+forall a. [a] -&gt; PlanetId
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; PlanetId
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[PlanetType]
+</span><a href="#local-6989586621679111066"><span class="hs-identifier hs-var">typeList</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Pos]
+</span><a href="#local-6989586621679111074"><span class="hs-identifier hs-var">candidates</span></a></span><span> </span><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111080"><span class="hs-identifier hs-var">g1</span></a></span><span>
+</span><span id="line-58"></span><span>    </span><span id="local-6989586621679111061"><span class="annot"><span class="annottext">planets :: [Planet]
+</span><a href="#local-6989586621679111061"><span class="hs-identifier hs-var hs-var">planets</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-59"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; Pos -&gt; PlanetType -&gt; Resources -&gt; Planet
+</span><a href="Game.Types.html#Planet"><span class="hs-identifier hs-var">Planet</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111091"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111092"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetType
+</span><a href="#local-6989586621679111093"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Resources -&gt; PlanetType -&gt; Map PlanetType Resources -&gt; Resources
+forall k a. Ord k =&gt; a -&gt; k -&gt; Map k a -&gt; a
+</span><span class="hs-identifier hs-var">Map.findWithDefault</span></span><span> </span><span class="annot"><span class="annottext">Resources
+forall k a. Map k a
+</span><span class="hs-identifier hs-var">Map.empty</span></span><span> </span><span class="annot"><span class="annottext">PlanetType
+</span><a href="#local-6989586621679111093"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Map PlanetType Resources
+</span><a href="Game.Config.html#cfgPlanetStock"><span class="hs-identifier hs-var">cfgPlanetStock</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111056"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-60"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679111091"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111091"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111092"><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679111092"><span class="hs-identifier hs-var">c</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111093"><span class="annot"><span class="annottext">PlanetType
+</span><a href="#local-6989586621679111093"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[PlanetId]
+-&gt; [Pos] -&gt; [PlanetType] -&gt; [(PlanetId, Pos, PlanetType)]
+forall a b c. [a] -&gt; [b] -&gt; [c] -&gt; [(a, b, c)]
+</span><span class="hs-identifier hs-var">zip3</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">PlanetId
+</span><span class="hs-number">1</span></span><span> </span><span class="hs-glyph">..</span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">[Pos]
+</span><a href="#local-6989586621679111083"><span class="hs-identifier hs-var">cells</span></a></span><span> </span><span class="annot"><span class="annottext">[PlanetType]
+</span><a href="#local-6989586621679111079"><span class="hs-identifier hs-var">shuffledTypes</span></a></span><span>
+</span><span id="line-61"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span class="hs-comment">-- | Boc ngau nhien @k@ phan tu khac nhau (khong lap) tu danh sach.</span><span>
+</span><span id="line-64"></span><span class="hs-comment">-- Neu @k@ bang do dai danh sach thi ket qua la mot hoan vi ngau nhien.</span><span>
+</span><span id="line-65"></span><span id="local-6989586621679110985"><span class="annot"><a href="Game.Generate.html#pickDistinct"><span class="hs-identifier hs-type">pickDistinct</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="#local-6989586621679110985"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StdGen</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><a href="#local-6989586621679110985"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StdGen</span></span><span class="hs-special">)</span></span><span>
+</span><span id="line-66"></span><span id="pickDistinct"><span class="annot"><span class="annottext">pickDistinct :: forall a. PlanetId -&gt; [a] -&gt; StdGen -&gt; ([a], StdGen)
+</span><a href="Game.Generate.html#pickDistinct"><span class="hs-identifier hs-var hs-var">pickDistinct</span></a></span></span><span> </span><span id="local-6989586621679111100"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111100"><span class="hs-identifier hs-var">k</span></a></span></span><span> </span><span id="local-6989586621679111101"><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679111101"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679111102"><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111102"><span class="hs-identifier hs-var">g</span></a></span></span><span>
+</span><span id="line-67"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111100"><span class="hs-identifier hs-var">k</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">||</span></span><span> </span><span class="annot"><span class="annottext">[a] -&gt; Bool
+forall a. [a] -&gt; Bool
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Bool
+</span><span class="hs-identifier hs-var">null</span></span><span> </span><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679111101"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111102"><span class="hs-identifier hs-var">g</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-68"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-69"></span><span>        </span><span class="hs-keyword">let</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679111114"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111114"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111115"><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111115"><span class="hs-identifier hs-var">g'</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(PlanetId, PlanetId) -&gt; StdGen -&gt; (PlanetId, StdGen)
+forall g. RandomGen g =&gt; (PlanetId, PlanetId) -&gt; g -&gt; (PlanetId, g)
+forall a g. (Random a, RandomGen g) =&gt; (a, a) -&gt; g -&gt; (a, g)
+</span><span class="hs-identifier hs-var">randomR</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlanetId
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[a] -&gt; PlanetId
+forall a. [a] -&gt; PlanetId
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; PlanetId
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679111101"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; PlanetId
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111102"><span class="hs-identifier hs-var">g</span></a></span><span>
+</span><span id="line-70"></span><span>        </span><span class="hs-keyword">in</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; [a] -&gt; ([a], [a])
+forall a. PlanetId -&gt; [a] -&gt; ([a], [a])
+</span><span class="hs-identifier hs-var">splitAt</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111114"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679111101"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-71"></span><span>            </span><span class="hs-special">(</span><span id="local-6989586621679111117"><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679111117"><span class="hs-identifier hs-var">before</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111118"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679111118"><span class="hs-identifier hs-var">chosen</span></a></span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span id="local-6989586621679111119"><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679111119"><span class="hs-identifier hs-var">after</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-72"></span><span>                </span><span class="hs-keyword">let</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679111122"><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679111122"><span class="hs-identifier hs-var">rest</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111123"><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111123"><span class="hs-identifier hs-var">g''</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; [a] -&gt; StdGen -&gt; ([a], StdGen)
+forall a. PlanetId -&gt; [a] -&gt; StdGen -&gt; ([a], StdGen)
+</span><a href="Game.Generate.html#pickDistinct"><span class="hs-identifier hs-var">pickDistinct</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679111100"><span class="hs-identifier hs-var">k</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; PlanetId -&gt; PlanetId
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679111117"><span class="hs-identifier hs-var">before</span></a></span><span> </span><span class="annot"><span class="annottext">[a] -&gt; [a] -&gt; [a]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679111119"><span class="hs-identifier hs-var">after</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111115"><span class="hs-identifier hs-var">g'</span></a></span><span>
+</span><span id="line-73"></span><span>                </span><span class="hs-keyword">in</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679111118"><span class="hs-identifier hs-var">chosen</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; [a] -&gt; [a]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span> </span><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679111122"><span class="hs-identifier hs-var">rest</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111123"><span class="hs-identifier hs-var">g''</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[a]
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111115"><span class="hs-identifier hs-var">g'</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span class="annot"><span class="hs-comment">-- | Boc ngau nhien mot phan tu; danh sach rong thi tra ve gia tri mac dinh.</span></span><span>
+</span><span id="line-77"></span><span id="local-6989586621679110971"><span class="annot"><a href="Game.Generate.html#pickOne"><span class="hs-identifier hs-type">pickOne</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679110971"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="#local-6989586621679110971"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StdGen</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679110971"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StdGen</span></span><span class="hs-special">)</span></span><span>
+</span><span id="line-78"></span><span id="pickOne"><span class="annot"><span class="annottext">pickOne :: forall a. a -&gt; [a] -&gt; StdGen -&gt; (a, StdGen)
+</span><a href="Game.Generate.html#pickOne"><span class="hs-identifier hs-var hs-var">pickOne</span></a></span></span><span> </span><span id="local-6989586621679111124"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679111124"><span class="hs-identifier hs-var">def</span></a></span></span><span> </span><span id="local-6989586621679111125"><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679111125"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span id="local-6989586621679111126"><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111126"><span class="hs-identifier hs-var">g</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PlanetId -&gt; [a] -&gt; StdGen -&gt; ([a], StdGen)
+forall a. PlanetId -&gt; [a] -&gt; StdGen -&gt; ([a], StdGen)
+</span><a href="Game.Generate.html#pickDistinct"><span class="hs-identifier hs-var">pickDistinct</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679111125"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111126"><span class="hs-identifier hs-var">g</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-79"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679111127"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679111127"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span class="annot"><span class="annottext">[a]
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111128"><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111128"><span class="hs-identifier hs-var">g'</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679111127"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111128"><span class="hs-identifier hs-var">g'</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-80"></span><span>    </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111129"><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111129"><span class="hs-identifier hs-var">g'</span></a></span></span><span class="hs-special">)</span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679111124"><span class="hs-identifier hs-var">def</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">StdGen
+</span><a href="#local-6989586621679111129"><span class="hs-identifier hs-var">g'</span></a></span><span class="hs-special">)</span></pre></body></html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LINE 1 &quot;libraries\\Win32\\System\\Win32\\Security.hsc&quot; #-}</span><span>
+</span><span id="line-1"></span><span class="hs-pragma">{-# OPTIONS_GHC -w #-}</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- The above warning suppression flag is a temporary kludge.</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- While working on this module you are encouraged to remove it and fix</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- any warnings in the module. See</span><span>
+</span><span id="line-5"></span><span class="hs-comment">--     https://ghc.haskell.org/trac/ghc/wiki/Commentary/CodingStyle#Warnings</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- for details</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-pragma">{-# LANGUAGE Trustworthy #-}</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-10"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- Module      :  System.Win32.Security</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- Copyright   :  (c) Simon Marlow 2007</span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- License     :  BSD-style (see the file LICENSE)</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--</span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- Maintainer  :  Simon Marlow</span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- Stability   :  provisional</span><span>
+</span><span id="line-17"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-18"></span><span class="hs-comment">--</span><span>
+</span><span id="line-19"></span><span class="hs-comment">-- FFI-bindings to interact with Win32 Security</span><span>
+</span><span id="line-20"></span><span class="hs-comment">--</span><span>
+</span><span id="line-21"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">System.Win32.Security</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-24"></span><span>        </span><span class="hs-comment">-- * Types</span><span>
+</span><span id="line-25"></span><span>        </span><span class="hs-identifier">SID</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">PSID</span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>        </span><span class="hs-identifier">ACL</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">PACL</span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>        </span><span class="hs-identifier">SECURITY_DESCRIPTOR</span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span>        </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>        </span><span class="hs-identifier">se_OWNER_DEFAULTED</span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>        </span><span class="hs-identifier">se_GROUP_DEFAULTED</span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>        </span><span class="hs-identifier">se_DACL_PRESENT</span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>        </span><span class="hs-identifier">se_DACL_DEFAULTED</span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>        </span><span class="hs-identifier">se_SACL_PRESENT</span><span class="hs-special">,</span><span>
+</span><span id="line-35"></span><span>        </span><span class="hs-identifier">se_SACL_DEFAULTED</span><span class="hs-special">,</span><span>
+</span><span id="line-36"></span><span>        </span><span class="hs-identifier">se_DACL_AUTO_INHERIT_REQ</span><span class="hs-special">,</span><span>
+</span><span id="line-37"></span><span>        </span><span class="hs-identifier">se_SACL_AUTO_INHERIT_REQ</span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>        </span><span class="hs-identifier">se_DACL_AUTO_INHERITED</span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>        </span><span class="hs-identifier">se_SACL_AUTO_INHERITED</span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>        </span><span class="hs-identifier">se_DACL_PROTECTED</span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>        </span><span class="hs-identifier">se_SACL_PROTECTED</span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>        </span><span class="hs-identifier">se_SELF_RELATIVE</span><span class="hs-special">,</span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span>        </span><span class="hs-identifier">SECURITY_INFORMATION</span><span class="hs-special">,</span><span>
+</span><span id="line-45"></span><span>        </span><span class="hs-identifier">oWNER_SECURITY_INFORMATION</span><span class="hs-special">,</span><span>
+</span><span id="line-46"></span><span>        </span><span class="hs-identifier">gROUP_SECURITY_INFORMATION</span><span class="hs-special">,</span><span>
+</span><span id="line-47"></span><span>        </span><span class="hs-identifier">dACL_SECURITY_INFORMATION</span><span class="hs-special">,</span><span>
+</span><span id="line-48"></span><span>        </span><span class="hs-identifier">sACL_SECURITY_INFORMATION</span><span class="hs-special">,</span><span>
+</span><span id="line-49"></span><span>
+</span><span id="line-50"></span><span>        </span><span class="hs-comment">-- * Functions</span><span>
+</span><span id="line-51"></span><span>        </span><span class="hs-identifier">getFileSecurity</span><span class="hs-special">,</span><span>
+</span><span id="line-52"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Foreign</span><span>
+</span><span id="line-55"></span><span class="hs-comment">-- import Foreign.C</span><span>
+</span><span id="line-56"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.Win32.Types</span><span class="hs-cpp">
+
+#include &quot;windows_cconv.h&quot;
+</span><span>
+</span><span id="line-60"></span><span>
+</span><span id="line-61"></span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- --------------------------------------------------------------------------</span><span>
+</span><span id="line-63"></span><span class="hs-comment">-- Security Descriptors</span><span>
+</span><span id="line-64"></span><span>
+</span><span id="line-65"></span><span class="hs-keyword">newtype</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR</span><span>
+</span><span id="line-66"></span><span class="hs-keyword">type</span><span> </span><span id="SECURITY_DESCRIPTOR"></span><span class="hs-identifier">PSECURITY_DESCRIPTOR</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">Ptr</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR</span><span>
+</span><span id="line-67"></span><span id="PSECURITY_DESCRIPTOR"></span><span class="hs-keyword">newtype</span><span> </span><span class="hs-identifier">SecurityDescriptor</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">SecurityDescriptor</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">ForeignPtr</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR</span><span class="hs-special">)</span><span>
+</span><span id="line-68"></span><span>
+</span><span id="line-69"></span><span class="hs-keyword">type</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">WORD</span><span>
+</span><span id="line-70"></span><span id="SECURITY_DESCRIPTOR_CONTROL"></span><span class="hs-identifier">se_OWNER_DEFAULTED</span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span>
+</span><span id="line-71"></span><span class="annot"><a href="System.Win32.Security.html#se_OWNER_DEFAULTED"><span class="hs-identifier hs-type">se_OWNER_DEFAULTED</span></a></span><span>        </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">1</span><span>
+</span><span id="line-72"></span><span id="se_OWNER_DEFAULTED"><span class="annot"><span class="annottext">se_OWNER_DEFAULTED :: SECURITY_DESCRIPTOR_CONTROL
+</span><a href="System.Win32.Security.html#se_OWNER_DEFAULTED"><span class="hs-identifier hs-var hs-var">se_GROUP_DEFAULTED</span></a></span></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span>
+</span><span id="line-73"></span><span class="annot"><a href="System.Win32.Security.html#se_GROUP_DEFAULTED"><span class="hs-identifier hs-type">se_GROUP_DEFAULTED</span></a></span><span>        </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">2</span><span>
+</span><span id="line-74"></span><span id="se_GROUP_DEFAULTED"><span class="hs-identifier">se_DACL_PRESENT</span></span><span>           </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span>
+</span><span id="line-75"></span><span class="annot"><a href="System.Win32.Security.html#se_DACL_PRESENT"><span class="hs-identifier hs-type">se_DACL_PRESENT</span></a></span><span>           </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">4</span><span>
+</span><span id="line-76"></span><span id="se_DACL_PRESENT"></span><span class="hs-identifier">se_DACL_DEFAULTED</span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span>
+</span><span id="line-77"></span><span class="annot"><a href="System.Win32.Security.html#se_DACL_DEFAULTED"><span class="hs-identifier hs-type">se_DACL_DEFAULTED</span></a></span><span>         </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">8</span><span>
+</span><span id="line-78"></span><span id="se_DACL_DEFAULTED"><span class="hs-identifier">se_SACL_PRESENT</span></span><span>           </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span>
+</span><span id="line-79"></span><span class="annot"><a href="System.Win32.Security.html#se_SACL_PRESENT"><span class="hs-identifier hs-type">se_SACL_PRESENT</span></a></span><span>           </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">16</span><span>
+</span><span id="line-80"></span><span id="se_SACL_PRESENT"></span><span class="hs-identifier">se_SACL_DEFAULTED</span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span>
+</span><span id="line-81"></span><span class="annot"><a href="System.Win32.Security.html#se_SACL_DEFAULTED"><span class="hs-identifier hs-type">se_SACL_DEFAULTED</span></a></span><span>         </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">32</span><span>
+</span><span id="line-82"></span><span id="se_SACL_DEFAULTED"></span><span class="hs-identifier">se_DACL_AUTO_INHERIT_REQ</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span>
+</span><span id="line-83"></span><span class="annot"><a href="System.Win32.Security.html#se_DACL_AUTO_INHERIT_REQ"><span class="hs-identifier hs-type">se_DACL_AUTO_INHERIT_REQ</span></a></span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">256</span><span>
+</span><span id="line-84"></span><span id="se_DACL_AUTO_INHERIT_REQ"><span class="annot"><span class="annottext">se_DACL_AUTO_INHERIT_REQ :: SECURITY_DESCRIPTOR_CONTROL
+</span><a href="System.Win32.Security.html#se_DACL_AUTO_INHERIT_REQ"><span class="hs-identifier hs-var hs-var">se_SACL_AUTO_INHERIT_REQ</span></a></span></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span>
+</span><span id="line-85"></span><span class="annot"><a href="System.Win32.Security.html#se_SACL_AUTO_INHERIT_REQ"><span class="hs-identifier hs-type">se_SACL_AUTO_INHERIT_REQ</span></a></span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">512</span><span>
+</span><span id="line-86"></span><span id="se_SACL_AUTO_INHERIT_REQ"><span class="hs-identifier">se_DACL_AUTO_INHERITED</span></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span>
+</span><span id="line-87"></span><span class="annot"><a href="System.Win32.Security.html#se_DACL_AUTO_INHERITED"><span class="hs-identifier hs-type">se_DACL_AUTO_INHERITED</span></a></span><span>    </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">1024</span><span>
+</span><span id="line-88"></span><span id="se_DACL_AUTO_INHERITED"><span class="annot"><span class="annottext">se_DACL_AUTO_INHERITED :: SECURITY_DESCRIPTOR_CONTROL
+</span><a href="System.Win32.Security.html#se_DACL_AUTO_INHERITED"><span class="hs-identifier hs-var hs-var">se_SACL_AUTO_INHERITED</span></a></span></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span>
+</span><span id="line-89"></span><span class="annot"><a href="System.Win32.Security.html#se_SACL_AUTO_INHERITED"><span class="hs-identifier hs-type">se_SACL_AUTO_INHERITED</span></a></span><span>    </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">2048</span><span>
+</span><span id="line-90"></span><span id="se_SACL_AUTO_INHERITED"><span class="hs-identifier">se_DACL_PROTECTED</span></span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span>
+</span><span id="line-91"></span><span class="annot"><a href="System.Win32.Security.html#se_DACL_PROTECTED"><span class="hs-identifier hs-type">se_DACL_PROTECTED</span></a></span><span>         </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">4096</span><span>
+</span><span id="line-92"></span><span id="se_DACL_PROTECTED"><span class="annot"><span class="annottext">se_DACL_PROTECTED :: SECURITY_DESCRIPTOR_CONTROL
+</span><a href="System.Win32.Security.html#se_DACL_PROTECTED"><span class="hs-identifier hs-var hs-var">se_SACL_PROTECTED</span></a></span></span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span>
+</span><span id="line-93"></span><span class="annot"><a href="System.Win32.Security.html#se_SACL_PROTECTED"><span class="hs-identifier hs-type">se_SACL_PROTECTED</span></a></span><span>         </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">8192</span><span>
+</span><span id="line-94"></span><span id="se_SACL_PROTECTED"><span class="hs-identifier">se_SELF_RELATIVE</span></span><span>          </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span>
+</span><span id="line-95"></span><span class="annot"><a href="System.Win32.Security.html#se_SELF_RELATIVE"><span class="hs-identifier hs-type">se_SELF_RELATIVE</span></a></span><span>          </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">32768</span><span>
+</span><span id="line-96"></span><span>
+</span><span id="line-97"></span><span class="hs-pragma">{-# LINE 85 &quot;libraries\\Win32\\System\\Win32\\Security.hsc&quot; #-}</span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="hs-keyword">newtype</span><span> </span><span class="hs-identifier">ACL</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">ACL</span><span> </span><span class="hs-identifier">ACL</span><span>   </span><span class="hs-comment">-- abstract</span><span>
+</span><span id="line-87"></span><span class="hs-keyword">type</span><span> </span><span class="hs-identifier">PACL</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">Ptr</span><span> </span><span class="hs-identifier">ACL</span><span>
+</span><span id="line-88"></span><span>
+</span><span id="line-89"></span><span class="hs-keyword">newtype</span><span> </span><span class="hs-identifier">SID</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">SID</span><span> </span><span class="hs-identifier">SID</span><span>
+</span><span id="line-90"></span><span class="hs-keyword">type</span><span> </span><span class="hs-identifier">PSID</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">Ptr</span><span> </span><span class="hs-identifier">SID</span><span>
+</span><span id="line-91"></span><span>
+</span><span id="line-92"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h GetSecurityDescriptorControl&quot;</span><span>
+</span><span id="line-93"></span><span>  </span><span class="hs-identifier">c_getSecurityDescriptorControl</span><span>
+</span><span id="line-94"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PSECURITY_DESCRIPTOR</span><span> </span><span class="hs-comment">-- pSecurityDescriptor</span><span>
+</span><span id="line-95"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Ptr</span><span> </span><span class="hs-identifier">SECURITY_DESCRIPTOR_CONTROL</span><span> </span><span class="hs-comment">-- pControl</span><span>
+</span><span id="line-96"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">LPDWORD</span><span> </span><span class="hs-comment">-- lpdwRevision</span><span>
+</span><span id="line-97"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">BOOL</span><span>
+</span><span id="line-98"></span><span>
+</span><span id="line-99"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h GetSecurityDescriptorDacl&quot;</span><span>
+</span><span id="line-100"></span><span>  </span><span class="hs-identifier">c_getSecurityDescriptorDacl</span><span>
+</span><span id="line-101"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PSECURITY_DESCRIPTOR</span><span> </span><span class="hs-comment">-- pSecurityDescriptor</span><span>
+</span><span id="line-102"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">LPBOOL</span><span> </span><span class="hs-comment">-- lpbDaclPresent</span><span>
+</span><span id="line-103"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Ptr</span><span> </span><span class="hs-identifier">PACL</span><span> </span><span class="hs-comment">-- pDacl</span><span>
+</span><span id="line-104"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">LPBOOL</span><span> </span><span class="hs-comment">-- lpbDaclDefaulted</span><span>
+</span><span id="line-105"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">BOOL</span><span>
+</span><span id="line-106"></span><span>
+</span><span id="line-107"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h GetSecurityDescriptorGroup&quot;</span><span>
+</span><span id="line-108"></span><span>  </span><span class="hs-identifier">c_getSecurityDescriptorGroup</span><span>
+</span><span id="line-109"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PSECURITY_DESCRIPTOR</span><span> </span><span class="hs-comment">-- pSecurityDescriptor</span><span>
+</span><span id="line-110"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Ptr</span><span> </span><span class="hs-identifier">PSID</span><span> </span><span class="hs-comment">-- pGroup</span><span>
+</span><span id="line-111"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">LPBOOL</span><span> </span><span class="hs-comment">-- lpbGroupDefaulted</span><span>
+</span><span id="line-112"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">BOOL</span><span>
+</span><span id="line-113"></span><span>
+</span><span id="line-114"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h GetSecurityDescriptorLength&quot;</span><span>
+</span><span id="line-115"></span><span>  </span><span class="hs-identifier">c_getSecurityDescriptorLength</span><span>
+</span><span id="line-116"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PSECURITY_DESCRIPTOR</span><span> </span><span class="hs-comment">-- pSecurityDescriptor</span><span>
+</span><span id="line-117"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">DWORD</span><span>
+</span><span id="line-118"></span><span>
+</span><span id="line-119"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h GetSecurityDescriptorOwner&quot;</span><span>
+</span><span id="line-120"></span><span>  </span><span class="hs-identifier">c_getSecurityDescriptorOwner</span><span>
+</span><span id="line-121"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PSECURITY_DESCRIPTOR</span><span> </span><span class="hs-comment">-- pSecurityDescriptor</span><span>
+</span><span id="line-122"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Ptr</span><span> </span><span class="hs-identifier">PSID</span><span> </span><span class="hs-comment">-- pOwner</span><span>
+</span><span id="line-123"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">LPBOOL</span><span> </span><span class="hs-comment">-- lpbOwnerDefaulted</span><span>
+</span><span id="line-124"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">BOOL</span><span>
+</span><span id="line-125"></span><span>
+</span><span id="line-126"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h GetSecurityDescriptorSacl&quot;</span><span>
+</span><span id="line-127"></span><span>  </span><span class="hs-identifier">c_getSecurityDescriptorSacl</span><span>
+</span><span id="line-128"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PSECURITY_DESCRIPTOR</span><span> </span><span class="hs-comment">-- pSecurityDescriptor</span><span>
+</span><span id="line-129"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">LPBOOL</span><span> </span><span class="hs-comment">-- lpbSaclPresent</span><span>
+</span><span id="line-130"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Ptr</span><span> </span><span class="hs-identifier">PACL</span><span> </span><span class="hs-comment">-- pSacl</span><span>
+</span><span id="line-131"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">LPBOOL</span><span> </span><span class="hs-comment">-- lpbSaclDefaulted</span><span>
+</span><span id="line-132"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">BOOL</span><span>
+</span><span id="line-133"></span><span>
+</span><span id="line-134"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h InitializeSecurityDescriptor&quot;</span><span>
+</span><span id="line-135"></span><span>  </span><span class="hs-identifier">c_initializeSecurityDescriptor</span><span>
+</span><span id="line-136"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PSECURITY_DESCRIPTOR</span><span> </span><span class="hs-comment">-- pSecurityDescriptor</span><span>
+</span><span id="line-137"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">DWORD</span><span> </span><span class="hs-comment">-- dwRevision</span><span>
+</span><span id="line-138"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">BOOL</span><span>
+</span><span id="line-139"></span><span>
+</span><span id="line-140"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h IsValidSecurityDescriptor&quot;</span><span>
+</span><span id="line-141"></span><span>  </span><span class="hs-identifier">c_isValidSecurityDescriptor</span><span>
+</span><span id="line-142"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PSECURITY_DESCRIPTOR</span><span> </span><span class="hs-comment">-- pSecurityDescriptor</span><span>
+</span><span id="line-143"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">BOOL</span><span>
+</span><span id="line-144"></span><span>
+</span><span id="line-145"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h SetSecurityDescriptorDacl&quot;</span><span>
+</span><span id="line-146"></span><span>  </span><span class="hs-identifier">c_setSecurityDescriptorDacl</span><span>
+</span><span id="line-147"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PSECURITY_DESCRIPTOR</span><span> </span><span class="hs-comment">-- pSecurityDescriptor</span><span>
+</span><span id="line-148"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">BOOL</span><span> </span><span class="hs-comment">-- bDaclPresent</span><span>
+</span><span id="line-149"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">PACL</span><span> </span><span class="hs-comment">-- pDacl</span><span>
+</span><span id="line-150"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">BOOL</span><span> </span><span class="hs-comment">-- bDaclDefaulted</span><span>
+</span><span id="line-151"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">BOOL</span><span>
+</span><span id="line-152"></span><span>
+</span><span id="line-153"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h SetSecurityDescriptorGroup&quot;</span><span>
+</span><span id="line-154"></span><span>  </span><span class="hs-identifier">c_setSecurityDescriptorGroup</span><span>
+</span><span id="line-155"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PSECURITY_DESCRIPTOR</span><span> </span><span class="hs-comment">-- pSecurityDescriptor</span><span>
+</span><span id="line-156"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">PSID</span><span> </span><span class="hs-comment">-- pGroup</span><span>
+</span><span id="line-157"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">BOOL</span><span> </span><span class="hs-comment">-- bGroupDefaulted</span><span>
+</span><span id="line-158"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">BOOL</span><span>
+</span><span id="line-159"></span><span>
+</span><span id="line-160"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h SetSecurityDescriptorOwner&quot;</span><span>
+</span><span id="line-161"></span><span>  </span><span class="hs-identifier">c_setSecurityDescriptorOwner</span><span>
+</span><span id="line-162"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PSECURITY_DESCRIPTOR</span><span> </span><span class="hs-comment">-- pSecurityDescriptor</span><span>
+</span><span id="line-163"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">PSID</span><span> </span><span class="hs-comment">-- pOwner</span><span>
+</span><span id="line-164"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">BOOL</span><span> </span><span class="hs-comment">-- bOwnerDefaulted</span><span>
+</span><span id="line-165"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">BOOL</span><span>
+</span><span id="line-166"></span><span>
+</span><span id="line-167"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h SetSecurityDescriptorSacl&quot;</span><span>
+</span><span id="line-168"></span><span>  </span><span class="hs-identifier">c_setSecurityDescriptorSacl</span><span>
+</span><span id="line-169"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">PSECURITY_DESCRIPTOR</span><span> </span><span class="hs-comment">-- pSecurityDescriptor</span><span>
+</span><span id="line-170"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">BOOL</span><span> </span><span class="hs-comment">-- bSaclPresent</span><span>
+</span><span id="line-171"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">PACL</span><span> </span><span class="hs-comment">-- pSacl</span><span>
+</span><span id="line-172"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">BOOL</span><span> </span><span class="hs-comment">-- bSaclDefaulted</span><span>
+</span><span id="line-173"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">BOOL</span><span>
+</span><span id="line-174"></span><span>
+</span><span id="line-175"></span><span class="hs-comment">-- ---------------------------------------------------------------------------</span><span>
+</span><span id="line-176"></span><span>
+</span><span id="line-177"></span><span class="hs-comment">-- PGENERIC_MAPPING</span><span>
+</span><span id="line-178"></span><span class="hs-comment">-- PPRIVILEGE_SET</span><span>
+</span><span id="line-179"></span><span>
+</span><span id="line-180"></span><span class="hs-keyword">type</span><span> </span><span class="hs-identifier">SECURITY_INFORMATION</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">DWORD</span><span>
+</span><span id="line-181"></span><span>
+</span><span id="line-182"></span><span class="hs-identifier">oWNER_SECURITY_INFORMATION</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_INFORMATION</span><span>
+</span><span id="line-183"></span><span class="hs-identifier">oWNER_SECURITY_INFORMATION</span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">1</span><span>
+</span><span id="line-184"></span><span class="hs-identifier">gROUP_SECURITY_INFORMATION</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_INFORMATION</span><span>
+</span><span id="line-185"></span><span class="hs-identifier">gROUP_SECURITY_INFORMATION</span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">2</span><span>
+</span><span id="line-186"></span><span class="hs-identifier">dACL_SECURITY_INFORMATION</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_INFORMATION</span><span>
+</span><span id="line-187"></span><span class="hs-identifier">dACL_SECURITY_INFORMATION</span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">4</span><span>
+</span><span id="line-188"></span><span class="hs-identifier">sACL_SECURITY_INFORMATION</span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">SECURITY_INFORMATION</span><span>
+</span><span id="line-189"></span><span class="hs-identifier">sACL_SECURITY_INFORMATION</span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="hs-number">8</span><span>
+</span><span id="line-190"></span><span>
+</span><span id="line-191"></span><span class="hs-pragma">{-# LINE 188 &quot;libraries\\Win32\\System\\Win32\\Security.hsc&quot; #-}</span><span>
+</span><span id="line-188"></span><span class="hs-comment">-- , pROTECTED_DACL_SECURITY_INFORMATION = PROTECTED_DACL_SECURITY_INFORMATION</span><span>
+</span><span id="line-189"></span><span class="hs-comment">-- , pROTECTED_SACL_SECURITY_INFORMATION = PROTECTED_SACL_SECURITY_INFORMATION</span><span>
+</span><span id="line-190"></span><span class="hs-comment">-- , uNPROTECTED_DACL_SECURITY_INFORMATION = UNPROTECTED_DACL_SECURITY_INFORMATION</span><span>
+</span><span id="line-191"></span><span class="hs-comment">-- , uNPROTECTED_SACL_SECURITY_INFORMATION = UNPROTECTED_SACL_SECURITY_INFORMATION</span><span>
+</span><span id="line-192"></span><span>
+</span><span id="line-193"></span><span class="hs-identifier">getFileSecurity</span><span>
+</span><span id="line-194"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">String</span><span>
+</span><span id="line-195"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">SECURITY_INFORMATION</span><span>
+</span><span id="line-196"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">SecurityDescriptor</span><span>
+</span><span id="line-197"></span><span class="hs-identifier">getFileSecurity</span><span> </span><span class="hs-identifier">filename</span><span> </span><span class="hs-identifier">si</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-198"></span><span>  </span><span class="hs-identifier">withTString</span><span> </span><span class="hs-identifier">filename</span><span> </span><span class="hs-operator">$</span><span> </span><span class="hs-glyph">\</span><span class="hs-identifier">lpFileName</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-199"></span><span>  </span><span class="hs-identifier">with</span><span> </span><span class="hs-number">0</span><span> </span><span class="hs-operator">$</span><span> </span><span class="hs-glyph">\</span><span class="hs-identifier">lpnLengthNeeded</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-200"></span><span>  </span><span class="hs-identifier">c_GetFileSecurity</span><span> </span><span class="hs-identifier">lpFileName</span><span> </span><span class="hs-identifier">si</span><span> </span><span class="hs-identifier">nullPtr</span><span> </span><span class="hs-number">0</span><span> </span><span class="hs-identifier">lpnLengthNeeded</span><span>
+</span><span id="line-201"></span><span>  </span><span class="hs-identifier">needed</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-identifier">peek</span><span> </span><span class="hs-identifier">lpnLengthNeeded</span><span>
+</span><span id="line-202"></span><span>  </span><span class="hs-identifier">fpSd</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-identifier">mallocForeignPtrBytes</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">fromIntegral</span><span> </span><span class="hs-identifier">needed</span><span class="hs-special">)</span><span>
+</span><span id="line-203"></span><span>  </span><span class="hs-identifier">withForeignPtr</span><span> </span><span class="hs-identifier">fpSd</span><span> </span><span class="hs-operator">$</span><span> </span><span class="hs-glyph">\</span><span class="hs-identifier">pSd</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-204"></span><span>  </span><span class="hs-identifier">failIfFalse_</span><span> </span><span class="hs-string">&quot;getFileSecurity&quot;</span><span> </span><span class="hs-operator">$</span><span>
+</span><span id="line-205"></span><span>    </span><span class="hs-identifier">c_GetFileSecurity</span><span> </span><span class="hs-identifier">lpFileName</span><span> </span><span class="hs-identifier">si</span><span> </span><span class="hs-identifier">pSd</span><span> </span><span class="hs-identifier">needed</span><span> </span><span class="hs-identifier">lpnLengthNeeded</span><span>
+</span><span id="line-206"></span><span>  </span><span class="hs-identifier">return</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">SecurityDescriptor</span><span> </span><span class="hs-identifier">fpSd</span><span class="hs-special">)</span><span>
+</span><span id="line-207"></span><span>
+</span><span id="line-208"></span><span class="hs-keyword">foreign</span><span> </span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">WINDOWS_CCONV</span><span> </span><span class="hs-keyword">unsafe</span><span> </span><span class="hs-string">&quot;windows.h GetFileSecurityW&quot;</span><span>
+</span><span id="line-209"></span><span>  </span><span class="hs-identifier">c_GetFileSecurity</span><span>
+</span><span id="line-210"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">LPCWSTR</span><span> </span><span class="hs-comment">-- lpFileName</span><span>
+</span><span id="line-211"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">SECURITY_INFORMATION</span><span> </span><span class="hs-comment">-- RequestedInformation</span><span>
+</span><span id="line-212"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">PSECURITY_DESCRIPTOR</span><span> </span><span class="hs-comment">-- pSecurityDescriptor</span><span>
+</span><span id="line-213"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">DWORD</span><span> </span><span class="hs-comment">-- nLength</span><span>
+</span><span id="line-214"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">LPDWORD</span><span> </span><span class="hs-comment">-- lpnLengthNeeded</span><span>
+</span><span id="line-215"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">IO</span><span> </span><span class="hs-identifier">BOOL</span><span>
+</span><span id="line-216"></span><span>
+</span><span id="line-217"></span><span class="hs-comment">--foreign import WINDOWS_CCONV unsafe &quot;windows.h AccessCheck&quot;</span><span>
+</span><span id="line-218"></span><span class="hs-comment">--  c_AccessCheck</span><span>
+</span><span id="line-219"></span><span class="hs-comment">--    :: PSECURITY_DESCRIPTOR -- pSecurityDescriptor</span><span>
+</span><span id="line-220"></span><span class="hs-comment">--    -&gt; HANDLE -- ClientToken</span><span>
+</span><span id="line-221"></span><span class="hs-comment">--    -&gt; DWORD -- DesiredAccess</span><span>
+</span><span id="line-222"></span><span class="hs-comment">--    -&gt; PGENERIC_MAPPING -- GenericMapping</span><span>
+</span><span id="line-223"></span><span class="hs-comment">--    -&gt; PPRIVILEGE_SET -- PrivilegeSet</span><span>
+</span><span id="line-224"></span><span class="hs-comment">--    -&gt; LPDWORD -- PrivilegeSetLength</span><span>
+</span><span id="line-225"></span><span class="hs-comment">--    -&gt; LPDWORD -- GrantedAccess</span><span>
+</span><span id="line-226"></span><span class="hs-comment">--    -&gt; LPBOOL -- AccessStatus</span><span>
+</span><span id="line-227"></span><span class="hs-comment">--    -&gt; IO BOOL</span><span>
+</span><span id="line-228"></span><span>
+</span><span id="line-229"></span><span class="hs-comment">-- foreign import WINDOWS_CCONV unsafe &quot;windows.h OpenThreadToken&quot;</span><span>
+</span><span id="line-230"></span><span class="hs-comment">--    OpenThreadToken</span><span>
+</span><span id="line-231"></span><span class="hs-comment">--      :: HANDLE -- ThreadHandle</span><span>
+</span><span id="line-232"></span><span class="hs-comment">--      -&gt; DWORD -- DesiredAccess</span><span>
+</span><span id="line-233"></span><span class="hs-comment">--      -&gt; BOOL -- OpenAsSelf</span><span>
+</span><span id="line-234"></span><span class="hs-comment">--      -&gt; PHANDLE -- TokenHandle</span><span>
+</span><span id="line-235"></span><span class="hs-comment">--      -&gt; IO BOOL</span><span>
+</span><span id="line-236"></span></pre></body></html>

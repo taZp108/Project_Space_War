@@ -1,0 +1,40 @@
+? C:\Users\ASUS\AppData\Local\Programs\stack\x86_64-windows\ghc-9.10.3\lib\x86_64-windows-ghc-9.10.3\rts-1.0.2\include\ghcversion.h
+: hash: 7038bb968ecc358729edd5d1e72a638409aaf5ea6ab13ce6ec7f253daa3b6529
+D:\Dev\space-war\.stack-work\dist\1a191874\build\autogen\Paths_space_war.hs:
+  hash: 31637fed831f78fedcf8e5daa2709a770878d1472f1cf74b309e094105d38b5a
+D:\Dev\space-war\.stack-work\dist\1a191874\build\autogen\cabal_macros.h:
+  hash: 051bc50ae22b48a100efe214db2e652974d5e7df12eba794acbea4dde9b22794
+D:\Dev\space-war\README.md:
+  hash: a511a5ddddcd4e033b3197531470e0af2f99712bc70462b0c18d5a66de2f6fb6
+D:\Dev\space-war\package.yaml:
+  hash: be1ae6f997c55c9a0a3d57ba2c6a4378b8d0b0b73cbd9cba2141e7fedecf64f8
+D:\Dev\space-war\space-war.cabal:
+  hash: e9e5c47d0a452bc363f93bc2f0b5475b6a3c8ab2df83053f076326e69c4fd1cc
+D:\Dev\space-war\src\Game\Action.hs:
+  hash: 8de8d8054e48c866c4528b197d4c5b6270225b52b03c96adcc23c9610a16c7ce
+D:\Dev\space-war\src\Game\Config.hs:
+  hash: 07d4437cbf2d1b8b98c7e35b47e07c430e43e840b0e39754f81ac13b5c7bd32e
+D:\Dev\space-war\src\Game\Generate.hs:
+  hash: 04483c58dba063b782051441f411f301fd4f0e236b314b76f526206e81750882
+D:\Dev\space-war\src\Game\State.hs:
+  hash: fac219edfbcae1ca60d0c7edc2fa1e659d25d23588387fe1103c19b7913673c3
+D:\Dev\space-war\src\Game\Turn.hs:
+  hash: b37f048934005ef96b89dcd2611de6e84df5aea563d419b7460374bc8a4a9e6f
+D:\Dev\space-war\src\Game\Types.hs:
+  hash: 86efb3332a9dfa7a85a605ac8fb98a4622685c8b597472eb6154878fbc9d3e74
+D:\Dev\space-war\src\Game\View.hs:
+  hash: 7555f2d621f1e8f866d9fed92d70619db318078f8994cb2aeadb8013884f3cee
+D:\Dev\space-war\src\Game\World.hs:
+  hash: af1a6bc920e67cf4709e0ea567c0a05e81622570c550fa3f316fc5002ab32dbb
+D:\Dev\space-war\src\Lib.hs:
+  hash: 6761c33c012ccca43c0c0215d1a3fe8b839a90065d327c54b903f14134d1ec13
+D:\Dev\space-war\src\Protocol\Json.hs:
+  hash: 24e790982489eb3ba1685a26f30c92bca20a858c696dd68906bde5d6826ca920
+D:\Dev\space-war\src\Protocol\Message.hs:
+  hash: 0ea84e8c648a45513a61a47930834f2b312115bf456ef7054ae27f2a00f9fe8e
+D:\Dev\space-war\src\Server\Handler.hs:
+  hash: 34843798318cb6fb4ed1639049447c9e0aa45c0e28c74b67a963af43f324c3e2
+D:\Dev\space-war\src\Server\Lobby.hs:
+  hash: 42cb703ded0ef12f51e875cea2868acc9ea42e9b13fe6327a21d4a466632f976
+D:\Dev\space-war\src\Server\Types.hs:
+  hash: 0fd641a165acfacafc47634f00fd5bf441e1d9137b2d8986c2c1342078a19ac2

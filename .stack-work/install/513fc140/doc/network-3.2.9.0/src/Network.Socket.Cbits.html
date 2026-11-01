@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LINE 1 &quot;Network\\Socket\\Cbits.hsc&quot; #-}</span><span>
+</span><span id="line-1"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Network.Socket.Cbits</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span>
+</span><span id="line-5"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Network.Socket.Imports.html"><span class="hs-identifier">Network.Socket.Imports</span></a></span><span>
+</span><span id="line-6"></span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- | This is the value of SOMAXCONN, typically 128.</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- 128 is good enough for normal network servers but</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- is too small for high performance servers.</span><span>
+</span><span id="line-10"></span><span class="annot"><a href="Network.Socket.Cbits.html#maxListenQueue"><span class="hs-identifier hs-type">maxListenQueue</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-11"></span><span id="maxListenQueue"><span class="annot"><span class="annottext">maxListenQueue :: Int
+</span><a href="Network.Socket.Cbits.html#maxListenQueue"><span class="hs-identifier hs-var hs-var">maxListenQueue</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2147483647</span></span><span>
+</span><span id="line-12"></span><span class="hs-pragma">{-# LINE 12 &quot;Network\\Socket\\Cbits.hsc&quot; #-}</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-pragma">{-# LINE 14 &quot;Network\\Socket\\Cbits.hsc&quot; #-}</span><span>
+</span><span id="line-14"></span><span class="hs-identifier">wsaNotInitialized</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">CInt</span><span>
+</span><span id="line-15"></span><span id="wsaNotInitialized"><span class="annot"><span class="annottext">wsaNotInitialized :: CInt
+</span><a href="Network.Socket.Cbits.html#wsaNotInitialized"><span class="hs-identifier hs-var hs-var">wsaNotInitialized</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CInt
+</span><span class="hs-number">10093</span></span><span>
+</span><span id="line-16"></span><span class="hs-pragma">{-# LINE 16 &quot;Network\\Socket\\Cbits.hsc&quot; #-}</span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span class="hs-pragma">{-# LINE 32 &quot;Network\\Socket\\Cbits.hsc&quot; #-}</span><span>
+</span><span id="line-32"></span></pre></body></html>

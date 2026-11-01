@@ -1,0 +1,1131 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE OverloadedStrings #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# OPTIONS_GHC -Wno-orphans #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- | Chuyen cac kieu cua game va cac tin nhan sang JSON (va nguoc lai), viet tay.</span><span>
+</span><span id="line-5"></span><span class="hs-comment">--</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- Cac instance duoc dat o day thay vi trong &quot;Game.Types&quot; de loi game khong phu</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- thuoc vao JSON (vi vay phai tat canh bao orphan o dau file).</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Protocol.Json.html"><span class="hs-identifier">Protocol.Json</span></a></span><span>
+</span><span id="line-9"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Protocol.Json.html#encodeServerMsg"><span class="hs-identifier">encodeServerMsg</span></a></span><span>
+</span><span id="line-10"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Protocol.Json.html#decodeClientMsg"><span class="hs-identifier">decodeClientMsg</span></a></span><span>
+</span><span id="line-11"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Protocol.Json.html#resourcesToJSON"><span class="hs-identifier">resourcesToJSON</span></a></span><span>
+</span><span id="line-12"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Aeson</span></span><span>
+</span><span id="line-15"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">FromJSON</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">ToJSON</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Value</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">eitherDecode</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">encode</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">object</span></span><span>
+</span><span id="line-16"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">withObject</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">withText</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-operator">(.:)</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-operator">(.=)</span></span><span>
+</span><span id="line-17"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Aeson.Key</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fromText</span></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Aeson.Types</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Pair</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Parser</span></span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString.Lazy</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">BL</span></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Types.html"><span class="hs-identifier">Game.Types</span></a></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.View.html"><span class="hs-identifier">Game.View</span></a></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Protocol.Message.html"><span class="hs-identifier">Protocol.Message</span></a></span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="annot"><span class="hs-comment">-- | Ma hoa mot tin nhan server thanh chuoi JSON de gui di.</span></span><span>
+</span><span id="line-30"></span><span class="annot"><a href="Protocol.Json.html#encodeServerMsg"><span class="hs-identifier hs-type">encodeServerMsg</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Protocol.Message.html#ServerMsg"><span class="hs-identifier hs-type">ServerMsg</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">BL.ByteString</span></span><span>
+</span><span id="line-31"></span><span id="encodeServerMsg"><span class="annot"><span class="annottext">encodeServerMsg :: ServerMsg -&gt; ByteString
+</span><a href="Protocol.Json.html#encodeServerMsg"><span class="hs-identifier hs-var hs-var">encodeServerMsg</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ServerMsg -&gt; ByteString
+forall a. ToJSON a =&gt; a -&gt; ByteString
+</span><span class="hs-identifier hs-var">encode</span></span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="annot"><span class="hs-comment">-- | Giai ma mot tin nhan tu client. Tra ve 'Left' kem ly do neu tin hong.</span></span><span>
+</span><span id="line-34"></span><span class="annot"><a href="Protocol.Json.html#decodeClientMsg"><span class="hs-identifier hs-type">decodeClientMsg</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">BL.ByteString</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="annot"><a href="Protocol.Message.html#ClientMsg"><span class="hs-identifier hs-type">ClientMsg</span></a></span><span>
+</span><span id="line-35"></span><span id="decodeClientMsg"><span class="annot"><span class="annottext">decodeClientMsg :: ByteString -&gt; Either String ClientMsg
+</span><a href="Protocol.Json.html#decodeClientMsg"><span class="hs-identifier hs-var hs-var">decodeClientMsg</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; Either String ClientMsg
+forall a. FromJSON a =&gt; ByteString -&gt; Either String a
+</span><span class="hs-identifier hs-var">eitherDecode</span></span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span class="annot"><span class="hs-comment">-- | Doi mot kho tai nguyen thanh doi tuong JSON, vi du @{&quot;iron&quot;: 5}@.</span></span><span>
+</span><span id="line-38"></span><span class="annot"><a href="Protocol.Json.html#resourcesToJSON"><span class="hs-identifier hs-type">resourcesToJSON</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span>
+</span><span id="line-39"></span><span id="resourcesToJSON"><span class="annot"><span class="annottext">resourcesToJSON :: Resources -&gt; Value
+</span><a href="Protocol.Json.html#resourcesToJSON"><span class="hs-identifier hs-var hs-var">resourcesToJSON</span></a></span></span><span> </span><span id="local-6989586621679112083"><span class="annot"><span class="annottext">Resources
+</span><a href="#local-6989586621679112083"><span class="hs-identifier hs-var">rs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><span class="annottext">[Pair] -&gt; Value
+</span><span class="hs-identifier hs-var">object</span></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Key
+</span><span class="hs-identifier hs-var">fromText</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType -&gt; Text
+</span><a href="Protocol.Json.html#resourceName"><span class="hs-identifier hs-var">resourceName</span></a></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679112085"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112086"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679112085"><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679112085"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679112086"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112086"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Resources -&gt; [(ResourceType, PlanetId)]
+forall k a. Map k a -&gt; [(k, a)]
+</span><span class="hs-identifier hs-var">Map.toList</span></span><span> </span><span class="annot"><span class="annottext">Resources
+</span><a href="#local-6989586621679112083"><span class="hs-identifier hs-var">rs</span></a></span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span class="annot"><span class="hs-comment">-- | Doi tuong JSON co truong &quot;type&quot; de phan biet cac truong hop.</span></span><span>
+</span><span id="line-43"></span><span class="annot"><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-type">tagged</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Pair</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span>
+</span><span id="line-44"></span><span id="tagged"><span class="annot"><span class="annottext">tagged :: Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var hs-var">tagged</span></a></span></span><span> </span><span id="local-6989586621679112089"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679112089"><span class="hs-identifier hs-var">kind</span></a></span></span><span> </span><span id="local-6989586621679112090"><span class="annot"><span class="annottext">[Pair]
+</span><a href="#local-6989586621679112090"><span class="hs-identifier hs-var">fields</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Pair] -&gt; Value
+</span><span class="hs-identifier hs-var">object</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;type&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Text -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679112089"><span class="hs-identifier hs-var">kind</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Pair -&gt; [Pair] -&gt; [Pair]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span> </span><span class="annot"><span class="annottext">[Pair]
+</span><a href="#local-6989586621679112090"><span class="hs-identifier hs-var">fields</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-45"></span><span>
+</span><span id="line-46"></span><span class="annot"><span class="hs-comment">-- | Doc mot chuoi JSON thanh gia tri theo bang (ten, gia tri).</span></span><span>
+</span><span id="line-47"></span><span id="local-6989586621679111951"><span class="annot"><a href="Protocol.Json.html#parseEnum"><span class="hs-identifier hs-type">parseEnum</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679111951"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><a href="#local-6989586621679111951"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-48"></span><span id="parseEnum"><span class="annot"><span class="annottext">parseEnum :: forall a. String -&gt; [(Text, a)] -&gt; Value -&gt; Parser a
+</span><a href="Protocol.Json.html#parseEnum"><span class="hs-identifier hs-var hs-var">parseEnum</span></a></span></span><span> </span><span id="local-6989586621679112102"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679112102"><span class="hs-identifier hs-var">what</span></a></span></span><span> </span><span id="local-6989586621679112103"><span class="annot"><span class="annottext">[(Text, a)]
+</span><a href="#local-6989586621679112103"><span class="hs-identifier hs-var">table</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; (Text -&gt; Parser a) -&gt; Value -&gt; Parser a
+forall a. String -&gt; (Text -&gt; Parser a) -&gt; Value -&gt; Parser a
+</span><span class="hs-identifier hs-var">withText</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679112102"><span class="hs-identifier hs-var">what</span></a></span><span> </span><span class="annot"><span class="annottext">((Text -&gt; Parser a) -&gt; Value -&gt; Parser a)
+-&gt; (Text -&gt; Parser a) -&gt; Value -&gt; Parser a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679112104"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679112104"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-49"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [(Text, a)] -&gt; Maybe a
+forall a b. Eq a =&gt; a -&gt; [(a, b)] -&gt; Maybe b
+</span><span class="hs-identifier hs-var">lookup</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679112104"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">[(Text, a)]
+</span><a href="#local-6989586621679112103"><span class="hs-identifier hs-var">table</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-50"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679112106"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679112106"><span class="hs-identifier hs-var">x</span></a></span></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; Parser a
+forall a. a -&gt; Parser a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679112106"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-51"></span><span>        </span><span class="annot"><span class="annottext">Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser a
+forall a. String -&gt; Parser a
+forall (m :: * -&gt; *) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;unknown &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679112102"><span class="hs-identifier hs-var">what</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679112104"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span class="hs-comment">-- ---------------------------------------------------------------------------</span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- Vi tri, huong, tai nguyen</span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112110"><span id="local-6989586621679112113"><span id="local-6989586621679112116"><span id="local-6989586621679112119"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-57"></span><span>    </span><span id="local-6989586621679112128"><span class="annot"><span class="annottext">toJSON :: Pos -&gt; Value
+</span><a href="#local-6989586621679112128"><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span> </span><span id="local-6989586621679112131"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112131"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679112132"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112132"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Pair] -&gt; Value
+</span><span class="hs-identifier hs-var">object</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;x&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112131"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;y&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112132"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span class="annot"><a href="Protocol.Json.html#directionName"><span class="hs-identifier hs-type">directionName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Direction"><span class="hs-identifier hs-type">Direction</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-60"></span><span id="directionName"><span class="annot"><span class="annottext">directionName :: Direction -&gt; Text
+</span><a href="Protocol.Json.html#directionName"><span class="hs-identifier hs-var hs-var">directionName</span></a></span></span><span> </span><span class="annot"><span class="annottext">Direction
+</span><a href="Game.Types.html#DirUp"><span class="hs-identifier hs-var">DirUp</span></a></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;up&quot;</span></span><span>
+</span><span id="line-61"></span><span class="annot"><a href="Protocol.Json.html#directionName"><span class="hs-identifier hs-var">directionName</span></a></span><span> </span><span class="annot"><span class="annottext">Direction
+</span><a href="Game.Types.html#DirDown"><span class="hs-identifier hs-var">DirDown</span></a></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;down&quot;</span></span><span>
+</span><span id="line-62"></span><span class="annot"><a href="Protocol.Json.html#directionName"><span class="hs-identifier hs-var">directionName</span></a></span><span> </span><span class="annot"><span class="annottext">Direction
+</span><a href="Game.Types.html#DirLeft"><span class="hs-identifier hs-var">DirLeft</span></a></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;left&quot;</span></span><span>
+</span><span id="line-63"></span><span class="annot"><a href="Protocol.Json.html#directionName"><span class="hs-identifier hs-var">directionName</span></a></span><span> </span><span class="annot"><span class="annottext">Direction
+</span><a href="Game.Types.html#DirRight"><span class="hs-identifier hs-var">DirRight</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;right&quot;</span></span><span>
+</span><span id="line-64"></span><span>
+</span><span id="line-65"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112140"><span id="local-6989586621679112144"><span id="local-6989586621679112147"><span id="local-6989586621679112150"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#Direction"><span class="hs-identifier hs-type">Direction</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-66"></span><span>    </span><span id="local-6989586621679112152"><span class="annot"><span class="annottext">toJSON :: Direction -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Value
+</span><span class="hs-identifier hs-var">String</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Value) -&gt; (Direction -&gt; Text) -&gt; Direction -&gt; Value
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Direction -&gt; Text
+</span><a href="Protocol.Json.html#directionName"><span class="hs-identifier hs-var">directionName</span></a></span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112157"><span id="local-6989586621679112161"><span class="annot"><span class="hs-identifier hs-type">FromJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#Direction"><span class="hs-identifier hs-type">Direction</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-69"></span><span>    </span><span id="local-6989586621679112169"><span class="annot"><span class="annottext">parseJSON :: Value -&gt; Parser Direction
+</span><a href="#local-6989586621679112169"><span class="hs-identifier hs-var hs-var hs-var">parseJSON</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; [(Text, Direction)] -&gt; Value -&gt; Parser Direction
+forall a. String -&gt; [(Text, a)] -&gt; Value -&gt; Parser a
+</span><a href="Protocol.Json.html#parseEnum"><span class="hs-identifier hs-var">parseEnum</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;direction&quot;</span></span><span> </span><span class="hs-special">[</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Direction -&gt; Text
+</span><a href="Protocol.Json.html#directionName"><span class="hs-identifier hs-var">directionName</span></a></span><span> </span><span class="annot"><span class="annottext">Direction
+</span><a href="#local-6989586621679112171"><span class="hs-identifier hs-var">d</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Direction
+</span><a href="#local-6989586621679112171"><span class="hs-identifier hs-var">d</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679112171"><span class="annot"><span class="annottext">Direction
+</span><a href="#local-6989586621679112171"><span class="hs-identifier hs-var">d</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Direction
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">minBound</span></span><span> </span><span class="hs-glyph">..</span><span> </span><span class="annot"><span class="annottext">Direction
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span class="hs-special">]</span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-70"></span><span>
+</span><span id="line-71"></span><span class="annot"><a href="Protocol.Json.html#compassName"><span class="hs-identifier hs-type">compassName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#Compass"><span class="hs-identifier hs-type">Compass</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-72"></span><span id="compassName"><span class="annot"><span class="annottext">compassName :: Compass -&gt; Text
+</span><a href="Protocol.Json.html#compassName"><span class="hs-identifier hs-var hs-var">compassName</span></a></span></span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#North"><span class="hs-identifier hs-var">North</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;north&quot;</span></span><span>
+</span><span id="line-73"></span><span class="annot"><a href="Protocol.Json.html#compassName"><span class="hs-identifier hs-var">compassName</span></a></span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#NorthEast"><span class="hs-identifier hs-var">NorthEast</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;north_east&quot;</span></span><span>
+</span><span id="line-74"></span><span class="annot"><a href="Protocol.Json.html#compassName"><span class="hs-identifier hs-var">compassName</span></a></span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#East"><span class="hs-identifier hs-var">East</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;east&quot;</span></span><span>
+</span><span id="line-75"></span><span class="annot"><a href="Protocol.Json.html#compassName"><span class="hs-identifier hs-var">compassName</span></a></span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#SouthEast"><span class="hs-identifier hs-var">SouthEast</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;south_east&quot;</span></span><span>
+</span><span id="line-76"></span><span class="annot"><a href="Protocol.Json.html#compassName"><span class="hs-identifier hs-var">compassName</span></a></span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#South"><span class="hs-identifier hs-var">South</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;south&quot;</span></span><span>
+</span><span id="line-77"></span><span class="annot"><a href="Protocol.Json.html#compassName"><span class="hs-identifier hs-var">compassName</span></a></span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#SouthWest"><span class="hs-identifier hs-var">SouthWest</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;south_west&quot;</span></span><span>
+</span><span id="line-78"></span><span class="annot"><a href="Protocol.Json.html#compassName"><span class="hs-identifier hs-var">compassName</span></a></span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#West"><span class="hs-identifier hs-var">West</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;west&quot;</span></span><span>
+</span><span id="line-79"></span><span class="annot"><a href="Protocol.Json.html#compassName"><span class="hs-identifier hs-var">compassName</span></a></span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#NorthWest"><span class="hs-identifier hs-var">NorthWest</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;north_west&quot;</span></span><span>
+</span><span id="line-80"></span><span class="annot"><a href="Protocol.Json.html#compassName"><span class="hs-identifier hs-var">compassName</span></a></span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="Game.Types.html#Here"><span class="hs-identifier hs-var">Here</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;here&quot;</span></span><span>
+</span><span id="line-81"></span><span>
+</span><span id="line-82"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112186"><span id="local-6989586621679112190"><span id="local-6989586621679112193"><span id="local-6989586621679112196"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#Compass"><span class="hs-identifier hs-type">Compass</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-83"></span><span>    </span><span id="local-6989586621679112198"><span class="annot"><span class="annottext">toJSON :: Compass -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Value
+</span><span class="hs-identifier hs-var">String</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Value) -&gt; (Compass -&gt; Text) -&gt; Compass -&gt; Value
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Compass -&gt; Text
+</span><a href="Protocol.Json.html#compassName"><span class="hs-identifier hs-var">compassName</span></a></span><span>
+</span><span id="line-84"></span><span>
+</span><span id="line-85"></span><span class="annot"><a href="Protocol.Json.html#resourceName"><span class="hs-identifier hs-type">resourceName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#ResourceType"><span class="hs-identifier hs-type">ResourceType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-86"></span><span id="resourceName"><span class="annot"><span class="annottext">resourceName :: ResourceType -&gt; Text
+</span><a href="Protocol.Json.html#resourceName"><span class="hs-identifier hs-var hs-var">resourceName</span></a></span></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#Iron"><span class="hs-identifier hs-var">Iron</span></a></span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;iron&quot;</span></span><span>
+</span><span id="line-87"></span><span class="annot"><a href="Protocol.Json.html#resourceName"><span class="hs-identifier hs-var">resourceName</span></a></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#Crystal"><span class="hs-identifier hs-var">Crystal</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;crystal&quot;</span></span><span>
+</span><span id="line-88"></span><span class="annot"><a href="Protocol.Json.html#resourceName"><span class="hs-identifier hs-var">resourceName</span></a></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#EnergyCore"><span class="hs-identifier hs-var">EnergyCore</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;energy_core&quot;</span></span><span>
+</span><span id="line-89"></span><span class="annot"><a href="Protocol.Json.html#resourceName"><span class="hs-identifier hs-var">resourceName</span></a></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#RareOre"><span class="hs-identifier hs-var">RareOre</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;rare_ore&quot;</span></span><span>
+</span><span id="line-90"></span><span class="annot"><a href="Protocol.Json.html#resourceName"><span class="hs-identifier hs-var">resourceName</span></a></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#ExoticMatter"><span class="hs-identifier hs-var">ExoticMatter</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;exotic_matter&quot;</span></span><span>
+</span><span id="line-91"></span><span>
+</span><span id="line-92"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112206"><span id="local-6989586621679112210"><span id="local-6989586621679112213"><span id="local-6989586621679112216"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#ResourceType"><span class="hs-identifier hs-type">ResourceType</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-93"></span><span>    </span><span id="local-6989586621679112218"><span class="annot"><span class="annottext">toJSON :: ResourceType -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Value
+</span><span class="hs-identifier hs-var">String</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Value) -&gt; (ResourceType -&gt; Text) -&gt; ResourceType -&gt; Value
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">ResourceType -&gt; Text
+</span><a href="Protocol.Json.html#resourceName"><span class="hs-identifier hs-var">resourceName</span></a></span><span>
+</span><span id="line-94"></span><span>
+</span><span id="line-95"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112221"><span id="local-6989586621679112225"><span class="annot"><span class="hs-identifier hs-type">FromJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#ResourceType"><span class="hs-identifier hs-type">ResourceType</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-96"></span><span>    </span><span id="local-6989586621679112232"><span class="annot"><span class="annottext">parseJSON :: Value -&gt; Parser ResourceType
+</span><span class="hs-identifier hs-var hs-var hs-var">parseJSON</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; [(Text, ResourceType)] -&gt; Value -&gt; Parser ResourceType
+forall a. String -&gt; [(Text, a)] -&gt; Value -&gt; Parser a
+</span><a href="Protocol.Json.html#parseEnum"><span class="hs-identifier hs-var">parseEnum</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;resource&quot;</span></span><span> </span><span class="hs-special">[</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType -&gt; Text
+</span><a href="Protocol.Json.html#resourceName"><span class="hs-identifier hs-var">resourceName</span></a></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679112233"><span class="hs-identifier hs-var">r</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679112233"><span class="hs-identifier hs-var">r</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679112233"><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679112233"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">ResourceType
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">minBound</span></span><span> </span><span class="hs-glyph">..</span><span> </span><span class="annot"><span class="annottext">ResourceType
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span class="hs-special">]</span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-97"></span><span>
+</span><span id="line-98"></span><span class="hs-comment">-- ---------------------------------------------------------------------------</span><span>
+</span><span id="line-99"></span><span class="hs-comment">-- Hanh tinh va nguoi choi</span><span>
+</span><span id="line-100"></span><span>
+</span><span id="line-101"></span><span class="annot"><a href="Protocol.Json.html#planetTypeName"><span class="hs-identifier hs-type">planetTypeName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#PlanetType"><span class="hs-identifier hs-type">PlanetType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-102"></span><span id="planetTypeName"><span class="annot"><span class="annottext">planetTypeName :: PlanetType -&gt; Text
+</span><a href="Protocol.Json.html#planetTypeName"><span class="hs-identifier hs-var hs-var">planetTypeName</span></a></span></span><span> </span><span class="annot"><span class="annottext">PlanetType
+</span><a href="Game.Types.html#Mining"><span class="hs-identifier hs-var">Mining</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mining&quot;</span></span><span>
+</span><span id="line-103"></span><span class="annot"><a href="Protocol.Json.html#planetTypeName"><span class="hs-identifier hs-var">planetTypeName</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetType
+</span><a href="Game.Types.html#Energy"><span class="hs-identifier hs-var">Energy</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;energy&quot;</span></span><span>
+</span><span id="line-104"></span><span class="annot"><a href="Protocol.Json.html#planetTypeName"><span class="hs-identifier hs-var">planetTypeName</span></a></span><span> </span><span class="annot"><span class="annottext">PlanetType
+</span><a href="Game.Types.html#Rare"><span class="hs-identifier hs-var">Rare</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;rare&quot;</span></span><span>
+</span><span id="line-105"></span><span>
+</span><span id="line-106"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112240"><span id="local-6989586621679112243"><span id="local-6989586621679112246"><span id="local-6989586621679112249"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#PlanetType"><span class="hs-identifier hs-type">PlanetType</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-107"></span><span>    </span><span id="local-6989586621679112251"><span class="annot"><span class="annottext">toJSON :: PlanetType -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Value
+</span><span class="hs-identifier hs-var">String</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Value) -&gt; (PlanetType -&gt; Text) -&gt; PlanetType -&gt; Value
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">PlanetType -&gt; Text
+</span><a href="Protocol.Json.html#planetTypeName"><span class="hs-identifier hs-var">planetTypeName</span></a></span><span>
+</span><span id="line-108"></span><span>
+</span><span id="line-109"></span><span class="annot"><a href="Protocol.Json.html#playerIdName"><span class="hs-identifier hs-type">playerIdName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-110"></span><span id="playerIdName"><span class="annot"><span class="annottext">playerIdName :: PlayerId -&gt; Text
+</span><a href="Protocol.Json.html#playerIdName"><span class="hs-identifier hs-var hs-var">playerIdName</span></a></span></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player1"><span class="hs-identifier hs-var">Player1</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;player1&quot;</span></span><span>
+</span><span id="line-111"></span><span class="annot"><a href="Protocol.Json.html#playerIdName"><span class="hs-identifier hs-var">playerIdName</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player2"><span class="hs-identifier hs-var">Player2</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;player2&quot;</span></span><span>
+</span><span id="line-112"></span><span>
+</span><span id="line-113"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112257"><span id="local-6989586621679112261"><span id="local-6989586621679112264"><span id="local-6989586621679112267"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-114"></span><span>    </span><span id="local-6989586621679112269"><span class="annot"><span class="annottext">toJSON :: PlayerId -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Value
+</span><span class="hs-identifier hs-var">String</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Value) -&gt; (PlayerId -&gt; Text) -&gt; PlayerId -&gt; Value
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; Text
+</span><a href="Protocol.Json.html#playerIdName"><span class="hs-identifier hs-var">playerIdName</span></a></span><span>
+</span><span id="line-115"></span><span>
+</span><span id="line-116"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112272"><span id="local-6989586621679112276"><span id="local-6989586621679112279"><span id="local-6989586621679112282"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#KnownPlanet"><span class="hs-identifier hs-type">KnownPlanet</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-117"></span><span>    </span><span id="local-6989586621679112290"><span class="annot"><span class="annottext">toJSON :: KnownPlanet -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span id="local-6989586621679112291"><span class="annot"><span class="annottext">KnownPlanet
+</span><a href="#local-6989586621679112291"><span class="hs-identifier hs-var">kp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Pair] -&gt; Value
+</span><span class="hs-identifier hs-var">object</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;pos&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Pos -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">KnownPlanet -&gt; Pos
+</span><a href="Game.Types.html#knownPos"><span class="hs-identifier hs-var">knownPos</span></a></span><span> </span><span class="annot"><span class="annottext">KnownPlanet
+</span><a href="#local-6989586621679112291"><span class="hs-identifier hs-var">kp</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;type&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlanetType -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">KnownPlanet -&gt; PlanetType
+</span><a href="Game.Types.html#knownType"><span class="hs-identifier hs-var">knownType</span></a></span><span> </span><span class="annot"><span class="annottext">KnownPlanet
+</span><a href="#local-6989586621679112291"><span class="hs-identifier hs-var">kp</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-118"></span><span>
+</span><span id="line-119"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112296"><span id="local-6989586621679112300"><span id="local-6989586621679112303"><span id="local-6989586621679112306"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#Planet"><span class="hs-identifier hs-type">Planet</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-120"></span><span>    </span><span id="local-6989586621679112321"><span class="annot"><span class="annottext">toJSON :: Planet -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span id="local-6989586621679112322"><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679112322"><span class="hs-identifier hs-var">pl</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Pair] -&gt; Value
+</span><span class="hs-identifier hs-var">object</span></span><span>
+</span><span id="line-121"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;id&quot;</span></span><span>    </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Planet -&gt; PlanetId
+</span><a href="Game.Types.html#planetId"><span class="hs-identifier hs-var">planetId</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679112322"><span class="hs-identifier hs-var">pl</span></a></span><span>
+</span><span id="line-122"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;pos&quot;</span></span><span>   </span><span class="annot"><span class="annottext">Key -&gt; Pos -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Planet -&gt; Pos
+</span><a href="Game.Types.html#planetPos"><span class="hs-identifier hs-var">planetPos</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679112322"><span class="hs-identifier hs-var">pl</span></a></span><span>
+</span><span id="line-123"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;type&quot;</span></span><span>  </span><span class="annot"><span class="annottext">Key -&gt; PlanetType -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Planet -&gt; PlanetType
+</span><a href="Game.Types.html#planetType"><span class="hs-identifier hs-var">planetType</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679112322"><span class="hs-identifier hs-var">pl</span></a></span><span>
+</span><span id="line-124"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;stock&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Value -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Resources -&gt; Value
+</span><a href="Protocol.Json.html#resourcesToJSON"><span class="hs-identifier hs-var">resourcesToJSON</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Planet -&gt; Resources
+</span><a href="Game.Types.html#planetStock"><span class="hs-identifier hs-var">planetStock</span></a></span><span> </span><span class="annot"><span class="annottext">Planet
+</span><a href="#local-6989586621679112322"><span class="hs-identifier hs-var">pl</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-125"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-126"></span><span>
+</span><span id="line-127"></span><span class="annot"><span class="hs-comment">-- | Mot hanh tinh da kham pha, kem ma so.</span></span><span>
+</span><span id="line-128"></span><span class="annot"><a href="Protocol.Json.html#knownPlanetEntry"><span class="hs-identifier hs-type">knownPlanetEntry</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#PlanetId"><span class="hs-identifier hs-type">PlanetId</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#KnownPlanet"><span class="hs-identifier hs-type">KnownPlanet</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Value</span></span><span>
+</span><span id="line-129"></span><span id="knownPlanetEntry"><span class="annot"><span class="annottext">knownPlanetEntry :: (PlanetId, KnownPlanet) -&gt; Value
+</span><a href="Protocol.Json.html#knownPlanetEntry"><span class="hs-identifier hs-var hs-var">knownPlanetEntry</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679112328"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112328"><span class="hs-identifier hs-var">pid</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679112329"><span class="annot"><span class="annottext">KnownPlanet
+</span><a href="#local-6989586621679112329"><span class="hs-identifier hs-var">kp</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Pair] -&gt; Value
+</span><span class="hs-identifier hs-var">object</span></span><span>
+</span><span id="line-130"></span><span>    </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;id&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112328"><span class="hs-identifier hs-var">pid</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;pos&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Pos -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">KnownPlanet -&gt; Pos
+</span><a href="Game.Types.html#knownPos"><span class="hs-identifier hs-var">knownPos</span></a></span><span> </span><span class="annot"><span class="annottext">KnownPlanet
+</span><a href="#local-6989586621679112329"><span class="hs-identifier hs-var">kp</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;type&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlanetType -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">KnownPlanet -&gt; PlanetType
+</span><a href="Game.Types.html#knownType"><span class="hs-identifier hs-var">knownType</span></a></span><span> </span><span class="annot"><span class="annottext">KnownPlanet
+</span><a href="#local-6989586621679112329"><span class="hs-identifier hs-var">kp</span></a></span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-131"></span><span>
+</span><span id="line-132"></span><span class="hs-comment">-- ---------------------------------------------------------------------------</span><span>
+</span><span id="line-133"></span><span class="hs-comment">-- Ket qua tran dau</span><span>
+</span><span id="line-134"></span><span>
+</span><span id="line-135"></span><span class="annot"><a href="Protocol.Json.html#winReasonName"><span class="hs-identifier hs-type">winReasonName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#WinReason"><span class="hs-identifier hs-type">WinReason</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-136"></span><span id="winReasonName"><span class="annot"><span class="annottext">winReasonName :: WinReason -&gt; Text
+</span><a href="Protocol.Json.html#winReasonName"><span class="hs-identifier hs-var hs-var">winReasonName</span></a></span></span><span> </span><span class="annot"><span class="annottext">WinReason
+</span><a href="Game.Types.html#ReachedTarget"><span class="hs-identifier hs-var">ReachedTarget</span></a></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;reached_target&quot;</span></span><span>
+</span><span id="line-137"></span><span class="annot"><a href="Protocol.Json.html#winReasonName"><span class="hs-identifier hs-var">winReasonName</span></a></span><span> </span><span class="annot"><span class="annottext">WinReason
+</span><a href="Game.Types.html#OpponentOutOfBattery"><span class="hs-identifier hs-var">OpponentOutOfBattery</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;opponent_out_of_battery&quot;</span></span><span>
+</span><span id="line-138"></span><span class="annot"><a href="Protocol.Json.html#winReasonName"><span class="hs-identifier hs-var">winReasonName</span></a></span><span> </span><span class="annot"><span class="annottext">WinReason
+</span><a href="Game.Types.html#OpponentDisconnected"><span class="hs-identifier hs-var">OpponentDisconnected</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;opponent_disconnected&quot;</span></span><span>
+</span><span id="line-139"></span><span class="annot"><a href="Protocol.Json.html#winReasonName"><span class="hs-identifier hs-var">winReasonName</span></a></span><span> </span><span class="annot"><span class="annottext">WinReason
+</span><a href="Game.Types.html#HigherScoreAtLimit"><span class="hs-identifier hs-var">HigherScoreAtLimit</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;higher_score_at_limit&quot;</span></span><span>
+</span><span id="line-140"></span><span>
+</span><span id="line-141"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112337"><span id="local-6989586621679112341"><span id="local-6989586621679112344"><span id="local-6989586621679112347"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#WinReason"><span class="hs-identifier hs-type">WinReason</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-142"></span><span>    </span><span id="local-6989586621679112349"><span class="annot"><span class="annottext">toJSON :: WinReason -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Value
+</span><span class="hs-identifier hs-var">String</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Value) -&gt; (WinReason -&gt; Text) -&gt; WinReason -&gt; Value
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">WinReason -&gt; Text
+</span><a href="Protocol.Json.html#winReasonName"><span class="hs-identifier hs-var">winReasonName</span></a></span><span>
+</span><span id="line-143"></span><span>
+</span><span id="line-144"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112352"><span id="local-6989586621679112356"><span id="local-6989586621679112359"><span id="local-6989586621679112362"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#GameResult"><span class="hs-identifier hs-type">GameResult</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-145"></span><span>    </span><span id="local-6989586621679112372"><span class="annot"><span class="annottext">toJSON :: GameResult -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Winner"><span class="hs-identifier hs-type">Winner</span></a></span><span> </span><span id="local-6989586621679112374"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679112374"><span class="hs-identifier hs-var">pid</span></a></span></span><span> </span><span id="local-6989586621679112375"><span class="annot"><span class="annottext">WinReason
+</span><a href="#local-6989586621679112375"><span class="hs-identifier hs-var">reason</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;winner&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;player&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlayerId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679112374"><span class="hs-identifier hs-var">pid</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;reason&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; WinReason -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">WinReason
+</span><a href="#local-6989586621679112375"><span class="hs-identifier hs-var">reason</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-146"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="annot"><span class="annottext">GameResult
+</span><a href="Game.Types.html#Draw"><span class="hs-identifier hs-var">Draw</span></a></span><span>                </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;draw&quot;</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-147"></span><span>
+</span><span id="line-148"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112379"><span id="local-6989586621679112383"><span id="local-6989586621679112386"><span id="local-6989586621679112389"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#GamePhase"><span class="hs-identifier hs-type">GamePhase</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-149"></span><span>    </span><span id="local-6989586621679112397"><span class="annot"><span class="annottext">toJSON :: GamePhase -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="annot"><span class="annottext">GamePhase
+</span><a href="Game.Types.html#WaitingForPlayers"><span class="hs-identifier hs-var">WaitingForPlayers</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;waiting&quot;</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-150"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="annot"><span class="annottext">GamePhase
+</span><a href="Game.Types.html#InProgress"><span class="hs-identifier hs-var">InProgress</span></a></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;in_progress&quot;</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-151"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Finished"><span class="hs-identifier hs-type">Finished</span></a></span><span> </span><span id="local-6989586621679112401"><span class="annot"><span class="annottext">GameResult
+</span><a href="#local-6989586621679112401"><span class="hs-identifier hs-var">result</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;finished&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;result&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; GameResult -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">GameResult
+</span><a href="#local-6989586621679112401"><span class="hs-identifier hs-var">result</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-152"></span><span>
+</span><span id="line-153"></span><span class="hs-comment">-- ---------------------------------------------------------------------------</span><span>
+</span><span id="line-154"></span><span class="hs-comment">-- Action va bao cao</span><span>
+</span><span id="line-155"></span><span>
+</span><span id="line-156"></span><span class="annot"><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-type">errorName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier hs-type">GameError</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-157"></span><span id="errorName"><span class="annot"><span class="annottext">errorName :: GameError -&gt; Text
+</span><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var hs-var">errorName</span></a></span></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#GameNotInProgress"><span class="hs-identifier hs-var">GameNotInProgress</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;game_not_in_progress&quot;</span></span><span>
+</span><span id="line-158"></span><span class="annot"><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var">errorName</span></a></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#NotYourTurn"><span class="hs-identifier hs-var">NotYourTurn</span></a></span><span>             </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;not_your_turn&quot;</span></span><span>
+</span><span id="line-159"></span><span class="annot"><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var">errorName</span></a></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#NotEnoughAP"><span class="hs-identifier hs-var">NotEnoughAP</span></a></span><span>             </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;not_enough_ap&quot;</span></span><span>
+</span><span id="line-160"></span><span class="annot"><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var">errorName</span></a></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#NotEnoughBattery"><span class="hs-identifier hs-var">NotEnoughBattery</span></a></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;not_enough_battery&quot;</span></span><span>
+</span><span id="line-161"></span><span class="annot"><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var">errorName</span></a></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#OutOfBounds"><span class="hs-identifier hs-var">OutOfBounds</span></a></span><span>             </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;out_of_bounds&quot;</span></span><span>
+</span><span id="line-162"></span><span class="annot"><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var">errorName</span></a></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#NotOnPlanet"><span class="hs-identifier hs-var">NotOnPlanet</span></a></span><span>             </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;not_on_planet&quot;</span></span><span>
+</span><span id="line-163"></span><span class="annot"><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var">errorName</span></a></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#PlanetHasNoSuchResource"><span class="hs-identifier hs-var">PlanetHasNoSuchResource</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;planet_has_no_such_resource&quot;</span></span><span>
+</span><span id="line-164"></span><span class="annot"><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var">errorName</span></a></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#CargoFull"><span class="hs-identifier hs-var">CargoFull</span></a></span><span>               </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;cargo_full&quot;</span></span><span>
+</span><span id="line-165"></span><span class="annot"><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var">errorName</span></a></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#CargoEmpty"><span class="hs-identifier hs-var">CargoEmpty</span></a></span><span>              </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;cargo_empty&quot;</span></span><span>
+</span><span id="line-166"></span><span class="annot"><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var">errorName</span></a></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#NotAtEarth"><span class="hs-identifier hs-var">NotAtEarth</span></a></span><span>              </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;not_at_earth&quot;</span></span><span>
+</span><span id="line-167"></span><span class="annot"><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var">errorName</span></a></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#OutOfDepositRange"><span class="hs-identifier hs-var">OutOfDepositRange</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;out_of_deposit_range&quot;</span></span><span>
+</span><span id="line-168"></span><span class="annot"><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var">errorName</span></a></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#BatteryFull"><span class="hs-identifier hs-var">BatteryFull</span></a></span><span>             </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;battery_full&quot;</span></span><span>
+</span><span id="line-169"></span><span class="annot"><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var">errorName</span></a></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#NotEnoughResources"><span class="hs-identifier hs-var">NotEnoughResources</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;not_enough_resources&quot;</span></span><span>
+</span><span id="line-170"></span><span class="annot"><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var">errorName</span></a></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#InvalidAmount"><span class="hs-identifier hs-var">InvalidAmount</span></a></span><span>           </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;invalid_amount&quot;</span></span><span>
+</span><span id="line-171"></span><span>
+</span><span id="line-172"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112419"><span id="local-6989586621679112423"><span id="local-6989586621679112426"><span id="local-6989586621679112429"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier hs-type">GameError</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-173"></span><span>    </span><span id="local-6989586621679112431"><span class="annot"><span class="annottext">toJSON :: GameError -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Value
+</span><span class="hs-identifier hs-var">String</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Value) -&gt; (GameError -&gt; Text) -&gt; GameError -&gt; Value
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">GameError -&gt; Text
+</span><a href="Protocol.Json.html#errorName"><span class="hs-identifier hs-var">errorName</span></a></span><span>
+</span><span id="line-174"></span><span>
+</span><span id="line-175"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112434"><span id="local-6989586621679112438"><span id="local-6989586621679112441"><span id="local-6989586621679112444"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#Notice"><span class="hs-identifier hs-type">Notice</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-176"></span><span>    </span><span id="local-6989586621679112448"><span class="annot"><span class="annottext">toJSON :: Notice -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="annot"><span class="annottext">Notice
+</span><a href="Game.Types.html#YouWereScanned"><span class="hs-identifier hs-var">YouWereScanned</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Value
+</span><span class="hs-string">&quot;you_were_scanned&quot;</span></span><span>
+</span><span id="line-177"></span><span>
+</span><span id="line-178"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112452"><span id="local-6989586621679112456"><span id="local-6989586621679112459"><span id="local-6989586621679112462"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#Action"><span class="hs-identifier hs-type">Action</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-179"></span><span>    </span><span id="local-6989586621679112485"><span class="annot"><span class="annottext">toJSON :: Action -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Move"><span class="hs-identifier hs-type">Move</span></a></span><span> </span><span id="local-6989586621679112487"><span class="annot"><span class="annottext">Direction
+</span><a href="#local-6989586621679112487"><span class="hs-identifier hs-var">dir</span></a></span></span><span class="hs-special">)</span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;move&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;direction&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Direction -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Direction
+</span><a href="#local-6989586621679112487"><span class="hs-identifier hs-var">dir</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-180"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#Observe"><span class="hs-identifier hs-var">Observe</span></a></span><span>          </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;observe&quot;</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-181"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#ScanArea"><span class="hs-identifier hs-var">ScanArea</span></a></span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;scan_area&quot;</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-182"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#ScanNearest"><span class="hs-identifier hs-var">ScanNearest</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;scan_nearest&quot;</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-183"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#ScanOpponent"><span class="hs-identifier hs-var">ScanOpponent</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;scan_opponent&quot;</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-184"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Mine"><span class="hs-identifier hs-type">Mine</span></a></span><span> </span><span id="local-6989586621679112493"><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679112493"><span class="hs-identifier hs-var">res</span></a></span></span><span class="hs-special">)</span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mine&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;resource&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; ResourceType -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679112493"><span class="hs-identifier hs-var">res</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-185"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#Deposit"><span class="hs-identifier hs-var">Deposit</span></a></span><span>          </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;deposit&quot;</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-186"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Recharge"><span class="hs-identifier hs-type">Recharge</span></a></span><span> </span><span id="local-6989586621679112496"><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679112496"><span class="hs-identifier hs-var">res</span></a></span></span><span> </span><span id="local-6989586621679112497"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112497"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;recharge&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;resource&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; ResourceType -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679112496"><span class="hs-identifier hs-var">res</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;amount&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112497"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-187"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#EndTurn"><span class="hs-identifier hs-var">EndTurn</span></a></span><span>          </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;end_turn&quot;</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-188"></span><span>
+</span><span id="line-189"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112501"><span id="local-6989586621679112505"><span class="annot"><span class="hs-identifier hs-type">FromJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#Action"><span class="hs-identifier hs-type">Action</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-190"></span><span>    </span><span id="local-6989586621679112553"><span class="annot"><span class="annottext">parseJSON :: Value -&gt; Parser Action
+</span><span class="hs-identifier hs-var hs-var hs-var">parseJSON</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; (Object -&gt; Parser Action) -&gt; Value -&gt; Parser Action
+forall a. String -&gt; (Object -&gt; Parser a) -&gt; Value -&gt; Parser a
+</span><span class="hs-identifier hs-var">withObject</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Action&quot;</span></span><span> </span><span class="annot"><span class="annottext">((Object -&gt; Parser Action) -&gt; Value -&gt; Parser Action)
+-&gt; (Object -&gt; Parser Action) -&gt; Value -&gt; Parser Action
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679112554"><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679112554"><span class="hs-identifier hs-var">o</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-191"></span><span>        </span><span id="local-6989586621679112555"><span class="annot"><a href="#local-6989586621679112555"><span class="hs-identifier hs-var">kind</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679112554"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span class="annot"><span class="annottext">Object -&gt; Key -&gt; Parser Text
+forall a. FromJSON a =&gt; Object -&gt; Key -&gt; Parser a
+</span><span class="hs-operator hs-var">.:</span></span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;type&quot;</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-192"></span><span>        </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="#local-6989586621679112555"><span class="hs-identifier hs-type">kind</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-193"></span><span>            </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;move&quot;</span></span><span>          </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Direction -&gt; Action
+</span><a href="Game.Types.html#Move"><span class="hs-identifier hs-var">Move</span></a></span><span> </span><span class="annot"><span class="annottext">(Direction -&gt; Action) -&gt; Parser Direction -&gt; Parser Action
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679112554"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span class="annot"><span class="annottext">Object -&gt; Key -&gt; Parser Direction
+forall a. FromJSON a =&gt; Object -&gt; Key -&gt; Parser a
+</span><span class="hs-operator hs-var">.:</span></span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;direction&quot;</span></span><span>
+</span><span id="line-194"></span><span>            </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;observe&quot;</span></span><span>       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Action -&gt; Parser Action
+forall a. a -&gt; Parser a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#Observe"><span class="hs-identifier hs-var">Observe</span></a></span><span>
+</span><span id="line-195"></span><span>            </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;scan_area&quot;</span></span><span>     </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Action -&gt; Parser Action
+forall a. a -&gt; Parser a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#ScanArea"><span class="hs-identifier hs-var">ScanArea</span></a></span><span>
+</span><span id="line-196"></span><span>            </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;scan_nearest&quot;</span></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Action -&gt; Parser Action
+forall a. a -&gt; Parser a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#ScanNearest"><span class="hs-identifier hs-var">ScanNearest</span></a></span><span>
+</span><span id="line-197"></span><span>            </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;scan_opponent&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Action -&gt; Parser Action
+forall a. a -&gt; Parser a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#ScanOpponent"><span class="hs-identifier hs-var">ScanOpponent</span></a></span><span>
+</span><span id="line-198"></span><span>            </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mine&quot;</span></span><span>          </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ResourceType -&gt; Action
+</span><a href="Game.Types.html#Mine"><span class="hs-identifier hs-var">Mine</span></a></span><span> </span><span class="annot"><span class="annottext">(ResourceType -&gt; Action) -&gt; Parser ResourceType -&gt; Parser Action
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679112554"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span class="annot"><span class="annottext">Object -&gt; Key -&gt; Parser ResourceType
+forall a. FromJSON a =&gt; Object -&gt; Key -&gt; Parser a
+</span><span class="hs-operator hs-var">.:</span></span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;resource&quot;</span></span><span>
+</span><span id="line-199"></span><span>            </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;deposit&quot;</span></span><span>       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Action -&gt; Parser Action
+forall a. a -&gt; Parser a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#Deposit"><span class="hs-identifier hs-var">Deposit</span></a></span><span>
+</span><span id="line-200"></span><span>            </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;recharge&quot;</span></span><span>      </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ResourceType -&gt; PlanetId -&gt; Action
+</span><a href="Game.Types.html#Recharge"><span class="hs-identifier hs-var">Recharge</span></a></span><span> </span><span class="annot"><span class="annottext">(ResourceType -&gt; PlanetId -&gt; Action)
+-&gt; Parser ResourceType -&gt; Parser (PlanetId -&gt; Action)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679112554"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span class="annot"><span class="annottext">Object -&gt; Key -&gt; Parser ResourceType
+forall a. FromJSON a =&gt; Object -&gt; Key -&gt; Parser a
+</span><span class="hs-operator hs-var">.:</span></span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;resource&quot;</span></span><span> </span><span class="annot"><span class="annottext">Parser (PlanetId -&gt; Action) -&gt; Parser PlanetId -&gt; Parser Action
+forall a b. Parser (a -&gt; b) -&gt; Parser a -&gt; Parser b
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679112554"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span class="annot"><span class="annottext">Object -&gt; Key -&gt; Parser PlanetId
+forall a. FromJSON a =&gt; Object -&gt; Key -&gt; Parser a
+</span><span class="hs-operator hs-var">.:</span></span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;amount&quot;</span></span><span>
+</span><span id="line-201"></span><span>            </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;end_turn&quot;</span></span><span>      </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Action -&gt; Parser Action
+forall a. a -&gt; Parser a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#EndTurn"><span class="hs-identifier hs-var">EndTurn</span></a></span><span>
+</span><span id="line-202"></span><span>            </span><span id="local-6989586621679112557"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679112557"><span class="hs-identifier hs-var">other</span></a></span></span><span>           </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser Action
+forall a. String -&gt; Parser a
+forall (m :: * -&gt; *) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;unknown action: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679112557"><span class="hs-identifier hs-var">other</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-203"></span><span>
+</span><span id="line-204"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112560"><span id="local-6989586621679112564"><span id="local-6989586621679112567"><span id="local-6989586621679112570"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#ActionResult"><span class="hs-identifier hs-type">ActionResult</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-205"></span><span>    </span><span id="local-6989586621679112617"><span class="annot"><span class="annottext">toJSON :: ActionResult -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Moved"><span class="hs-identifier hs-type">Moved</span></a></span><span> </span><span id="local-6989586621679112619"><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679112619"><span class="hs-identifier hs-var">pos</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;moved&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;pos&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Pos -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679112619"><span class="hs-identifier hs-var">pos</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-206"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#PlanetsFound"><span class="hs-identifier hs-type">PlanetsFound</span></a></span><span> </span><span id="local-6989586621679112621"><span class="annot"><span class="annottext">[KnownPlanet]
+</span><a href="#local-6989586621679112621"><span class="hs-identifier hs-var">planets</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;planets_found&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;planets&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; [KnownPlanet] -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">[KnownPlanet]
+</span><a href="#local-6989586621679112621"><span class="hs-identifier hs-var">planets</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-207"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#NearestPlanet"><span class="hs-identifier hs-type">NearestPlanet</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (Compass, PlanetId)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;nearest_planet&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;found&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Bool -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">]</span><span>
+</span><span id="line-208"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#NearestPlanet"><span class="hs-identifier hs-type">NearestPlanet</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679112623"><span class="annot"><span class="annottext">Compass
+</span><a href="#local-6989586621679112623"><span class="hs-identifier hs-var">direction</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679112624"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112624"><span class="hs-identifier hs-var">dist</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-209"></span><span>        </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;nearest_planet&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;found&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Bool -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;direction&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Compass -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="#local-6989586621679112623"><span class="hs-identifier hs-var">direction</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;distance&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112624"><span class="hs-identifier hs-var">dist</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-210"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#OpponentDirection"><span class="hs-identifier hs-type">OpponentDirection</span></a></span><span> </span><span id="local-6989586621679112626"><span class="annot"><span class="annottext">Compass
+</span><a href="#local-6989586621679112626"><span class="hs-identifier hs-var">direction</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;opponent_direction&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;direction&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Compass -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Compass
+</span><a href="#local-6989586621679112626"><span class="hs-identifier hs-var">direction</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-211"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Mined"><span class="hs-identifier hs-type">Mined</span></a></span><span> </span><span id="local-6989586621679112628"><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679112628"><span class="hs-identifier hs-var">res</span></a></span></span><span> </span><span id="local-6989586621679112629"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112629"><span class="hs-identifier hs-var">amount</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mined&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;resource&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; ResourceType -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">ResourceType
+</span><a href="#local-6989586621679112628"><span class="hs-identifier hs-var">res</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;amount&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112629"><span class="hs-identifier hs-var">amount</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-212"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Deposited"><span class="hs-identifier hs-type">Deposited</span></a></span><span> </span><span id="local-6989586621679112631"><span class="annot"><span class="annottext">Resources
+</span><a href="#local-6989586621679112631"><span class="hs-identifier hs-var">rs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;deposited&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;resources&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Value -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Resources -&gt; Value
+</span><a href="Protocol.Json.html#resourcesToJSON"><span class="hs-identifier hs-var">resourcesToJSON</span></a></span><span> </span><span class="annot"><span class="annottext">Resources
+</span><a href="#local-6989586621679112631"><span class="hs-identifier hs-var">rs</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-213"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#Recharged"><span class="hs-identifier hs-type">Recharged</span></a></span><span> </span><span id="local-6989586621679112633"><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112633"><span class="hs-identifier hs-var">amount</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;recharged&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;amount&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlanetId
+</span><a href="#local-6989586621679112633"><span class="hs-identifier hs-var">amount</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-214"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="annot"><span class="annottext">ActionResult
+</span><a href="Game.Types.html#TurnEnded"><span class="hs-identifier hs-var">TurnEnded</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;turn_ended&quot;</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-215"></span><span>
+</span><span id="line-216"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112637"><span id="local-6989586621679112641"><span id="local-6989586621679112644"><span id="local-6989586621679112647"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-type">ActionReport</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-217"></span><span>    </span><span id="local-6989586621679112657"><span class="annot"><span class="annottext">toJSON :: ActionReport -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span id="local-6989586621679112658"><span class="annot"><span class="annottext">ActionReport
+</span><a href="#local-6989586621679112658"><span class="hs-identifier hs-var">rep</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Pair] -&gt; Value
+</span><span class="hs-identifier hs-var">object</span></span><span>
+</span><span id="line-218"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;result&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; ActionResult -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">ActionReport -&gt; ActionResult
+</span><a href="Game.Types.html#reportResult"><span class="hs-identifier hs-var">reportResult</span></a></span><span> </span><span class="annot"><span class="annottext">ActionReport
+</span><a href="#local-6989586621679112658"><span class="hs-identifier hs-var">rep</span></a></span><span>
+</span><span id="line-219"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;notice&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Maybe Notice -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">ActionReport -&gt; Maybe Notice
+</span><a href="Game.Types.html#reportNotice"><span class="hs-identifier hs-var">reportNotice</span></a></span><span> </span><span class="annot"><span class="annottext">ActionReport
+</span><a href="#local-6989586621679112658"><span class="hs-identifier hs-var">rep</span></a></span><span>
+</span><span id="line-220"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-221"></span><span>
+</span><span id="line-222"></span><span class="hs-comment">-- ---------------------------------------------------------------------------</span><span>
+</span><span id="line-223"></span><span class="hs-comment">-- View va tong ket</span><span>
+</span><span id="line-224"></span><span>
+</span><span id="line-225"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112663"><span id="local-6989586621679112667"><span id="local-6989586621679112670"><span id="local-6989586621679112673"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.View.html#PlayerView"><span class="hs-identifier hs-type">PlayerView</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-226"></span><span>    </span><span id="local-6989586621679112736"><span class="annot"><span class="annottext">toJSON :: PlayerView -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span id="local-6989586621679112737"><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Pair] -&gt; Value
+</span><span class="hs-identifier hs-var">object</span></span><span>
+</span><span id="line-227"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;you&quot;</span></span><span>              </span><span class="annot"><span class="annottext">Key -&gt; PlayerId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; PlayerId
+</span><a href="Game.View.html#viewSelf"><span class="hs-identifier hs-var">viewSelf</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-228"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;map_width&quot;</span></span><span>        </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; PlanetId
+</span><a href="Game.View.html#viewMapWidth"><span class="hs-identifier hs-var">viewMapWidth</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-229"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;map_height&quot;</span></span><span>       </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; PlanetId
+</span><a href="Game.View.html#viewMapHeight"><span class="hs-identifier hs-var">viewMapHeight</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-230"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;earth&quot;</span></span><span>            </span><span class="annot"><span class="annottext">Key -&gt; Pos -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; Pos
+</span><a href="Game.View.html#viewEarth"><span class="hs-identifier hs-var">viewEarth</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-231"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;round&quot;</span></span><span>            </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; PlanetId
+</span><a href="Game.View.html#viewRound"><span class="hs-identifier hs-var">viewRound</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-232"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;max_rounds&quot;</span></span><span>       </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; PlanetId
+</span><a href="Game.View.html#viewMaxRounds"><span class="hs-identifier hs-var">viewMaxRounds</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-233"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;current_player&quot;</span></span><span>   </span><span class="annot"><span class="annottext">Key -&gt; PlayerId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; PlayerId
+</span><a href="Game.View.html#viewCurrent"><span class="hs-identifier hs-var">viewCurrent</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-234"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;phase&quot;</span></span><span>            </span><span class="annot"><span class="annottext">Key -&gt; GamePhase -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; GamePhase
+</span><a href="Game.View.html#viewPhase"><span class="hs-identifier hs-var">viewPhase</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-235"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;pos&quot;</span></span><span>              </span><span class="annot"><span class="annottext">Key -&gt; Pos -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; Pos
+</span><a href="Game.View.html#viewPos"><span class="hs-identifier hs-var">viewPos</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-236"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;battery&quot;</span></span><span>          </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; PlanetId
+</span><a href="Game.View.html#viewBattery"><span class="hs-identifier hs-var">viewBattery</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-237"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;battery_max&quot;</span></span><span>      </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; PlanetId
+</span><a href="Game.View.html#viewBatteryMax"><span class="hs-identifier hs-var">viewBatteryMax</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-238"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;ap&quot;</span></span><span>               </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; PlanetId
+</span><a href="Game.View.html#viewAP"><span class="hs-identifier hs-var">viewAP</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-239"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;ap_max&quot;</span></span><span>           </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; PlanetId
+</span><a href="Game.View.html#viewApMax"><span class="hs-identifier hs-var">viewApMax</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-240"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;cargo&quot;</span></span><span>            </span><span class="annot"><span class="annottext">Key -&gt; Value -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Resources -&gt; Value
+</span><a href="Protocol.Json.html#resourcesToJSON"><span class="hs-identifier hs-var">resourcesToJSON</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlayerView -&gt; Resources
+</span><a href="Game.View.html#viewCargo"><span class="hs-identifier hs-var">viewCargo</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-241"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;cargo_capacity&quot;</span></span><span>   </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; PlanetId
+</span><a href="Game.View.html#viewCargoCapacity"><span class="hs-identifier hs-var">viewCargoCapacity</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-242"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;storage&quot;</span></span><span>          </span><span class="annot"><span class="annottext">Key -&gt; Value -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Resources -&gt; Value
+</span><a href="Protocol.Json.html#resourcesToJSON"><span class="hs-identifier hs-var">resourcesToJSON</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlayerView -&gt; Resources
+</span><a href="Game.View.html#viewStorage"><span class="hs-identifier hs-var">viewStorage</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-243"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;score&quot;</span></span><span>            </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; PlanetId
+</span><a href="Game.View.html#viewScore"><span class="hs-identifier hs-var">viewScore</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-244"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;score_target&quot;</span></span><span>     </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; PlanetId
+</span><a href="Game.View.html#viewScoreTarget"><span class="hs-identifier hs-var">viewScoreTarget</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-245"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;known_planets&quot;</span></span><span>    </span><span class="annot"><span class="annottext">Key -&gt; [Value] -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">((PlanetId, KnownPlanet) -&gt; Value)
+-&gt; [(PlanetId, KnownPlanet)] -&gt; [Value]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">(PlanetId, KnownPlanet) -&gt; Value
+</span><a href="Protocol.Json.html#knownPlanetEntry"><span class="hs-identifier hs-var">knownPlanetEntry</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Map PlanetId KnownPlanet -&gt; [(PlanetId, KnownPlanet)]
+forall k a. Map k a -&gt; [(k, a)]
+</span><span class="hs-identifier hs-var">Map.toList</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlayerView -&gt; Map PlanetId KnownPlanet
+</span><a href="Game.View.html#viewKnown"><span class="hs-identifier hs-var">viewKnown</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-246"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;planet_here&quot;</span></span><span>      </span><span class="annot"><span class="annottext">Key -&gt; Maybe Planet -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView -&gt; Maybe Planet
+</span><a href="Game.View.html#viewHere"><span class="hs-identifier hs-var">viewHere</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112737"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-247"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-248"></span><span>
+</span><span id="line-249"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112760"><span id="local-6989586621679112764"><span id="local-6989586621679112767"><span id="local-6989586621679112770"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.View.html#PlayerFinal"><span class="hs-identifier hs-type">PlayerFinal</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-250"></span><span>    </span><span id="local-6989586621679112778"><span class="annot"><span class="annottext">toJSON :: PlayerFinal -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span id="local-6989586621679112779"><span class="annot"><span class="annottext">PlayerFinal
+</span><a href="#local-6989586621679112779"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Pair] -&gt; Value
+</span><span class="hs-identifier hs-var">object</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;pos&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Pos -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerFinal -&gt; Pos
+</span><a href="Game.View.html#finalPos"><span class="hs-identifier hs-var">finalPos</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerFinal
+</span><a href="#local-6989586621679112779"><span class="hs-identifier hs-var">f</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;score&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlanetId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerFinal -&gt; PlanetId
+</span><a href="Game.View.html#finalScore"><span class="hs-identifier hs-var">finalScore</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerFinal
+</span><a href="#local-6989586621679112779"><span class="hs-identifier hs-var">f</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-251"></span><span>
+</span><span id="line-252"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112784"><span id="local-6989586621679112788"><span id="local-6989586621679112791"><span id="local-6989586621679112794"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Game.View.html#GameSummary"><span class="hs-identifier hs-type">GameSummary</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-253"></span><span>    </span><span id="local-6989586621679112802"><span class="annot"><span class="annottext">toJSON :: GameSummary -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span id="local-6989586621679112803"><span class="annot"><span class="annottext">GameSummary
+</span><a href="#local-6989586621679112803"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Pair] -&gt; Value
+</span><span class="hs-identifier hs-var">object</span></span><span>
+</span><span id="line-254"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;player1&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlayerFinal -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">GameSummary -&gt; PlayerFinal
+</span><a href="Game.View.html#summaryPlayer1"><span class="hs-identifier hs-var">summaryPlayer1</span></a></span><span> </span><span class="annot"><span class="annottext">GameSummary
+</span><a href="#local-6989586621679112803"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-255"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;player2&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlayerFinal -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">GameSummary -&gt; PlayerFinal
+</span><a href="Game.View.html#summaryPlayer2"><span class="hs-identifier hs-var">summaryPlayer2</span></a></span><span> </span><span class="annot"><span class="annottext">GameSummary
+</span><a href="#local-6989586621679112803"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-256"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-257"></span><span>
+</span><span id="line-258"></span><span class="hs-comment">-- ---------------------------------------------------------------------------</span><span>
+</span><span id="line-259"></span><span class="hs-comment">-- Tin nhan</span><span>
+</span><span id="line-260"></span><span>
+</span><span id="line-261"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112808"><span id="local-6989586621679112812"><span id="local-6989586621679112815"><span id="local-6989586621679112818"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Protocol.Message.html#ClientMsg"><span class="hs-identifier hs-type">ClientMsg</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-262"></span><span>    </span><span id="local-6989586621679112825"><span class="annot"><span class="annottext">toJSON :: ClientMsg -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="annot"><span class="annottext">ClientMsg
+</span><a href="Protocol.Message.html#Join"><span class="hs-identifier hs-var">Join</span></a></span><span>           </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;join&quot;</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-263"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Protocol.Message.html#DoAction"><span class="hs-identifier hs-type">DoAction</span></a></span><span> </span><span id="local-6989586621679112828"><span class="annot"><span class="annottext">Action
+</span><a href="#local-6989586621679112828"><span class="hs-identifier hs-var">act</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;action&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;action&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Action -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="#local-6989586621679112828"><span class="hs-identifier hs-var">act</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-264"></span><span>
+</span><span id="line-265"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112831"><span id="local-6989586621679112834"><span class="annot"><span class="hs-identifier hs-type">FromJSON</span></span><span> </span><span class="annot"><a href="Protocol.Message.html#ClientMsg"><span class="hs-identifier hs-type">ClientMsg</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-266"></span><span>    </span><span id="local-6989586621679112850"><span class="annot"><span class="annottext">parseJSON :: Value -&gt; Parser ClientMsg
+</span><span class="hs-identifier hs-var hs-var hs-var">parseJSON</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; (Object -&gt; Parser ClientMsg) -&gt; Value -&gt; Parser ClientMsg
+forall a. String -&gt; (Object -&gt; Parser a) -&gt; Value -&gt; Parser a
+</span><span class="hs-identifier hs-var">withObject</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;ClientMsg&quot;</span></span><span> </span><span class="annot"><span class="annottext">((Object -&gt; Parser ClientMsg) -&gt; Value -&gt; Parser ClientMsg)
+-&gt; (Object -&gt; Parser ClientMsg) -&gt; Value -&gt; Parser ClientMsg
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679112851"><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679112851"><span class="hs-identifier hs-var">o</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-267"></span><span>        </span><span id="local-6989586621679112852"><span class="annot"><a href="#local-6989586621679112852"><span class="hs-identifier hs-var">kind</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679112851"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span class="annot"><span class="annottext">Object -&gt; Key -&gt; Parser Text
+forall a. FromJSON a =&gt; Object -&gt; Key -&gt; Parser a
+</span><span class="hs-operator hs-var">.:</span></span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;type&quot;</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-268"></span><span>        </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="#local-6989586621679112852"><span class="hs-identifier hs-type">kind</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-269"></span><span>            </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;join&quot;</span></span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ClientMsg -&gt; Parser ClientMsg
+forall a. a -&gt; Parser a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">ClientMsg
+</span><a href="Protocol.Message.html#Join"><span class="hs-identifier hs-var">Join</span></a></span><span>
+</span><span id="line-270"></span><span>            </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;action&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Action -&gt; ClientMsg
+</span><a href="Protocol.Message.html#DoAction"><span class="hs-identifier hs-var">DoAction</span></a></span><span> </span><span class="annot"><span class="annottext">(Action -&gt; ClientMsg) -&gt; Parser Action -&gt; Parser ClientMsg
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="#local-6989586621679112851"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span class="annot"><span class="annottext">Object -&gt; Key -&gt; Parser Action
+forall a. FromJSON a =&gt; Object -&gt; Key -&gt; Parser a
+</span><span class="hs-operator hs-var">.:</span></span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;action&quot;</span></span><span>
+</span><span id="line-271"></span><span>            </span><span id="local-6989586621679112853"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679112853"><span class="hs-identifier hs-var">other</span></a></span></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; Parser ClientMsg
+forall a. String -&gt; Parser a
+forall (m :: * -&gt; *) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;unknown message: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679112853"><span class="hs-identifier hs-var">other</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-272"></span><span>
+</span><span id="line-273"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679112856"><span id="local-6989586621679112859"><span id="local-6989586621679112862"><span id="local-6989586621679112865"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="Protocol.Message.html#ServerMsg"><span class="hs-identifier hs-type">ServerMsg</span></a></span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-274"></span><span>    </span><span id="local-6989586621679112908"><span class="annot"><span class="annottext">toJSON :: ServerMsg -&gt; Value
+</span><span class="hs-identifier hs-var hs-var hs-var">toJSON</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Protocol.Message.html#Welcome"><span class="hs-identifier hs-type">Welcome</span></a></span><span> </span><span id="local-6989586621679112910"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679112910"><span class="hs-identifier hs-var">pid</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;welcome&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;player&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlayerId -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679112910"><span class="hs-identifier hs-var">pid</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-275"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="annot"><span class="annottext">ServerMsg
+</span><a href="Protocol.Message.html#WaitingForOpponent"><span class="hs-identifier hs-var">WaitingForOpponent</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;waiting_for_opponent&quot;</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-276"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Protocol.Message.html#GameStarted"><span class="hs-identifier hs-type">GameStarted</span></a></span><span> </span><span id="local-6989586621679112913"><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112913"><span class="hs-identifier hs-var">view</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;game_started&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;view&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlayerView -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112913"><span class="hs-identifier hs-var">view</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-277"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Protocol.Message.html#ActionAccepted"><span class="hs-identifier hs-type">ActionAccepted</span></a></span><span> </span><span id="local-6989586621679112915"><span class="annot"><span class="annottext">ActionReport
+</span><a href="#local-6989586621679112915"><span class="hs-identifier hs-var">rep</span></a></span></span><span> </span><span id="local-6989586621679112916"><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112916"><span class="hs-identifier hs-var">view</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-278"></span><span>        </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;action_accepted&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;report&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; ActionReport -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">ActionReport
+</span><a href="#local-6989586621679112915"><span class="hs-identifier hs-var">rep</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;view&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlayerView -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112916"><span class="hs-identifier hs-var">view</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-279"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Protocol.Message.html#ActionRejected"><span class="hs-identifier hs-type">ActionRejected</span></a></span><span> </span><span id="local-6989586621679112918"><span class="annot"><span class="annottext">GameError
+</span><a href="#local-6989586621679112918"><span class="hs-identifier hs-var">err</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;action_rejected&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;error&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; GameError -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="#local-6989586621679112918"><span class="hs-identifier hs-var">err</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-280"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Protocol.Message.html#OpponentActed"><span class="hs-identifier hs-type">OpponentActed</span></a></span><span> </span><span id="local-6989586621679112920"><span class="annot"><span class="annottext">Maybe Notice
+</span><a href="#local-6989586621679112920"><span class="hs-identifier hs-var">notice</span></a></span></span><span> </span><span id="local-6989586621679112921"><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112921"><span class="hs-identifier hs-var">view</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-281"></span><span>        </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;opponent_acted&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;notice&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; Maybe Notice -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">Maybe Notice
+</span><a href="#local-6989586621679112920"><span class="hs-identifier hs-var">notice</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;view&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; PlayerView -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">PlayerView
+</span><a href="#local-6989586621679112921"><span class="hs-identifier hs-var">view</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-282"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Protocol.Message.html#GameOver"><span class="hs-identifier hs-type">GameOver</span></a></span><span> </span><span id="local-6989586621679112923"><span class="annot"><span class="annottext">GameResult
+</span><a href="#local-6989586621679112923"><span class="hs-identifier hs-var">result</span></a></span></span><span> </span><span id="local-6989586621679112924"><span class="annot"><span class="annottext">GameSummary
+</span><a href="#local-6989586621679112924"><span class="hs-identifier hs-var">summary</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-283"></span><span>        </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;game_over&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;result&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; GameResult -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">GameResult
+</span><a href="#local-6989586621679112923"><span class="hs-identifier hs-var">result</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;summary&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; GameSummary -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">GameSummary
+</span><a href="#local-6989586621679112924"><span class="hs-identifier hs-var">summary</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-284"></span><span>    </span><span class="annot"><span class="hs-identifier hs-var">toJSON</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Protocol.Message.html#ProtocolError"><span class="hs-identifier hs-type">ProtocolError</span></a></span><span> </span><span id="local-6989586621679112926"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679112926"><span class="hs-identifier hs-var">msg</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Pair] -&gt; Value
+</span><a href="Protocol.Json.html#tagged"><span class="hs-identifier hs-var">tagged</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;protocol_error&quot;</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Key
+</span><span class="hs-string">&quot;message&quot;</span></span><span> </span><span class="annot"><span class="annottext">Key -&gt; String -&gt; Pair
+forall v. ToJSON v =&gt; Key -&gt; v -&gt; Pair
+forall e kv v. (KeyValue e kv, ToJSON v) =&gt; Key -&gt; v -&gt; kv
+</span><span class="hs-operator hs-var">.=</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679112926"><span class="hs-identifier hs-var">msg</span></a></span><span class="hs-special">]</span></pre></body></html>

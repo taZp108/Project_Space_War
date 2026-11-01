@@ -1,0 +1,32 @@
+? C:\Users\ASUS\AppData\Local\Programs\stack\x86_64-windows\ghc-9.10.3\lib\x86_64-windows-ghc-9.10.3\rts-1.0.2\include\ghcversion.h
+: hash: 7038bb968ecc358729edd5d1e72a638409aaf5ea6ab13ce6ec7f253daa3b6529
+D:\Dev\space-war\.stack-work\dist\1a191874\build\space-war-test\autogen\Paths_space_war.hs:
+  hash: 7bae280577668f2340a387a653f7f8b07109197d2d4869b0b1940f0815d87b64
+D:\Dev\space-war\.stack-work\dist\1a191874\build\space-war-test\autogen\cabal_macros.h:
+  hash: 04dea21f1a3e0eba4488a3bf379a0f08f9143102114a8f9bff64f8d5dbd91f85
+D:\Dev\space-war\README.md:
+  hash: a511a5ddddcd4e033b3197531470e0af2f99712bc70462b0c18d5a66de2f6fb6
+D:\Dev\space-war\package.yaml:
+  hash: be1ae6f997c55c9a0a3d57ba2c6a4378b8d0b0b73cbd9cba2141e7fedecf64f8
+D:\Dev\space-war\space-war.cabal:
+  hash: e9e5c47d0a452bc363f93bc2f0b5475b6a3c8ab2df83053f076326e69c4fd1cc
+D:\Dev\space-war\test\Game\ActionSpec.hs:
+  hash: 8936ea4c9de1eb0bb6d690a77d85fa11a0f4bbbe8573c9978957ae79e957acb2
+D:\Dev\space-war\test\Game\GenerateSpec.hs:
+  hash: 609346d36e19d097b1ea7ef5c9866b41a209f7175783d54e3e4d46c6f976af0e
+D:\Dev\space-war\test\Game\RoguelikeSpec.hs:
+  hash: 74bad3cdc3541fb599a0bc4dcda90aec804de4a59e092f7a16fda46811648299
+D:\Dev\space-war\test\Game\StateSpec.hs:
+  hash: fda843ec3da2f26e73b0eff4699a9406a4f2c5b3f85555d6f7443a43f7a967d5
+D:\Dev\space-war\test\Game\TestUtil.hs:
+  hash: 867cdde2628abcb445d9a952bf6c421bc36e57cff0fea217a208a84f9d55e276
+D:\Dev\space-war\test\Game\TurnSpec.hs:
+  hash: 0845e92f3190a6113b5b697a7924be9eafd3e3e46d5eddc39da78143d3ce81b3
+D:\Dev\space-war\test\Game\ViewSpec.hs:
+  hash: 5b78983e20dbf80c0ef45c0a270c88c4f6cd66cc6552a96289f07a1ffb519a13
+D:\Dev\space-war\test\Game\WorldSpec.hs:
+  hash: a2acd0b17efa03fdf52cc1ee4e6d857662a0397d7dd86d2ac709f2aceb1beb4c
+D:\Dev\space-war\test\Protocol\JsonSpec.hs:
+  hash: c3721ec26e3b37d6cb42926c4887912fedbde5a81f4b73f2ac61995141e914a4
+D:\Dev\space-war\test\Spec.hs:
+  hash: 0e76024ecc0484c4ac2a18724a192e687cd22edd55b366fce9c0295e74923061

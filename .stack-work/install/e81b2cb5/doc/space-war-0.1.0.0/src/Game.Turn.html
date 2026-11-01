@@ -1,0 +1,231 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | Luot choi: ap dung action cua mot nguoi, doi luot, kiem tra thang/thua.</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.Turn.html"><span class="hs-identifier">Game.Turn</span></a></span><span>
+</span><span id="line-3"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Game.Turn.html#applyAction"><span class="hs-identifier">applyAction</span></a></span><span>
+</span><span id="line-4"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Turn.html#endTurn"><span class="hs-identifier">endTurn</span></a></span><span>
+</span><span id="line-5"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Turn.html#forfeit"><span class="hs-identifier">forfeit</span></a></span><span>
+</span><span id="line-6"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Action.html"><span class="hs-identifier">Game.Action</span></a></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Config.html"><span class="hs-identifier">Game.Config</span></a></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.State.html"><span class="hs-identifier">Game.State</span></a></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Types.html"><span class="hs-identifier">Game.Types</span></a></span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- | Ap dung mot action cua nguoi choi. Kiem tra tran dang choi va dung luot,</span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- roi thuc hien action, roi xu ly ket qua (thang, thua, het AP thi doi luot).</span><span>
+</span><span id="line-15"></span><span class="annot"><a href="Game.Turn.html#applyAction"><span class="hs-identifier hs-type">applyAction</span></a></span><span>
+</span><span id="line-16"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Action"><span class="hs-identifier hs-type">Action</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span>
+</span><span id="line-17"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Game.Types.html#GameError"><span class="hs-identifier hs-type">GameError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Types.html#ActionReport"><span class="hs-identifier hs-type">ActionReport</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span id="applyAction"><span class="annot"><span class="annottext">applyAction :: Config
+-&gt; PlayerId
+-&gt; Action
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Turn.html#applyAction"><span class="hs-identifier hs-var hs-var">applyAction</span></a></span></span><span> </span><span id="local-6989586621679111496"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111496"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111497"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111497"><span class="hs-identifier hs-var">pid</span></a></span></span><span> </span><span id="local-6989586621679111498"><span class="annot"><span class="annottext">Action
+</span><a href="#local-6989586621679111498"><span class="hs-identifier hs-var">action</span></a></span></span><span> </span><span id="local-6989586621679111499"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111499"><span class="hs-identifier hs-var">gs</span></a></span></span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GameState -&gt; GamePhase
+</span><a href="Game.Types.html#gsPhase"><span class="hs-identifier hs-var">gsPhase</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111499"><span class="hs-identifier hs-var">gs</span></a></span><span> </span><span class="annot"><span class="annottext">GamePhase -&gt; GamePhase -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">GamePhase
+</span><a href="Game.Types.html#InProgress"><span class="hs-identifier hs-var">InProgress</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameError -&gt; Either GameError (GameState, ActionReport)
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#GameNotInProgress"><span class="hs-identifier hs-var">GameNotInProgress</span></a></span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GameState -&gt; PlayerId
+</span><a href="Game.Types.html#gsCurrent"><span class="hs-identifier hs-var">gsCurrent</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111499"><span class="hs-identifier hs-var">gs</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; PlayerId -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111497"><span class="hs-identifier hs-var">pid</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameError -&gt; Either GameError (GameState, ActionReport)
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">GameError
+</span><a href="Game.Types.html#NotYourTurn"><span class="hs-identifier hs-var">NotYourTurn</span></a></span><span>
+</span><span id="line-21"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-22"></span><span>        </span><span class="hs-special">(</span><span id="local-6989586621679111506"><span class="annot"><a href="#local-6989586621679111506"><span class="hs-identifier hs-var">gs'</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111507"><span class="annot"><a href="#local-6989586621679111507"><span class="hs-identifier hs-var">rep</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Config
+-&gt; PlayerId
+-&gt; Action
+-&gt; GameState
+-&gt; Either GameError (GameState, ActionReport)
+</span><a href="Game.Action.html#performAction"><span class="hs-identifier hs-var">performAction</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111496"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111497"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="#local-6989586621679111498"><span class="hs-identifier hs-var">action</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111499"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-23"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Game.Turn.html#afterAction"><span class="hs-identifier hs-type">afterAction</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111496"><span class="hs-identifier hs-type">cfg</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111497"><span class="hs-identifier hs-type">pid</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111498"><span class="hs-identifier hs-type">action</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111506"><span class="hs-identifier hs-type">gs'</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679111507"><span class="hs-identifier hs-type">rep</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-comment">-- | Sau moi action thanh cong, thu tu kiem tra la: thang (sau Deposit),</span><span>
+</span><span id="line-26"></span><span class="hs-comment">-- thua do het battery, roi het AP hoac EndTurn thi doi luot.</span><span>
+</span><span id="line-27"></span><span class="annot"><a href="Game.Turn.html#afterAction"><span class="hs-identifier hs-type">afterAction</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Action"><span class="hs-identifier hs-type">Action</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span>
+</span><span id="line-28"></span><span id="afterAction"><span class="annot"><span class="annottext">afterAction :: Config -&gt; PlayerId -&gt; Action -&gt; GameState -&gt; GameState
+</span><a href="Game.Turn.html#afterAction"><span class="hs-identifier hs-var hs-var">afterAction</span></a></span></span><span> </span><span id="local-6989586621679111510"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111510"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111511"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111511"><span class="hs-identifier hs-var">pid</span></a></span></span><span> </span><span id="local-6989586621679111512"><span class="annot"><span class="annottext">Action
+</span><a href="#local-6989586621679111512"><span class="hs-identifier hs-var">action</span></a></span></span><span> </span><span id="local-6989586621679111513"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111513"><span class="hs-identifier hs-var">gs</span></a></span></span><span>
+</span><span id="line-29"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="#local-6989586621679111512"><span class="hs-identifier hs-var">action</span></a></span><span> </span><span class="annot"><span class="annottext">Action -&gt; Action -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#Deposit"><span class="hs-identifier hs-var">Deposit</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Config -&gt; Player -&gt; Int
+</span><a href="Game.State.html#playerScore"><span class="hs-identifier hs-var">playerScore</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111510"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111517"><span class="hs-identifier hs-var">me</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgScoreTarget"><span class="hs-identifier hs-var">cfgScoreTarget</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111510"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-30"></span><span>        </span><span class="annot"><span class="annottext">GameResult -&gt; GameState -&gt; GameState
+</span><a href="Game.Turn.html#finish"><span class="hs-identifier hs-var">finish</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlayerId -&gt; WinReason -&gt; GameResult
+</span><a href="Game.Types.html#Winner"><span class="hs-identifier hs-var">Winner</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111511"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">WinReason
+</span><a href="Game.Types.html#ReachedTarget"><span class="hs-identifier hs-var">ReachedTarget</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111513"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-31"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Player -&gt; Int
+</span><a href="Game.Types.html#playerBattery"><span class="hs-identifier hs-var">playerBattery</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111517"><span class="hs-identifier hs-var">me</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-32"></span><span>        </span><span class="annot"><span class="annottext">GameResult -&gt; GameState -&gt; GameState
+</span><a href="Game.Turn.html#finish"><span class="hs-identifier hs-var">finish</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlayerId -&gt; WinReason -&gt; GameResult
+</span><a href="Game.Types.html#Winner"><span class="hs-identifier hs-var">Winner</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlayerId -&gt; PlayerId
+</span><a href="Game.State.html#otherPlayer"><span class="hs-identifier hs-var">otherPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111511"><span class="hs-identifier hs-var">pid</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">WinReason
+</span><a href="Game.Types.html#OpponentOutOfBattery"><span class="hs-identifier hs-var">OpponentOutOfBattery</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111513"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-33"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="#local-6989586621679111512"><span class="hs-identifier hs-var">action</span></a></span><span> </span><span class="annot"><span class="annottext">Action -&gt; Action -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Action
+</span><a href="Game.Types.html#EndTurn"><span class="hs-identifier hs-var">EndTurn</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">||</span></span><span> </span><span class="annot"><span class="annottext">Player -&gt; Int
+</span><a href="Game.Types.html#playerAP"><span class="hs-identifier hs-var">playerAP</span></a></span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111517"><span class="hs-identifier hs-var">me</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Config -&gt; GameState -&gt; GameState
+</span><a href="Game.Turn.html#endTurn"><span class="hs-identifier hs-var">endTurn</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111510"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111513"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111513"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-36"></span><span>    </span><span id="local-6989586621679111517"><span class="annot"><span class="annottext">me :: Player
+</span><a href="#local-6989586621679111517"><span class="hs-identifier hs-var hs-var">me</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; GameState -&gt; Player
+</span><a href="Game.State.html#getPlayer"><span class="hs-identifier hs-var">getPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111511"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111513"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- | Ket thuc luot hien tai. Sau luot cua Player2 thi sang vong moi, neu da het</span><span>
+</span><span id="line-39"></span><span class="hs-comment">-- so vong thi tinh ket qua theo diem kho Earth. Nguoi den luot duoc nap day AP.</span><span>
+</span><span id="line-40"></span><span class="annot"><a href="Game.Turn.html#endTurn"><span class="hs-identifier hs-type">endTurn</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span>
+</span><span id="line-41"></span><span id="endTurn"><span class="annot"><span class="annottext">endTurn :: Config -&gt; GameState -&gt; GameState
+</span><a href="Game.Turn.html#endTurn"><span class="hs-identifier hs-var hs-var">endTurn</span></a></span></span><span> </span><span id="local-6989586621679111530"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111530"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111531"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111531"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">GameState -&gt; PlayerId
+</span><a href="Game.Types.html#gsCurrent"><span class="hs-identifier hs-var">gsCurrent</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111531"><span class="hs-identifier hs-var">gs</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-42"></span><span>    </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player1"><span class="hs-identifier hs-var">Player1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Config -&gt; PlayerId -&gt; GameState -&gt; GameState
+</span><a href="Game.Turn.html#startTurn"><span class="hs-identifier hs-var">startTurn</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111530"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player2"><span class="hs-identifier hs-var">Player2</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111531"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-43"></span><span>    </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player2"><span class="hs-identifier hs-var">Player2</span></a></span><span>
+</span><span id="line-44"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GameState -&gt; Int
+</span><a href="Game.Types.html#gsRound"><span class="hs-identifier hs-var">gsRound</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111531"><span class="hs-identifier hs-var">gs</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgMaxRounds"><span class="hs-identifier hs-var">cfgMaxRounds</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111530"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GameResult -&gt; GameState -&gt; GameState
+</span><a href="Game.Turn.html#finish"><span class="hs-identifier hs-var">finish</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; GameState -&gt; GameResult
+</span><a href="Game.Turn.html#roundLimitResult"><span class="hs-identifier hs-var">roundLimitResult</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111530"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111531"><span class="hs-identifier hs-var">gs</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111531"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-45"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Config -&gt; PlayerId -&gt; GameState -&gt; GameState
+</span><a href="Game.Turn.html#startTurn"><span class="hs-identifier hs-var">startTurn</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111530"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player1"><span class="hs-identifier hs-var">Player1</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111531"><span class="hs-identifier hs-var">gs</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Game.Types.html#gsRound"><span class="hs-identifier hs-var">gsRound</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Game.Types.html#gsRound"><span class="hs-identifier hs-var">gsRound</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111531"><span class="hs-identifier hs-type">gs</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">+</span></span><span> </span><span class="annot"><span class="hs-number">1</span></span><span> </span><span class="hs-special">}</span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span class="annot"><span class="hs-comment">-- | Bat dau luot cua mot nguoi: dat nguoi do lam nguoi hien tai, AP day.</span></span><span>
+</span><span id="line-48"></span><span class="annot"><a href="Game.Turn.html#startTurn"><span class="hs-identifier hs-type">startTurn</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span>
+</span><span id="line-49"></span><span id="startTurn"><span class="annot"><span class="annottext">startTurn :: Config -&gt; PlayerId -&gt; GameState -&gt; GameState
+</span><a href="Game.Turn.html#startTurn"><span class="hs-identifier hs-var hs-var">startTurn</span></a></span></span><span> </span><span id="local-6989586621679111539"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111539"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111540"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111540"><span class="hs-identifier hs-var">pid</span></a></span></span><span> </span><span id="local-6989586621679111541"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111541"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-50"></span><span>    </span><span class="annot"><span class="annottext">PlayerId -&gt; (Player -&gt; Player) -&gt; GameState -&gt; GameState
+</span><a href="Game.State.html#modifyPlayer"><span class="hs-identifier hs-var">modifyPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111540"><span class="hs-identifier hs-var">pid</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679111543"><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111543"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Player
+</span><a href="#local-6989586621679111543"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Game.Types.html#playerAP"><span class="hs-identifier hs-var">playerAP</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Game.Config.html#cfgApMax"><span class="hs-identifier hs-var">cfgApMax</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111539"><span class="hs-identifier hs-type">cfg</span></a></span><span> </span><span class="hs-special">}</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111541"><span class="hs-identifier hs-var">gs</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Game.Types.html#gsCurrent"><span class="hs-identifier hs-var">gsCurrent</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679111540"><span class="hs-identifier hs-type">pid</span></a></span><span> </span><span class="hs-special">}</span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span>
+</span><span id="line-52"></span><span class="annot"><span class="hs-comment">-- | Ket qua khi het so vong: diem Earth cao hon thang, bang nhau thi hoa.</span></span><span>
+</span><span id="line-53"></span><span class="annot"><a href="Game.Turn.html#roundLimitResult"><span class="hs-identifier hs-type">roundLimitResult</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameResult"><span class="hs-identifier hs-type">GameResult</span></a></span><span>
+</span><span id="line-54"></span><span id="roundLimitResult"><span class="annot"><span class="annottext">roundLimitResult :: Config -&gt; GameState -&gt; GameResult
+</span><a href="Game.Turn.html#roundLimitResult"><span class="hs-identifier hs-var hs-var">roundLimitResult</span></a></span></span><span> </span><span id="local-6989586621679111545"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111545"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span id="local-6989586621679111546"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111546"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-55"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Ordering
+forall a. Ord a =&gt; a -&gt; a -&gt; Ordering
+</span><span class="hs-identifier hs-var">compare</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Player -&gt; Int
+</span><a href="Game.State.html#playerScore"><span class="hs-identifier hs-var">playerScore</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111545"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameState -&gt; Player
+</span><a href="Game.Types.html#gsPlayer1"><span class="hs-identifier hs-var">gsPlayer1</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111546"><span class="hs-identifier hs-var">gs</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Player -&gt; Int
+</span><a href="Game.State.html#playerScore"><span class="hs-identifier hs-var">playerScore</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679111545"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GameState -&gt; Player
+</span><a href="Game.Types.html#gsPlayer2"><span class="hs-identifier hs-var">gsPlayer2</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111546"><span class="hs-identifier hs-var">gs</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-56"></span><span>        </span><span class="annot"><span class="annottext">Ordering
+</span><span class="hs-identifier hs-var">GT</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; WinReason -&gt; GameResult
+</span><a href="Game.Types.html#Winner"><span class="hs-identifier hs-var">Winner</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player1"><span class="hs-identifier hs-var">Player1</span></a></span><span> </span><span class="annot"><span class="annottext">WinReason
+</span><a href="Game.Types.html#HigherScoreAtLimit"><span class="hs-identifier hs-var">HigherScoreAtLimit</span></a></span><span>
+</span><span id="line-57"></span><span>        </span><span class="annot"><span class="annottext">Ordering
+</span><span class="hs-identifier hs-var">LT</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PlayerId -&gt; WinReason -&gt; GameResult
+</span><a href="Game.Types.html#Winner"><span class="hs-identifier hs-var">Winner</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="Game.Types.html#Player2"><span class="hs-identifier hs-var">Player2</span></a></span><span> </span><span class="annot"><span class="annottext">WinReason
+</span><a href="Game.Types.html#HigherScoreAtLimit"><span class="hs-identifier hs-var">HigherScoreAtLimit</span></a></span><span>
+</span><span id="line-58"></span><span>        </span><span class="annot"><span class="annottext">Ordering
+</span><span class="hs-identifier hs-var">EQ</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GameResult
+</span><a href="Game.Types.html#Draw"><span class="hs-identifier hs-var">Draw</span></a></span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span class="annot"><span class="hs-comment">-- | Nguoi choi mat ket noi thi doi thu thang. Tran da ket thuc thi giu nguyen.</span></span><span>
+</span><span id="line-61"></span><span class="annot"><a href="Game.Turn.html#forfeit"><span class="hs-identifier hs-type">forfeit</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#PlayerId"><span class="hs-identifier hs-type">PlayerId</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span>
+</span><span id="line-62"></span><span id="forfeit"><span class="annot"><span class="annottext">forfeit :: PlayerId -&gt; GameState -&gt; GameState
+</span><a href="Game.Turn.html#forfeit"><span class="hs-identifier hs-var hs-var">forfeit</span></a></span></span><span> </span><span id="local-6989586621679111552"><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111552"><span class="hs-identifier hs-var">loser</span></a></span></span><span> </span><span id="local-6989586621679111553"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111553"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">GameState -&gt; GamePhase
+</span><a href="Game.Types.html#gsPhase"><span class="hs-identifier hs-var">gsPhase</span></a></span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111553"><span class="hs-identifier hs-var">gs</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-63"></span><span>    </span><span class="annot"><a href="Game.Types.html#Finished"><span class="hs-identifier hs-type">Finished</span></a></span><span> </span><span class="annot"><span class="annottext">GameResult
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111553"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-64"></span><span>    </span><span class="annot"><span class="annottext">GamePhase
+</span><span class="hs-identifier">_</span></span><span>          </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GameResult -&gt; GameState -&gt; GameState
+</span><a href="Game.Turn.html#finish"><span class="hs-identifier hs-var">finish</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlayerId -&gt; WinReason -&gt; GameResult
+</span><a href="Game.Types.html#Winner"><span class="hs-identifier hs-var">Winner</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlayerId -&gt; PlayerId
+</span><a href="Game.State.html#otherPlayer"><span class="hs-identifier hs-var">otherPlayer</span></a></span><span> </span><span class="annot"><span class="annottext">PlayerId
+</span><a href="#local-6989586621679111552"><span class="hs-identifier hs-var">loser</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">WinReason
+</span><a href="Game.Types.html#OpponentDisconnected"><span class="hs-identifier hs-var">OpponentDisconnected</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111553"><span class="hs-identifier hs-var">gs</span></a></span><span>
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span class="annot"><a href="Game.Turn.html#finish"><span class="hs-identifier hs-type">finish</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Types.html#GameResult"><span class="hs-identifier hs-type">GameResult</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#GameState"><span class="hs-identifier hs-type">GameState</span></a></span><span>
+</span><span id="line-67"></span><span id="finish"><span class="annot"><span class="annottext">finish :: GameResult -&gt; GameState -&gt; GameState
+</span><a href="Game.Turn.html#finish"><span class="hs-identifier hs-var hs-var">finish</span></a></span></span><span> </span><span id="local-6989586621679111556"><span class="annot"><span class="annottext">GameResult
+</span><a href="#local-6989586621679111556"><span class="hs-identifier hs-var">result</span></a></span></span><span> </span><span id="local-6989586621679111557"><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111557"><span class="hs-identifier hs-var">gs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GameState
+</span><a href="#local-6989586621679111557"><span class="hs-identifier hs-var">gs</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Game.Types.html#gsPhase"><span class="hs-identifier hs-var">gsPhase</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Game.Types.html#Finished"><span class="hs-identifier hs-type">Finished</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679111556"><span class="hs-identifier hs-type">result</span></a></span><span> </span><span class="hs-special">}</span></pre></body></html>

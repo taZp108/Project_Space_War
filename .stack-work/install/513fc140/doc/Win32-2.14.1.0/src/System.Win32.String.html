@@ -1,0 +1,72 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">{- |
+   Module      :  System.Win32.String
+   Copyright   :  2013 shelarcy
+   License     :  BSD-style
+
+   Maintainer  :  shelarcy@gmail.com
+   Stability   :  Provisional
+   Portability :  Non-portable (Win32 API)
+
+   Utilities for primitive marshalling of Windows' C strings.
+-}</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="System.Win32.String.html"><span class="hs-identifier">System.Win32.String</span></a></span><span>
+</span><span id="line-13"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="System.Win32.Types.html#LPSTR"><span class="hs-identifier">LPSTR</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="System.Win32.Types.html#LPCSTR"><span class="hs-identifier">LPCSTR</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="System.Win32.Types.html#LPWSTR"><span class="hs-identifier">LPWSTR</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="System.Win32.Types.html#LPCWSTR"><span class="hs-identifier">LPCWSTR</span></a></span><span>
+</span><span id="line-14"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="System.Win32.Types.html#TCHAR"><span class="hs-identifier">TCHAR</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="System.Win32.Types.html#LPTSTR"><span class="hs-identifier">LPTSTR</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="System.Win32.Types.html#LPCTSTR"><span class="hs-identifier">LPCTSTR</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="System.Win32.Types.html#LPCTSTR_"><span class="hs-identifier">LPCTSTR_</span></a></span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="System.Win32.Types.html#withTString"><span class="hs-identifier">withTString</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="System.Win32.Types.html#withTStringLen"><span class="hs-identifier">withTStringLen</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="System.Win32.Types.html#peekTString"><span class="hs-identifier">peekTString</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="System.Win32.Types.html#peekTStringLen"><span class="hs-identifier">peekTStringLen</span></a></span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="System.Win32.Types.html#newTString"><span class="hs-identifier">newTString</span></a></span><span>
+</span><span id="line-17"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="System.Win32.String.html#withTStringBuffer"><span class="hs-identifier">withTStringBuffer</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="System.Win32.String.html#withTStringBufferLen"><span class="hs-identifier">withTStringBufferLen</span></a></span><span>
+</span><span id="line-18"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="System.Win32.Types.html"><span class="hs-identifier">System.Win32.Types</span></a></span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-comment">-- | Marshal a dummy Haskell string into a NUL terminated C wide string</span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- using temporary storage.</span><span>
+</span><span id="line-23"></span><span class="hs-comment">--</span><span>
+</span><span id="line-24"></span><span class="hs-comment">-- * the Haskell string is created by length parameter. And the Haskell</span><span>
+</span><span id="line-25"></span><span class="hs-comment">--   string contains /only/ NUL characters.</span><span>
+</span><span id="line-26"></span><span class="hs-comment">--</span><span>
+</span><span id="line-27"></span><span class="hs-comment">-- * the memory is freed when the subcomputation terminates (either</span><span>
+</span><span id="line-28"></span><span class="hs-comment">--   normally or via an exception), so the pointer to the temporary</span><span>
+</span><span id="line-29"></span><span class="hs-comment">--   storage must /not/ be used after this.</span><span>
+</span><span id="line-30"></span><span class="hs-comment">--</span><span>
+</span><span id="line-31"></span><span id="local-6989586621679148756"><span class="annot"><a href="System.Win32.String.html#withTStringBuffer"><span class="hs-identifier hs-type">withTStringBuffer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="System.Win32.Types.html#LPTSTR"><span class="hs-identifier hs-type">LPTSTR</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679148756"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679148756"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-32"></span><span id="withTStringBuffer"><span class="annot"><span class="annottext">withTStringBuffer :: forall a. Int -&gt; (LPTSTR -&gt; IO a) -&gt; IO a
+</span><a href="System.Win32.String.html#withTStringBuffer"><span class="hs-identifier hs-var hs-var">withTStringBuffer</span></a></span></span><span> </span><span id="local-6989586621679148777"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679148777"><span class="hs-identifier hs-var">maxLength</span></a></span></span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679148778"><span class="annot"><span class="annottext">dummyBuffer :: [Char]
+</span><a href="#local-6989586621679148778"><span class="hs-identifier hs-var hs-var">dummyBuffer</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Char -&gt; [Char]
+forall a. Int -&gt; a -&gt; [a]
+</span><span class="hs-identifier hs-var">replicate</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679148777"><span class="hs-identifier hs-var">maxLength</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'\0'</span></span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-keyword">in</span><span>  </span><span class="annot"><span class="annottext">[Char] -&gt; (LPTSTR -&gt; IO a) -&gt; IO a
+forall a. [Char] -&gt; (LPTSTR -&gt; IO a) -&gt; IO a
+</span><a href="System.Win32.Types.html#withTString"><span class="hs-identifier hs-var">withTString</span></a></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><a href="#local-6989586621679148778"><span class="hs-identifier hs-var">dummyBuffer</span></a></span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="hs-comment">-- | Marshal a dummy Haskell string into a C wide string (i.e. wide</span><span>
+</span><span id="line-37"></span><span class="hs-comment">-- character array) in temporary storage, with explicit length</span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- information.</span><span>
+</span><span id="line-39"></span><span class="hs-comment">--</span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- * the Haskell string is created by length parameter. And the Haskell</span><span>
+</span><span id="line-41"></span><span class="hs-comment">--   string contains /only/ NUL characters.</span><span>
+</span><span id="line-42"></span><span class="hs-comment">--</span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- * the memory is freed when the subcomputation terminates (either</span><span>
+</span><span id="line-44"></span><span class="hs-comment">--   normally or via an exception), so the pointer to the temporary</span><span>
+</span><span id="line-45"></span><span class="hs-comment">--   storage must /not/ be used after this.</span><span>
+</span><span id="line-46"></span><span class="hs-comment">--</span><span>
+</span><span id="line-47"></span><span id="local-6989586621679148760"><span class="annot"><a href="System.Win32.String.html#withTStringBufferLen"><span class="hs-identifier hs-type">withTStringBufferLen</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><a href="System.Win32.Types.html#LPTSTR"><span class="hs-identifier hs-type">LPTSTR</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679148760"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679148760"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-48"></span><span id="withTStringBufferLen"><span class="annot"><span class="annottext">withTStringBufferLen :: forall a. Int -&gt; ((LPTSTR, Int) -&gt; IO a) -&gt; IO a
+</span><a href="System.Win32.String.html#withTStringBufferLen"><span class="hs-identifier hs-var hs-var">withTStringBufferLen</span></a></span></span><span> </span><span id="local-6989586621679148780"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679148780"><span class="hs-identifier hs-var">maxLength</span></a></span></span><span>
+</span><span id="line-49"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679148781"><span class="annot"><span class="annottext">dummyBuffer :: [Char]
+</span><a href="#local-6989586621679148781"><span class="hs-identifier hs-var hs-var">dummyBuffer</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Char -&gt; [Char]
+forall a. Int -&gt; a -&gt; [a]
+</span><span class="hs-identifier hs-var">replicate</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679148780"><span class="hs-identifier hs-var">maxLength</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'\0'</span></span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-keyword">in</span><span>  </span><span class="annot"><span class="annottext">[Char] -&gt; ((LPTSTR, Int) -&gt; IO a) -&gt; IO a
+forall a. [Char] -&gt; ((LPTSTR, Int) -&gt; IO a) -&gt; IO a
+</span><a href="System.Win32.Types.html#withTStringLen"><span class="hs-identifier hs-var">withTStringLen</span></a></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><a href="#local-6989586621679148781"><span class="hs-identifier hs-var">dummyBuffer</span></a></span><span>
+</span><span id="line-51"></span><span>
+</span><span id="line-52"></span></pre></body></html>

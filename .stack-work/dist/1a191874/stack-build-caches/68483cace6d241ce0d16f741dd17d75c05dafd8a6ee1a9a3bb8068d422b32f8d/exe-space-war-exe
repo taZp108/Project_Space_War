@@ -1,0 +1,14 @@
+? C:\Users\ASUS\AppData\Local\Programs\stack\x86_64-windows\ghc-9.10.3\lib\x86_64-windows-ghc-9.10.3\rts-1.0.2\include\ghcversion.h
+: hash: 7038bb968ecc358729edd5d1e72a638409aaf5ea6ab13ce6ec7f253daa3b6529
+D:\Dev\space-war\.stack-work\dist\1a191874\build\space-war-exe\autogen\Paths_space_war.hs:
+  hash: d3546fafd14540ecd51505d430f2b4e7d1d4b35e599d04a4212336927e9a10dd
+D:\Dev\space-war\.stack-work\dist\1a191874\build\space-war-exe\autogen\cabal_macros.h:
+  hash: ad218abf8198245ea78c79d3b755debe9c9a826b23afdba48c69a8aec78107be
+D:\Dev\space-war\README.md:
+  hash: a511a5ddddcd4e033b3197531470e0af2f99712bc70462b0c18d5a66de2f6fb6
+D:\Dev\space-war\app\Main.hs:
+  hash: ea5224af92c55ddf65e1a324fc063e498be354a1173a15dc71e705ca6376cf82
+D:\Dev\space-war\package.yaml:
+  hash: be1ae6f997c55c9a0a3d57ba2c6a4378b8d0b0b73cbd9cba2141e7fedecf64f8
+D:\Dev\space-war\space-war.cabal:
+  hash: e9e5c47d0a452bc363f93bc2f0b5475b6a3c8ab2df83053f076326e69c4fd1cc

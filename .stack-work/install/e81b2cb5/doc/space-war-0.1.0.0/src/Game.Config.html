@@ -1,0 +1,287 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Moi thong so cua game nam o day de chinh sua o mot cho.</span><span>
+</span><span id="line-2"></span><span class="hs-comment">--</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Cac con so trong 'defaultConfig' la gia tri tam, se can bang lai sau.</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Game.Config.html"><span class="hs-identifier">Game.Config</span></a></span><span>
+</span><span id="line-5"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier">Cost</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-6"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier">Config</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Config.html#defaultConfig"><span class="hs-identifier">defaultConfig</span></a></span><span>
+</span><span id="line-8"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Game.Config.html#earthPosition"><span class="hs-identifier">earthPosition</span></a></span><span>
+</span><span id="line-9"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Game.Types.html"><span class="hs-identifier">Game.Types</span></a></span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="annot"><span class="hs-comment">-- | Chi phi cua mot action.</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">data</span><span> </span><span id="Cost"><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier hs-var">Cost</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Cost"><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier hs-var">Cost</span></a></span></span><span>
+</span><span id="line-17"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="costAP"><span class="annot"><span class="annottext">Cost -&gt; Int
+</span><a href="Game.Config.html#costAP"><span class="hs-identifier hs-var hs-var">costAP</span></a></span></span><span>      </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="costBattery"><span class="annot"><span class="annottext">Cost -&gt; Int
+</span><a href="Game.Config.html#costBattery"><span class="hs-identifier hs-var hs-var">costBattery</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110354"><span id="local-6989586621679110361"><span id="local-6989586621679110365"><span class="annot"><span class="annottext">Int -&gt; Cost -&gt; ShowS
+[Cost] -&gt; ShowS
+Cost -&gt; String
+(Int -&gt; Cost -&gt; ShowS)
+-&gt; (Cost -&gt; String) -&gt; ([Cost] -&gt; ShowS) -&gt; Show Cost
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Cost -&gt; ShowS
+showsPrec :: Int -&gt; Cost -&gt; ShowS
+$cshow :: Cost -&gt; String
+show :: Cost -&gt; String
+$cshowList :: [Cost] -&gt; ShowS
+showList :: [Cost] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110370"><span id="local-6989586621679110375"><span class="annot"><span class="annottext">Cost -&gt; Cost -&gt; Bool
+(Cost -&gt; Cost -&gt; Bool) -&gt; (Cost -&gt; Cost -&gt; Bool) -&gt; Eq Cost
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Cost -&gt; Cost -&gt; Bool
+== :: Cost -&gt; Cost -&gt; Bool
+$c/= :: Cost -&gt; Cost -&gt; Bool
+/= :: Cost -&gt; Cost -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="annot"><span class="hs-comment">-- | Cac thong so cua game.</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">data</span><span> </span><span id="Config"><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-var">Config</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Config"><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-var">Config</span></a></span></span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="cfgMapWidth"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgMapWidth"><span class="hs-identifier hs-var hs-var">cfgMapWidth</span></a></span></span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-24"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgMapHeight"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgMapHeight"><span class="hs-identifier hs-var hs-var">cfgMapHeight</span></a></span></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-25"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgPlanetCounts"><span class="annot"><span class="annottext">Config -&gt; Map PlanetType Int
+</span><a href="Game.Config.html#cfgPlanetCounts"><span class="hs-identifier hs-var hs-var">cfgPlanetCounts</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.Map</span></span><span> </span><span class="annot"><a href="Game.Types.html#PlanetType"><span class="hs-identifier hs-type">PlanetType</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>   </span><span class="annot"><span class="hs-comment">-- ^ so hanh tinh moi loai</span></span><span>
+</span><span id="line-26"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgPlanetStock"><span class="annot"><span class="annottext">Config -&gt; Map PlanetType Resources
+</span><a href="Game.Config.html#cfgPlanetStock"><span class="hs-identifier hs-var hs-var">cfgPlanetStock</span></a></span></span><span>      </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.Map</span></span><span> </span><span class="annot"><a href="Game.Types.html#PlanetType"><span class="hs-identifier hs-type">PlanetType</span></a></span><span> </span><span class="annot"><a href="Game.Types.html#Resources"><span class="hs-identifier hs-type">Resources</span></a></span><span>  </span><span class="annot"><span class="hs-comment">-- ^ ton kho ban dau moi loai</span></span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgPlanetMinEarthDist"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgPlanetMinEarthDist"><span class="hs-identifier hs-var hs-var">cfgPlanetMinEarthDist</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>                    </span><span class="annot"><span class="hs-comment">-- ^ hanh tinh cach Earth toi thieu</span></span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgSpawnMinDist"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgSpawnMinDist"><span class="hs-identifier hs-var hs-var">cfgSpawnMinDist</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-29"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgSpawnMaxDist"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgSpawnMaxDist"><span class="hs-identifier hs-var hs-var">cfgSpawnMaxDist</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgBatteryMax"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgBatteryMax"><span class="hs-identifier hs-var hs-var">cfgBatteryMax</span></a></span></span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-31"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgApMax"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgApMax"><span class="hs-identifier hs-var hs-var">cfgApMax</span></a></span></span><span>            </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-32"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgCargoCapacity"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgCargoCapacity"><span class="hs-identifier hs-var hs-var">cfgCargoCapacity</span></a></span></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-33"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgObserveRadius"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgObserveRadius"><span class="hs-identifier hs-var hs-var">cfgObserveRadius</span></a></span></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgScanRadius"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgScanRadius"><span class="hs-identifier hs-var hs-var">cfgScanRadius</span></a></span></span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgMineAmount"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgMineAmount"><span class="hs-identifier hs-var hs-var">cfgMineAmount</span></a></span></span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>                      </span><span class="annot"><span class="hs-comment">-- ^ toi da moi lan Mine</span></span><span>
+</span><span id="line-36"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgDepositRange"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgDepositRange"><span class="hs-identifier hs-var hs-var">cfgDepositRange</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>                      </span><span class="annot"><span class="hs-comment">-- ^ tam gui hang ve Earth</span></span><span>
+</span><span id="line-37"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgRechargeRate"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgRechargeRate"><span class="hs-identifier hs-var hs-var">cfgRechargeRate</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>                      </span><span class="annot"><span class="hs-comment">-- ^ battery nhan duoc cho 1 diem tai nguyen</span></span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgResourceValue"><span class="annot"><span class="annottext">Config -&gt; Resources
+</span><a href="Game.Config.html#cfgResourceValue"><span class="hs-identifier hs-var hs-var">cfgResourceValue</span></a></span></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.Map</span></span><span> </span><span class="annot"><a href="Game.Types.html#ResourceType"><span class="hs-identifier hs-type">ResourceType</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="annot"><span class="hs-comment">-- ^ diem moi don vi</span></span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgScoreTarget"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgScoreTarget"><span class="hs-identifier hs-var hs-var">cfgScoreTarget</span></a></span></span><span>      </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgMaxRounds"><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgMaxRounds"><span class="hs-identifier hs-var hs-var">cfgMaxRounds</span></a></span></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgCostMove"><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostMove"><span class="hs-identifier hs-var hs-var">cfgCostMove</span></a></span></span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier hs-type">Cost</span></a></span><span>
+</span><span id="line-42"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgCostObserve"><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostObserve"><span class="hs-identifier hs-var hs-var">cfgCostObserve</span></a></span></span><span>      </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier hs-type">Cost</span></a></span><span>
+</span><span id="line-43"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgCostScanArea"><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostScanArea"><span class="hs-identifier hs-var hs-var">cfgCostScanArea</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier hs-type">Cost</span></a></span><span>
+</span><span id="line-44"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgCostScanNearest"><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostScanNearest"><span class="hs-identifier hs-var hs-var">cfgCostScanNearest</span></a></span></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier hs-type">Cost</span></a></span><span>
+</span><span id="line-45"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgCostScanOpponent"><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostScanOpponent"><span class="hs-identifier hs-var hs-var">cfgCostScanOpponent</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier hs-type">Cost</span></a></span><span>
+</span><span id="line-46"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgCostMine"><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostMine"><span class="hs-identifier hs-var hs-var">cfgCostMine</span></a></span></span><span>         </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier hs-type">Cost</span></a></span><span>
+</span><span id="line-47"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgCostDepositAtEarth"><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostDepositAtEarth"><span class="hs-identifier hs-var hs-var">cfgCostDepositAtEarth</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier hs-type">Cost</span></a></span><span>
+</span><span id="line-48"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgCostDepositRemote"><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostDepositRemote"><span class="hs-identifier hs-var hs-var">cfgCostDepositRemote</span></a></span></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier hs-type">Cost</span></a></span><span>
+</span><span id="line-49"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="cfgCostRecharge"><span class="annot"><span class="annottext">Config -&gt; Cost
+</span><a href="Game.Config.html#cfgCostRecharge"><span class="hs-identifier hs-var hs-var">cfgCostRecharge</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Cost"><span class="hs-identifier hs-type">Cost</span></a></span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110408"><span id="local-6989586621679110441"><span id="local-6989586621679110445"><span class="annot"><span class="annottext">Int -&gt; Config -&gt; ShowS
+[Config] -&gt; ShowS
+Config -&gt; String
+(Int -&gt; Config -&gt; ShowS)
+-&gt; (Config -&gt; String) -&gt; ([Config] -&gt; ShowS) -&gt; Show Config
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Config -&gt; ShowS
+showsPrec :: Int -&gt; Config -&gt; ShowS
+$cshow :: Config -&gt; String
+show :: Config -&gt; String
+$cshowList :: [Config] -&gt; ShowS
+showList :: [Config] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110451"><span id="local-6989586621679110483"><span class="annot"><span class="annottext">Config -&gt; Config -&gt; Bool
+(Config -&gt; Config -&gt; Bool)
+-&gt; (Config -&gt; Config -&gt; Bool) -&gt; Eq Config
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Config -&gt; Config -&gt; Bool
+== :: Config -&gt; Config -&gt; Bool
+$c/= :: Config -&gt; Config -&gt; Bool
+/= :: Config -&gt; Config -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span>
+</span><span id="line-52"></span><span class="annot"><span class="hs-comment">-- | Cau hinh mac dinh theo spec v1.0.</span></span><span>
+</span><span id="line-53"></span><span class="annot"><a href="Game.Config.html#defaultConfig"><span class="hs-identifier hs-type">defaultConfig</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span>
+</span><span id="line-54"></span><span id="defaultConfig"><span class="annot"><span class="annottext">defaultConfig :: Config
+</span><a href="Game.Config.html#defaultConfig"><span class="hs-identifier hs-var hs-var">defaultConfig</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span>
+</span><span id="line-55"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">cfgMapWidth :: Int
+</span><a href="Game.Config.html#cfgMapWidth"><span class="hs-identifier hs-var">cfgMapWidth</span></a></span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">100</span></span><span>
+</span><span id="line-56"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgMapHeight :: Int
+</span><a href="Game.Config.html#cfgMapHeight"><span class="hs-identifier hs-var">cfgMapHeight</span></a></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">100</span></span><span>
+</span><span id="line-57"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgPlanetCounts :: Map PlanetType Int
+</span><a href="Game.Config.html#cfgPlanetCounts"><span class="hs-identifier hs-var">cfgPlanetCounts</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[(PlanetType, Int)] -&gt; Map PlanetType Int
+forall k a. Ord k =&gt; [(k, a)] -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.fromList</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlanetType
+</span><a href="Game.Types.html#Mining"><span class="hs-identifier hs-var">Mining</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">40</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlanetType
+</span><a href="Game.Types.html#Energy"><span class="hs-identifier hs-var">Energy</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">24</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlanetType
+</span><a href="Game.Types.html#Rare"><span class="hs-identifier hs-var">Rare</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">16</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-58"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgPlanetStock :: Map PlanetType Resources
+</span><a href="Game.Config.html#cfgPlanetStock"><span class="hs-identifier hs-var">cfgPlanetStock</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[(PlanetType, Resources)] -&gt; Map PlanetType Resources
+forall k a. Ord k =&gt; [(k, a)] -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.fromList</span></span><span>
+</span><span id="line-59"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlanetType
+</span><a href="Game.Types.html#Mining"><span class="hs-identifier hs-var">Mining</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[(ResourceType, Int)] -&gt; Resources
+forall k a. Ord k =&gt; [(k, a)] -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.fromList</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#Iron"><span class="hs-identifier hs-var">Iron</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">80</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#Crystal"><span class="hs-identifier hs-var">Crystal</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">30</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-60"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlanetType
+</span><a href="Game.Types.html#Energy"><span class="hs-identifier hs-var">Energy</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[(ResourceType, Int)] -&gt; Resources
+forall k a. Ord k =&gt; [(k, a)] -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.fromList</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#EnergyCore"><span class="hs-identifier hs-var">EnergyCore</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">30</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#Iron"><span class="hs-identifier hs-var">Iron</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">20</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PlanetType
+</span><a href="Game.Types.html#Rare"><span class="hs-identifier hs-var">Rare</span></a></span><span class="hs-special">,</span><span>   </span><span class="annot"><span class="annottext">[(ResourceType, Int)] -&gt; Resources
+forall k a. Ord k =&gt; [(k, a)] -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.fromList</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#RareOre"><span class="hs-identifier hs-var">RareOre</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">8</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#ExoticMatter"><span class="hs-identifier hs-var">ExoticMatter</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-62"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-63"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgPlanetMinEarthDist :: Int
+</span><a href="Game.Config.html#cfgPlanetMinEarthDist"><span class="hs-identifier hs-var">cfgPlanetMinEarthDist</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">4</span></span><span>
+</span><span id="line-64"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgSpawnMinDist :: Int
+</span><a href="Game.Config.html#cfgSpawnMinDist"><span class="hs-identifier hs-var">cfgSpawnMinDist</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span>
+</span><span id="line-65"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgSpawnMaxDist :: Int
+</span><a href="Game.Config.html#cfgSpawnMaxDist"><span class="hs-identifier hs-var">cfgSpawnMaxDist</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">5</span></span><span>
+</span><span id="line-66"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgBatteryMax :: Int
+</span><a href="Game.Config.html#cfgBatteryMax"><span class="hs-identifier hs-var">cfgBatteryMax</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">100</span></span><span>
+</span><span id="line-67"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgApMax :: Int
+</span><a href="Game.Config.html#cfgApMax"><span class="hs-identifier hs-var">cfgApMax</span></a></span><span>            </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">5</span></span><span>
+</span><span id="line-68"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgCargoCapacity :: Int
+</span><a href="Game.Config.html#cfgCargoCapacity"><span class="hs-identifier hs-var">cfgCargoCapacity</span></a></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">50</span></span><span>
+</span><span id="line-69"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgObserveRadius :: Int
+</span><a href="Game.Config.html#cfgObserveRadius"><span class="hs-identifier hs-var">cfgObserveRadius</span></a></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">3</span></span><span>
+</span><span id="line-70"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgScanRadius :: Int
+</span><a href="Game.Config.html#cfgScanRadius"><span class="hs-identifier hs-var">cfgScanRadius</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">8</span></span><span>
+</span><span id="line-71"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgMineAmount :: Int
+</span><a href="Game.Config.html#cfgMineAmount"><span class="hs-identifier hs-var">cfgMineAmount</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">5</span></span><span>
+</span><span id="line-72"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgDepositRange :: Int
+</span><a href="Game.Config.html#cfgDepositRange"><span class="hs-identifier hs-var">cfgDepositRange</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">5</span></span><span>
+</span><span id="line-73"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgRechargeRate :: Int
+</span><a href="Game.Config.html#cfgRechargeRate"><span class="hs-identifier hs-var">cfgRechargeRate</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span>
+</span><span id="line-74"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgResourceValue :: Resources
+</span><a href="Game.Config.html#cfgResourceValue"><span class="hs-identifier hs-var">cfgResourceValue</span></a></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[(ResourceType, Int)] -&gt; Resources
+forall k a. Ord k =&gt; [(k, a)] -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.fromList</span></span><span>
+</span><span id="line-75"></span><span>        </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#Iron"><span class="hs-identifier hs-var">Iron</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#Crystal"><span class="hs-identifier hs-var">Crystal</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">3</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#EnergyCore"><span class="hs-identifier hs-var">EnergyCore</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">5</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#RareOre"><span class="hs-identifier hs-var">RareOre</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">10</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ResourceType
+</span><a href="Game.Types.html#ExoticMatter"><span class="hs-identifier hs-var">ExoticMatter</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">25</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-76"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgScoreTarget :: Int
+</span><a href="Game.Config.html#cfgScoreTarget"><span class="hs-identifier hs-var">cfgScoreTarget</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">500</span></span><span>
+</span><span id="line-77"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgMaxRounds :: Int
+</span><a href="Game.Config.html#cfgMaxRounds"><span class="hs-identifier hs-var">cfgMaxRounds</span></a></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">100</span></span><span>
+</span><span id="line-78"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgCostMove :: Cost
+</span><a href="Game.Config.html#cfgCostMove"><span class="hs-identifier hs-var">cfgCostMove</span></a></span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Cost
+</span><a href="Game.Config.html#Cost"><span class="hs-identifier hs-var">Cost</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span>
+</span><span id="line-79"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgCostObserve :: Cost
+</span><a href="Game.Config.html#cfgCostObserve"><span class="hs-identifier hs-var">cfgCostObserve</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Cost
+</span><a href="Game.Config.html#Cost"><span class="hs-identifier hs-var">Cost</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span>
+</span><span id="line-80"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgCostScanArea :: Cost
+</span><a href="Game.Config.html#cfgCostScanArea"><span class="hs-identifier hs-var">cfgCostScanArea</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Cost
+</span><a href="Game.Config.html#Cost"><span class="hs-identifier hs-var">Cost</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">3</span></span><span>
+</span><span id="line-81"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgCostScanNearest :: Cost
+</span><a href="Game.Config.html#cfgCostScanNearest"><span class="hs-identifier hs-var">cfgCostScanNearest</span></a></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Cost
+</span><a href="Game.Config.html#Cost"><span class="hs-identifier hs-var">Cost</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">3</span></span><span>
+</span><span id="line-82"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgCostScanOpponent :: Cost
+</span><a href="Game.Config.html#cfgCostScanOpponent"><span class="hs-identifier hs-var">cfgCostScanOpponent</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Cost
+</span><a href="Game.Config.html#Cost"><span class="hs-identifier hs-var">Cost</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">3</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">3</span></span><span>
+</span><span id="line-83"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgCostMine :: Cost
+</span><a href="Game.Config.html#cfgCostMine"><span class="hs-identifier hs-var">cfgCostMine</span></a></span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Cost
+</span><a href="Game.Config.html#Cost"><span class="hs-identifier hs-var">Cost</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span>
+</span><span id="line-84"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgCostDepositAtEarth :: Cost
+</span><a href="Game.Config.html#cfgCostDepositAtEarth"><span class="hs-identifier hs-var">cfgCostDepositAtEarth</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Cost
+</span><a href="Game.Config.html#Cost"><span class="hs-identifier hs-var">Cost</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-85"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgCostDepositRemote :: Cost
+</span><a href="Game.Config.html#cfgCostDepositRemote"><span class="hs-identifier hs-var">cfgCostDepositRemote</span></a></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Cost
+</span><a href="Game.Config.html#Cost"><span class="hs-identifier hs-var">Cost</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span>
+</span><span id="line-86"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">cfgCostRecharge :: Cost
+</span><a href="Game.Config.html#cfgCostRecharge"><span class="hs-identifier hs-var">cfgCostRecharge</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Cost
+</span><a href="Game.Config.html#Cost"><span class="hs-identifier hs-var">Cost</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-87"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-88"></span><span>
+</span><span id="line-89"></span><span class="annot"><span class="hs-comment">-- | Vi tri Earth: giua map (rong chia 2, cao chia 2). Mac dinh la (50, 50).</span></span><span>
+</span><span id="line-90"></span><span class="annot"><a href="Game.Config.html#earthPosition"><span class="hs-identifier hs-type">earthPosition</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Game.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Game.Types.html#Pos"><span class="hs-identifier hs-type">Pos</span></a></span><span>
+</span><span id="line-91"></span><span id="earthPosition"><span class="annot"><span class="annottext">earthPosition :: Config -&gt; Pos
+</span><a href="Game.Config.html#earthPosition"><span class="hs-identifier hs-var hs-var">earthPosition</span></a></span></span><span> </span><span id="local-6989586621679110498"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110498"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Pos
+</span><a href="Game.Types.html#Pos"><span class="hs-identifier hs-var">Pos</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgMapWidth"><span class="hs-identifier hs-var">cfgMapWidth</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110498"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Integral a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">`div`</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Int
+</span><a href="Game.Config.html#cfgMapHeight"><span class="hs-identifier hs-var">cfgMapHeight</span></a></span><span> </span><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679110498"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Integral a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">`div`</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span></pre></body></html>
